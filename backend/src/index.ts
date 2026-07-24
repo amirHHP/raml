@@ -47,7 +47,7 @@ app.use(async (_req, _res, next) => {
   next();
 });
 
-app.get('/health', (_req, res) => {
+function healthHandler(_req: express.Request, res: express.Response): void {
   res.json({
     ok: true,
     service: 'raml-backend',
@@ -55,7 +55,10 @@ app.get('/health', (_req, res) => {
     memoryStore: (global as { __ramlMemory?: boolean }).__ramlMemory === true,
     adminConfigured: Boolean(config.adminToken),
   });
-});
+}
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 app.use('/api/game', gameRoutes);
 app.use('/api/mono', monetizationRoutes);
