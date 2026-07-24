@@ -1,8 +1,12 @@
 import { z } from 'zod';
 import OpenAI from 'openai';
-import { config } from '../config';
-import { SYSTEM_PROMPT } from '../prompts/system';
 import type { AiGameResponse } from '../types/game';
+import {
+  getRuntimeAiSettings,
+  onAiSettingsChange,
+  type RuntimeAiSettings,
+} from './aiSettings';
+import { getPromptBody } from './promptService';
 
 const AiResponseSchema = z.object({
   story_text: z.string(),
@@ -66,13 +70,25 @@ const AiResponseSchema = z.object({
 });
 
 let client: OpenAI | null = null;
+let clientFingerprint = '';
 
-function getClient(): OpenAI {
-  if (!client) {
+onAiSettingsChange(() => {
+  client = null;
+  clientFingerprint = '';
+});
+
+function fingerprint(settings: RuntimeAiSettings): string {
+  return `${settings.openaiApiKey}|${settings.openaiBaseUrl}|${settings.openaiModel}|${settings.useMockAi}`;
+}
+
+function getClient(settings: RuntimeAiSettings): OpenAI {
+  const fp = fingerprint(settings);
+  if (!client || clientFingerprint !== fp) {
     client = new OpenAI({
-      apiKey: config.openaiApiKey,
-      baseURL: config.openaiBaseUrl,
+      apiKey: settings.openaiApiKey,
+      baseURL: settings.openaiBaseUrl,
     });
+    clientFingerprint = fp;
   }
   return client;
 }
@@ -166,8 +182,8 @@ function mockAi(userPrompt: string): AiGameResponse {
     };
   }
 
-  // Generic action continuation — occasionally request a dice roll
-  const wantsDice = /غار|حمله|نگهبان|اژدها/.test(userPrompt) || userPrompt.includes('به سوی نور');
+  const wantsDice =
+    /غار|حمله|نگهبان|اژدها/.test(userPrompt) || userPrompt.includes('به سوی نور');
 
   if (wantsDice && !userPrompt.includes('عقب')) {
     return {
@@ -222,16 +238,18 @@ function mockAi(userPrompt: string): AiGameResponse {
 }
 
 export async function generateGameTurn(userPrompt: string): Promise<AiGameResponse> {
-  if (config.useMockAi) {
+  const settings = await getRuntimeAiSettings();
+  if (settings.useMockAi || !settings.openaiApiKey) {
     return mockAi(userPrompt);
   }
 
-  const completion = await getClient().chat.completions.create({
-    model: config.openaiModel,
+  const systemPrompt = await getPromptBody('system');
+  const completion = await getClient(settings).chat.completions.create({
+    model: settings.openaiModel,
     temperature: 0.8,
     response_format: { type: 'json_object' },
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
   });
@@ -241,4 +259,9 @@ export async function generateGameTurn(userPrompt: string): Promise<AiGameRespon
 
   const parsed = AiResponseSchema.parse(extractJson(content));
   return parsed as AiGameResponse;
+}
+
+export function resetAiClient(): void {
+  client = null;
+  clientFingerprint = '';
 }

@@ -1,3 +1,10 @@
+import {
+  DEFAULT_ACTION_TEMPLATE,
+  DEFAULT_AWAKEN_TEMPLATE,
+  DEFAULT_DICE_TEMPLATE,
+  renderTemplate,
+} from './templates';
+
 export const SYSTEM_PROMPT = `تو «رمل» هستی؛ یک استاد بازی نقش‌آفرینی متنی به سبک D&D برای بازیکنان ایرانی.
 همهٔ متن‌های داستان، مکان، گزینه‌ها و پیام‌ها باید به فارسی معیار و روان باشند.
 
@@ -34,13 +41,7 @@ export const SYSTEM_PROMPT = `تو «رمل» هستی؛ یک استاد باز�
 اگر تاس لازم نیست، options حداقل ۲ مورد باشد.`;
 
 export function buildAwakenUserPrompt(name: string, classType: string): string {
-  return `بازیکن تازه چشم‌هایش را باز کرده است.
-نام شخصیت: ${name}
-کلاس: ${classType}
-
-صحنهٔ آغازین را بنویس: بیداری در تاریکی، حس شن، صدای باد کویر، و اولین انتخاب‌ها.
-unlocked_hint: این روز اول است؛ صحنه را ساده نگه دار.
-needs_dice_roll را false بگذار.`;
+  return renderTemplate(DEFAULT_AWAKEN_TEMPLATE, { name, classType });
 }
 
 export function buildActionUserPrompt(params: {
@@ -53,16 +54,16 @@ export function buildActionUserPrompt(params: {
   inventory: string[];
   chosenOption: string;
 }): string {
-  return `وضعیت فعلی بازیکن:
-نام: ${params.name} | کلاس: ${params.classType} | سطح: ${params.level}
-مکان: ${params.location}
-آمار: ${JSON.stringify(params.stats)}
-موجودی: ${params.inventory.join('، ') || 'خالی'}
-آخرین داستان: ${params.storySnippet}
-
-بازیکن این گزینه را انتخاب کرد: «${params.chosenOption}»
-
-داستان را ادامه بده و JSON وضعیت بعدی را برگردان. یک واحد انرژی قبلاً مصرف شده؛ energy_change را معمولاً ۰ بگذار مگر رویداد خاصی باشد.`;
+  return renderTemplate(DEFAULT_ACTION_TEMPLATE, {
+    name: params.name,
+    classType: params.classType,
+    level: params.level,
+    location: params.location,
+    stats: JSON.stringify(params.stats),
+    inventory: params.inventory.join('، ') || 'خالی',
+    storySnippet: params.storySnippet,
+    chosenOption: params.chosenOption,
+  });
 }
 
 export function buildDiceResultUserPrompt(params: {
@@ -76,15 +77,15 @@ export function buildDiceResultUserPrompt(params: {
   location: string;
   storySnippet: string;
 }): string {
-  return `نتیجهٔ تاس مهارت:
-بازیکن: ${params.name}
-نوع تاس: ${params.requiredType}
-عدد خام: ${params.rawRoll} + اصلاح‌گر ${params.modifier} = ${params.rollTotal}
-حداقل موفقیت: ${params.minSuccess}
-نتیجه: ${params.success ? 'موفقیت' : 'شکست'}
-مکان: ${params.location}
-زمینه: ${params.storySnippet}
-
-بر اساس ${params.success ? 'موفقیت' : 'شکست'}، داستان را ادامه بده و JSON بعدی را بده.
-needs_dice_roll را false بگذار و گزینه‌های جدید ارائه کن.`;
+  return renderTemplate(DEFAULT_DICE_TEMPLATE, {
+    name: params.name,
+    requiredType: params.requiredType,
+    rawRoll: params.rawRoll,
+    modifier: params.modifier,
+    rollTotal: params.rollTotal,
+    minSuccess: params.minSuccess,
+    resultLabel: params.success ? 'موفقیت' : 'شکست',
+    location: params.location,
+    storySnippet: params.storySnippet,
+  });
 }

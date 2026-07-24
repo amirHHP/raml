@@ -8,10 +8,13 @@ import type {
   PlayerStats,
 } from '../types/game';
 
+export type PlayerStatus = 'active' | 'banned';
+
 export interface IPlayer extends Document {
   deviceId: string;
   characterName: string;
   classType: ClassType;
+  status: PlayerStatus;
   awakened: boolean;
   unlockedFullUi: boolean;
   createdAt: Date;
@@ -100,6 +103,12 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       enum: ['warrior', 'mage', 'rogue', 'ranger'],
       default: 'warrior',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'banned'],
+      default: 'active',
+      index: true,
     },
     awakened: { type: Boolean, default: false },
     unlockedFullUi: { type: Boolean, default: false },

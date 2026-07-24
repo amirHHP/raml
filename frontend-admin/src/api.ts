@@ -1,0 +1,108 @@
+import type {
+  AdminNotification,
+  AdminPlayerSummary,
+  AdminStats,
+  AiSettings,
+  PromptItem,
+  PromptKey,
+} from './types';
+
+const TOKEN_KEY = 'raml_admin_token';
+
+export function getToken(): string | null {
+  return sessionStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  sessionStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { error?: string }).error || 'خطای شبکه');
+  }
+  return data as T;
+}
+
+export const adminApi = {
+  getStats: () => request<AdminStats>('/api/admin/stats'),
+  listPlayers: (params: {
+    q?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set('q', params.q);
+    if (params.status) qs.set('status', params.status);
+    if (params.page) qs.set('page', String(params.page));
+    if (params.limit) qs.set('limit', String(params.limit));
+    return request<{
+      items: AdminPlayerSummary[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/admin/players?${qs}`);
+  },
+  getPlayer: (deviceId: string) =>
+    request<{
+      summary: AdminPlayerSummary;
+      state: Record<string, unknown>;
+      storyHistory: string[];
+    }>(`/api/admin/players/${encodeURIComponent(deviceId)}`),
+  patchPlayer: (
+    deviceId: string,
+    body: {
+      status?: 'active' | 'banned';
+      unlockedFullUi?: boolean;
+      refillEnergy?: boolean;
+    },
+  ) =>
+    request<{ summary: AdminPlayerSummary }>(
+      `/api/admin/players/${encodeURIComponent(deviceId)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    ),
+  getAi: () => request<AiSettings>('/api/admin/ai'),
+  putAi: (body: {
+    openaiApiKey?: string;
+    openaiBaseUrl?: string;
+    openaiModel?: string;
+    useMockAi?: boolean;
+  }) =>
+    request<AiSettings>('/api/admin/ai', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  getPrompts: () => request<{ prompts: PromptItem[] }>('/api/admin/prompts'),
+  putPrompt: (key: PromptKey, body: string) =>
+    request<PromptItem>(`/api/admin/prompts/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ body }),
+    }),
+  listNotifications: () =>
+    request<{ items: AdminNotification[] }>('/api/admin/notifications'),
+  sendNotification: (body: {
+    title: string;
+    body: string;
+    targetType: 'all' | 'device';
+    targetDeviceId?: string;
+  }) =>
+    request<{ notification: AdminNotification & { delivered?: number } }>(
+      '/api/admin/notifications',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+};

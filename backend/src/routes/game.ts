@@ -10,6 +10,7 @@ import {
   submitDiceRoll,
   toClientState,
 } from '../services/gameState';
+import { getPlayerInbox, markInboxRead } from '../services/notifications';
 
 const router = Router();
 
@@ -18,8 +19,9 @@ router.get('/state', requireDeviceId, async (req, res) => {
     const player = await getOrCreatePlayer(req.deviceId);
     res.json(toClientState(player));
   } catch (err) {
+    const e = err as Error & { status?: number };
     console.error(err);
-    res.status(500).json({ error: 'خطا در دریافت وضعیت' });
+    res.status(e.status || 500).json({ error: e.message || 'خطا در دریافت وضعیت' });
   }
 });
 
@@ -105,6 +107,30 @@ router.post('/debug/unlock', requireDeviceId, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'خطا در آنلاک' });
+  }
+});
+
+router.get('/inbox', requireDeviceId, async (req, res) => {
+  try {
+    const inbox = await getPlayerInbox(req.deviceId);
+    res.json(inbox);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در صندوق پیام' });
+  }
+});
+
+router.post('/inbox/:id/read', requireDeviceId, async (req, res) => {
+  try {
+    const inboxId = String(req.params.id);
+    const item = await markInboxRead(req.deviceId, inboxId);
+    const inbox = await getPlayerInbox(req.deviceId);
+    res.json({ item, unreadCount: inbox.unreadCount });
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در خواندن پیام' });
   }
 });
 

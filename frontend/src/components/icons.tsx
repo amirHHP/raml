@@ -26,6 +26,15 @@ export function IconSettings(p: IconProps) {
   );
 }
 
+export function IconBell(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
 export function IconEye(p: IconProps) {
   return (
     <svg {...base(p)}>

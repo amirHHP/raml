@@ -1,4 +1,4 @@
-import type { ClassType, GameState, ShopSku } from '../types/game';
+import type { ClassType, GameState, InboxItem, ShopSku } from '../types/game';
 
 const DEVICE_KEY = 'raml_device_id';
 
@@ -56,6 +56,13 @@ export const api = {
     request<GameState>('/api/game/toast/clear', { method: 'POST', body: '{}' }),
   debugUnlock: () =>
     request<GameState>('/api/game/debug/unlock', { method: 'POST', body: '{}' }),
+  getInbox: () =>
+    request<{ items: InboxItem[]; unreadCount: number }>('/api/game/inbox'),
+  markInboxRead: (id: string) =>
+    request<{ item: InboxItem; unreadCount: number }>(
+      `/api/game/inbox/${encodeURIComponent(id)}/read`,
+      { method: 'POST', body: '{}' },
+    ),
   getShop: () => request<{ items: ShopSku[] }>('/api/mono/shop'),
   claimAdReward: () =>
     request<GameState>('/api/mono/ads/reward', { method: 'POST', body: '{}' }),

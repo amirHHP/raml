@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { ClassType, GameState, ShopSku, TabId } from '../types/game';
+import type { ClassType, GameState, InboxItem, ShopSku, TabId } from '../types/game';
 
 export function useGame() {
   const [state, setState] = useState<GameState | null>(null);
@@ -11,6 +11,16 @@ export function useGame() {
   const [shop, setShop] = useState<ShopSku[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adOpen, setAdOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const refreshInbox = useCallback(async () => {
+    const inbox = await api.getInbox();
+    setInboxItems(inbox.items);
+    setUnreadCount(inbox.unreadCount);
+    return inbox;
+  }, []);
 
   const refresh = useCallback(async () => {
     const s = await api.getState();
@@ -23,10 +33,16 @@ export function useGame() {
     (async () => {
       try {
         setLoading(true);
-        const [s, shopRes] = await Promise.all([api.getState(), api.getShop()]);
+        const [s, shopRes, inbox] = await Promise.all([
+          api.getState(),
+          api.getShop(),
+          api.getInbox(),
+        ]);
         if (!cancelled) {
           setState(s);
           setShop(shopRes.items);
+          setInboxItems(inbox.items);
+          setUnreadCount(inbox.unreadCount);
           setError(null);
         }
       } catch (e) {
@@ -40,14 +56,15 @@ export function useGame() {
     };
   }, []);
 
-  // Poll energy regen lightly
+  // Poll energy regen + inbox lightly
   useEffect(() => {
     if (!state?.awakened) return;
     const id = window.setInterval(() => {
       void refresh().catch(() => undefined);
+      void refreshInbox().catch(() => undefined);
     }, 60_000);
     return () => window.clearInterval(id);
-  }, [state?.awakened, refresh]);
+  }, [state?.awakened, refresh, refreshInbox]);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -114,6 +131,18 @@ export function useGame() {
     }
   };
 
+  const markInboxRead = async (id: string) => {
+    try {
+      const res = await api.markInboxRead(id);
+      setUnreadCount(res.unreadCount);
+      setInboxItems((prev) =>
+        prev.map((item) => (item.id === id ? res.item : item)),
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   return {
     state,
     loading,
@@ -127,6 +156,12 @@ export function useGame() {
     setSettingsOpen,
     adOpen,
     setAdOpen,
+    inboxOpen,
+    setInboxOpen,
+    inboxItems,
+    unreadCount,
+    markInboxRead,
+    refreshInbox,
     awaken,
     choose,
     submitDice,
