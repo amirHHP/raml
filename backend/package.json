@@ -10,7 +10,11 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts"
   },
-  "keywords": ["raml", "rpg", "llm"],
+  "keywords": [
+    "raml",
+    "rpg",
+    "llm"
+  ],
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
@@ -20,7 +24,7 @@
     "helmet": "^8.1.0",
     "mongoose": "^8.16.5",
     "morgan": "^1.10.1",
-    "openai": "^5.12.2",
+    "openai": "^6.49.0",
     "uuid": "^11.1.0",
     "zod": "^4.0.14"
   },
