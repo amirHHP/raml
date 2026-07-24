@@ -118,8 +118,7 @@ const PlayerSchema = new Schema<IPlayer>(
     currentLocation: { type: String, default: 'تاریکی مطلق' },
     storyText: {
       type: String,
-      default:
-        'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...\n\nنام خود را به یاد آور و چشم‌هایت را باز کن.',
+      default: 'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...',
     },
     enemyLineArtType: { type: String, default: 'none' },
     needsDiceRoll: { type: Boolean, default: false },

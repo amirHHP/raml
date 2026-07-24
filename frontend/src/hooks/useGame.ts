@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { ClassType, GameState, InboxItem, ShopSku, TabId } from '../types/game';
+import type { GameState, InboxItem, ShopSku, TabId } from '../types/game';
 
 export function useGame() {
   const [state, setState] = useState<GameState | null>(null);
@@ -88,12 +88,14 @@ export function useGame() {
     }
   };
 
-  const awaken = async (name: string, classType: ClassType) => {
-    const s = await run(() => api.awaken(name, classType));
+  const awaken = async (name: string) => {
+    const s = await run(() => api.awaken(name));
     if (s) {
       setState(s);
       setTab('story');
+      return true;
     }
+    return false;
   };
 
   const choose = async (optionId: string) => {

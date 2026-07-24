@@ -48,3 +48,145 @@
     scrollbar-color: #3f3f46 transparent;
   }
 }
+
+/* Natural eye-opening transition into the world */
+.eyes-open-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  opacity: 1;
+  transition: opacity 0.7s ease-out;
+}
+
+.eyes-open-overlay.is-exiting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.eyes-open-pair {
+  display: flex;
+  gap: 2.75rem;
+  align-items: center;
+}
+
+.eye-socket {
+  position: relative;
+  width: 72px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 50% / 55%;
+}
+
+.eye-globe {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 45%, #d4d4d8 0%, #a1a1aa 55%, #52525b 100%);
+  opacity: 0;
+  animation: eye-globe-in 1.4s ease-out 0.35s forwards;
+}
+
+.eye-iris {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #71717a 0%, #3f3f46 60%, #18181b 100%);
+}
+
+.eye-pupil {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #000;
+}
+
+.eye-shine {
+  position: absolute;
+  top: 10px;
+  left: 28px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.eye-lid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #000;
+  z-index: 2;
+}
+
+.eye-lid-upper {
+  top: 0;
+  height: 55%;
+  transform-origin: top center;
+  animation: lid-upper-open 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) 0.2s forwards;
+}
+
+.eye-lid-lower {
+  bottom: 0;
+  height: 45%;
+  transform-origin: bottom center;
+  animation: lid-lower-open 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) 0.2s forwards;
+}
+
+@keyframes lid-upper-open {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-105%);
+  }
+}
+
+@keyframes lid-lower-open {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(105%);
+  }
+}
+
+@keyframes eye-globe-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyes-open-overlay {
+    transition: none;
+  }
+
+  .eye-globe,
+  .eye-lid-upper,
+  .eye-lid-lower {
+    animation: none;
+  }
+
+  .eye-globe {
+    opacity: 1;
+  }
+
+  .eye-lid-upper {
+    transform: translateY(-105%);
+  }
+
+  .eye-lid-lower {
+    transform: translateY(105%);
+  }
+}

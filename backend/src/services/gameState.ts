@@ -56,8 +56,7 @@ function defaultPlayer(deviceId: string): Partial<IPlayer> {
     lastPlayedAt: now,
     playDayCount: 0,
     currentLocation: 'تاریکی مطلق',
-    storyText:
-      'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...\n\nنام خود را به یاد آور و چشم‌هایت را باز کن.',
+    storyText: 'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...',
     enemyLineArtType: 'none',
     needsDiceRoll: false,
     pendingDiceRoll: null,
