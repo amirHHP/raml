@@ -6,8 +6,9 @@
 
 ```
 /frontend         React + Vite + TypeScript + Tailwind + Capacitor (PWA/APK)
-/frontend-admin   پنل ادمین جدا (آمار، بازیکن‌ها، AI، پرامپت، اعلان)
+/frontend-admin   پنل ادمین (در بیلد پروداکشن داخل /admin روی همان دامنه embed می‌شود)
 /backend          Node.js + Express + MongoDB (با fallback حافظه) + پراکسی OpenAI
+/vercel.json      دیپلوی چندسرویسی Vercel (frontend + backend)
 ```
 
 ## اجرای محلی
