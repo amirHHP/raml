@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:admin && tsc -b && vite build",
+    "build:admin": "npm install --prefix ../frontend-admin && npm run build --prefix ../frontend-admin",
     "lint": "oxlint",
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync android",

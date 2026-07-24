@@ -4,10 +4,10 @@ import { config } from '../config';
 import { regenerateEnergy, spendEnergy, msUntilNextEnergy } from './energy';
 import { generateGameTurn } from './ai';
 import {
-  buildActionUserPrompt,
-  buildAwakenUserPrompt,
-  buildDiceResultUserPrompt,
-} from '../prompts/system';
+  buildActionPrompt,
+  buildAwakenPrompt,
+  buildDicePrompt,
+} from './promptService';
 import type {
   AiGameResponse,
   ClassType,
@@ -25,12 +25,30 @@ export function setUseMemory(value: boolean): void {
   useMemory = value;
 }
 
+export function isUsingMemory(): boolean {
+  return useMemory;
+}
+
+export function getMemoryPlayers(): Map<string, IPlayer> {
+  return memoryStore;
+}
+
+export async function persistPlayer(player: IPlayer): Promise<IPlayer> {
+  if (useMemory) {
+    memoryStore.set(player.deviceId, player);
+    return player;
+  }
+  await player.save();
+  return player;
+}
+
 function defaultPlayer(deviceId: string): Partial<IPlayer> {
   const now = new Date();
   return {
     deviceId,
     characterName: '',
     classType: 'warrior',
+    status: 'active',
     awakened: false,
     unlockedFullUi: false,
     createdAt: now,
@@ -144,21 +162,27 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
 }
 
 async function persist(player: IPlayer): Promise<IPlayer> {
-  if (useMemory) {
-    memoryStore.set(player.deviceId, player);
-    return player;
+  return persistPlayer(player);
+}
+
+function assertNotBanned(player: IPlayer): void {
+  if (player.status === 'banned') {
+    throw Object.assign(new Error('حساب کاربری مسدود شده است'), { status: 403 });
   }
-  await player.save();
-  return player;
 }
 
 export async function getOrCreatePlayer(deviceId: string): Promise<IPlayer> {
   if (useMemory) {
     let p = memoryStore.get(deviceId);
     if (!p) {
-      p = { ...defaultPlayer(deviceId), save: async () => p } as unknown as IPlayer;
+      p = {
+        ...defaultPlayer(deviceId),
+        status: 'active',
+        save: async () => p,
+      } as unknown as IPlayer;
       memoryStore.set(deviceId, p);
     }
+    assertNotBanned(p);
     regenerateEnergy(p);
     touchPlayDay(p);
     p.unlockedFullUi = computeUnlocked(p);
@@ -169,6 +193,7 @@ export async function getOrCreatePlayer(deviceId: string): Promise<IPlayer> {
   if (!player) {
     player = await Player.create(defaultPlayer(deviceId));
   }
+  assertNotBanned(player);
   regenerateEnergy(player);
   touchPlayDay(player);
   player.unlockedFullUi = computeUnlocked(player);
@@ -250,7 +275,7 @@ export async function awakenPlayer(
     player.stats.intellect = 3;
   }
 
-  const ai = await generateGameTurn(buildAwakenUserPrompt(name, classType));
+  const ai = await generateGameTurn(await buildAwakenPrompt(name, classType));
   applyAiResponse(player, ai);
   await persist(player);
   return toClientState(player);
@@ -286,7 +311,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
   player.toastMessage = null;
 
   const ai = await generateGameTurn(
-    buildActionUserPrompt({
+    await buildActionPrompt({
       name: player.characterName,
       classType: player.classType,
       level: player.stats.level,
@@ -352,7 +377,7 @@ export async function submitDiceRoll(
   const success = total >= pending.minRollSuccess;
 
   const ai = await generateGameTurn(
-    buildDiceResultUserPrompt({
+    await buildDicePrompt({
       name: player.characterName,
       rollTotal: total,
       rawRoll,

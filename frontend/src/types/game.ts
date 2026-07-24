@@ -87,6 +87,14 @@ export interface ShopSku {
   type: 'consumable' | 'non_consumable';
 }
 
+export interface InboxItem {
+  id: string;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export const CLASS_LABELS: Record<ClassType, string> = {
   warrior: 'جنگجو',
   mage: 'جادوگر',

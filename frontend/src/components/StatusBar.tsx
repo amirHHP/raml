@@ -1,4 +1,5 @@
 import {
+  IconBell,
   IconBolt,
   IconCoin,
   IconFlask,
@@ -11,10 +12,14 @@ export function StatusBar({
   state,
   sparse,
   onSettings,
+  onInbox,
+  unreadCount = 0,
 }: {
   state: GameState;
   sparse?: boolean;
   onSettings: () => void;
+  onInbox?: () => void;
+  unreadCount?: number;
 }) {
   const { stats, characterName, classType } = state;
 
@@ -36,14 +41,29 @@ export function StatusBar({
             </>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onSettings}
-          className="rounded-full p-2 text-ink-dim transition hover:text-amber"
-          aria-label="تنظیمات"
-        >
-          <IconSettings size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          {onInbox && (
+            <button
+              type="button"
+              onClick={onInbox}
+              className="relative rounded-full p-2 text-ink-dim transition hover:text-amber"
+              aria-label="صندوق پیام"
+            >
+              <IconBell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute end-1 top-1 h-2 w-2 rounded-full bg-amber" />
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onSettings}
+            className="rounded-full p-2 text-ink-dim transition hover:text-amber"
+            aria-label="تنظیمات"
+          >
+            <IconSettings size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-dim">

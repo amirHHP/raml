@@ -5,8 +5,10 @@
 ## ساختار
 
 ```
-/frontend   React + Vite + TypeScript + Tailwind + Capacitor (PWA/APK)
-/backend    Node.js + Express + MongoDB (با fallback حافظه) + پراکسی OpenAI
+/frontend         React + Vite + TypeScript + Tailwind + Capacitor (PWA/APK)
+/frontend-admin   پنل ادمین (در بیلد پروداکشن داخل /admin روی همان دامنه embed می‌شود)
+/backend          Node.js + Express + MongoDB (با fallback حافظه) + پراکسی OpenAI
+/vercel.json      دیپلوی چندسرویسی Vercel (frontend + backend)
 ```
 
 ## اجرای محلی
@@ -15,8 +17,8 @@
 
 ```bash
 cd backend
-cp .env.example .env   # در صورت نیاز
-npm install
+cp .env.example .env   # ADMIN_TOKEN را حتماً عوض کنید
+npm install --legacy-peer-deps
 npm run dev
 ```
 
@@ -24,16 +26,16 @@ npm run dev
 - اگر MongoDB در دسترس نباشد، به‌صورت خودکار از **حافظهٔ موقت** استفاده می‌شود.
 - با `USE_MOCK_AI=true` نیازی به کلید API نیست (حالت پیش‌فرض توسعه).
 
-برای LLM واقعی:
-
 ```env
 USE_MOCK_AI=false
 OPENAI_API_KEY=sk-...
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
+ADMIN_TOKEN=change-me
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
 ```
 
-### ۲) فرانت‌اند
+### ۲) فرانت‌اند بازی
 
 ```bash
 cd frontend
@@ -41,10 +43,38 @@ npm install
 npm run dev
 ```
 
-باز کنید: `http://localhost:5173`  
-Vite درخواست‌های `/api` را به بک‌اند پروکسی می‌کند.
+باز کنید: `http://localhost:5173`
 
-### ۳) تست انرژی
+### ۳) پنل ادمین
+
+محلی:
+
+```bash
+cd frontend-admin
+npm install
+npm run dev
+```
+
+یا از ریشه: `npm run dev:admin` → `http://localhost:5174`
+
+روی Vercel (همان دامنه بازی): **`https://raml-ten.vercel.app/admin`**  
+با مقدار `ADMIN_TOKEN` وارد شوید.
+
+در env بک‌اند روی Vercel حتماً ست کنید:
+
+```env
+ADMIN_TOKEN=change-me
+CORS_ORIGIN=https://raml-ten.vercel.app,http://localhost:5173,http://localhost:5174
+```
+
+قابلیت‌ها:
+- داشبورد آمار (کل، بیدار شده، DAU/WAU، توزیع کلاس، خرید)
+- لیست و جزئیات بازیکن‌ها + ban / unlock / refill انرژی
+- مدیریت کلید و مدل AI (کلید mask می‌شود)
+- ویرایش پرامپت‌های system / awaken / action / dice
+- ارسال اعلان به همه یا یک deviceId (صندوق پیام + toast در بازی)
+
+### ۴) تست
 
 ```bash
 cd backend && npm test
@@ -87,9 +117,12 @@ npm run cap:open
 | POST | `/api/game/action` | انتخاب گزینه |
 | POST | `/api/game/dice` | ارسال نتیجه تاس |
 | POST | `/api/game/debug/unlock` | آنلاک رابط کامل |
+| GET | `/api/game/inbox` | صندوق پیام ادمین |
+| POST | `/api/game/inbox/:id/read` | خواندن پیام |
 | GET | `/api/mono/shop` | لیست SKU |
 | POST | `/api/mono/ads/reward` | +۵ انرژی |
 | POST | `/api/mono/iap/verify` | تأیید خرید ماک |
+| GET | `/api/admin/*` | پنل ادمین (`Authorization: Bearer ADMIN_TOKEN`) |
 
 ## پالت OLED
 

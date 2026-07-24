@@ -14,6 +14,7 @@ import { StatsPanel } from './components/panels/StatsPanel';
 import { ShopPanel } from './components/panels/ShopPanel';
 import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
+import { InboxModal } from './components/InboxModal';
 
 const EYES_OPEN_MS = 2600;
 
@@ -68,6 +69,11 @@ export default function App() {
           state={state}
           sparse={sparse}
           onSettings={() => game.setSettingsOpen(true)}
+          onInbox={() => {
+            void game.refreshInbox().catch(() => undefined);
+            game.setInboxOpen(true);
+          }}
+          unreadCount={game.unreadCount}
         />
       )}
 
@@ -194,6 +200,13 @@ export default function App() {
         busy={game.busy}
         playDayCount={state.playDayCount}
         unlocked={state.unlockedFullUi}
+      />
+
+      <InboxModal
+        open={game.inboxOpen}
+        items={game.inboxItems}
+        onClose={() => game.setInboxOpen(false)}
+        onRead={(id) => void game.markInboxRead(id)}
       />
 
       <RewardedAdModal
