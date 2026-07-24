@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-oled: #000000;
+  --color-ink: #e4e4e7;
+  --color-ink-dim: #a1a1aa;
+  --color-ink-muted: #71717a;
+  --color-amber: #f59e0b;
+  --color-amber-glow: #fbbf24;
+  --color-amber-dim: #b45309;
+  --color-panel: #0a0a0a;
+  --color-line: #27272a;
+  --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    background: #000;
+    color: #e4e4e7;
+    font-family: var(--font-sans);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-amber) 35%, transparent);
+  }
+}
+
+@layer utilities {
+  .amber-glow {
+    box-shadow:
+      0 0 12px color-mix(in oklab, var(--color-amber) 45%, transparent),
+      0 0 28px color-mix(in oklab, var(--color-amber) 20%, transparent);
+  }
+
+  .amber-text-glow {
+    text-shadow: 0 0 12px color-mix(in oklab, var(--color-amber) 55%, transparent);
+  }
+
+  .story-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #3f3f46 transparent;
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "applicationId": "ir.raml.game",
+  "skus": [
+    {
+      "sku": "energy_refill",
+      "type": "inapp",
+      "title": "پر کردن انرژی",
+      "price": "1000",
+      "currency": "IRR",
+      "description": "انرژی را کامل پر می‌کند"
+    },
+    {
+      "sku": "scenario_kavir",
+      "type": "inapp",
+      "title": "سناریو: شن‌های کویر",
+      "price": "5000",
+      "currency": "IRR",
+      "description": "باز کردن ماجرای ویژه کویر"
+    },
+    {
+      "sku": "unlock_full_ui",
+      "type": "inapp",
+      "title": "باز کردن رابط کامل",
+      "price": "2000",
+      "currency": "IRR",
+      "description": "بدون انتظار ۳ روزه"
+    }
+  ]
+}
