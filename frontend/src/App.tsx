@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGame } from './hooks/useGame';
 import { StatusBar } from './components/StatusBar';
 import { StoryArea } from './components/StoryArea';
@@ -6,14 +7,29 @@ import { ActionCards } from './components/ActionCards';
 import { BottomNav } from './components/BottomNav';
 import { Toast } from './components/Toast';
 import { AwakenScreen } from './components/AwakenScreen';
+import { EnergyDepletedScreen } from './components/EnergyDepletedScreen';
+import { EyesOpenOverlay } from './components/EyesOpenOverlay';
 import { InventoryPanel } from './components/panels/InventoryPanel';
 import { StatsPanel } from './components/panels/StatsPanel';
 import { ShopPanel } from './components/panels/ShopPanel';
 import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 
+const EYES_OPEN_MS = 2600;
+
 export default function App() {
   const game = useGame();
+  const [openingEyes, setOpeningEyes] = useState(false);
+
+  const handleAwaken = async (name: string) => {
+    setOpeningEyes(true);
+    const minAnim = new Promise<void>((resolve) => {
+      window.setTimeout(resolve, EYES_OPEN_MS);
+    });
+    await game.awaken(name);
+    await minAnim;
+    setOpeningEyes(false);
+  };
 
   if (game.loading) {
     return (
@@ -40,18 +56,24 @@ export default function App() {
 
   const { state } = game;
   const sparse = !state.unlockedFullUi;
+  const showChrome = state.awakened && !openingEyes;
+  const energyEmpty = state.stats.energy < 1;
+  const refillPrice =
+    game.shop.find((item) => item.sku === 'energy_refill')?.priceTomans ?? null;
 
   return (
     <div className="mx-auto flex h-full max-w-lg flex-col bg-oled">
-      <StatusBar
-        state={state}
-        sparse={sparse}
-        onSettings={() => game.setSettingsOpen(true)}
-      />
+      {showChrome && (
+        <StatusBar
+          state={state}
+          sparse={sparse}
+          onSettings={() => game.setSettingsOpen(true)}
+        />
+      )}
 
-      <Toast message={state.toastMessage} />
+      {showChrome && <Toast message={state.toastMessage} />}
 
-      {game.error && (
+      {game.error && !openingEyes && (
         <div className="mx-4 mt-3 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-xs text-red-300">
           {game.error}
           <button
@@ -64,6 +86,8 @@ export default function App() {
         </div>
       )}
 
+      <EyesOpenOverlay visible={openingEyes} />
+
       <main
         className={`flex-1 overflow-y-auto story-scroll ${
           state.awakened && state.unlockedFullUi ? 'pb-24' : 'pb-8'
@@ -72,8 +96,8 @@ export default function App() {
         {!state.awakened ? (
           <AwakenScreen
             storyText={state.storyText}
-            busy={game.busy}
-            onAwaken={game.awaken}
+            busy={game.busy || openingEyes}
+            onAwaken={handleAwaken}
           />
         ) : (
           <>
@@ -92,7 +116,20 @@ export default function App() {
                     onRoll={game.submitDice}
                   />
                 )}
-                {!state.needsDiceRoll && (
+                {!state.needsDiceRoll && energyEmpty && (
+                  <EnergyDepletedScreen
+                    msUntilNextEnergy={state.msUntilNextEnergy}
+                    energyRegenMinutes={state.energyRegenMinutes}
+                    refillPriceTomans={refillPrice}
+                    busy={game.busy}
+                    onWatchAd={() => game.setAdOpen(true)}
+                    onBuyRefill={() => void game.buySku('energy_refill')}
+                    onTimerElapsed={() => {
+                      void game.refresh().catch(() => undefined);
+                    }}
+                  />
+                )}
+                {!state.needsDiceRoll && !energyEmpty && (
                   <ActionCards
                     options={state.options}
                     stats={state.stats}
@@ -124,11 +161,11 @@ export default function App() {
         )}
       </main>
 
-      {state.awakened && state.unlockedFullUi && (
+      {showChrome && state.unlockedFullUi && (
         <BottomNav active={game.tab} onChange={game.setTab} />
       )}
 
-      {state.awakened && !state.unlockedFullUi && (
+      {showChrome && !state.unlockedFullUi && (
         <div className="border-t border-line/50 px-4 py-3 text-center text-[11px] text-ink-muted">
           رابط کامل پس از ۳ روز بازی — یا از فروشگاه / تنظیمات آنلاک کنید.
           <div className="mt-2 flex justify-center gap-4">

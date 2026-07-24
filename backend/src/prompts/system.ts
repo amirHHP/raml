@@ -36,7 +36,7 @@ export const SYSTEM_PROMPT = `تو «رمل» هستی؛ یک استاد باز�
 export function buildAwakenUserPrompt(name: string, classType: string): string {
   return `بازیکن تازه چشم‌هایش را باز کرده است.
 نام شخصیت: ${name}
-کلاس: ${classType}
+کلاس هنوز انتخاب نشده (مقدار داخلی موقت: ${classType})؛ روی هویت یا مهارت‌های کلاس تأکید نکن.
 
 صحنهٔ آغازین را بنویس: بیداری در تاریکی، حس شن، صدای باد کویر، و اولین انتخاب‌ها.
 unlocked_hint: این روز اول است؛ صحنه را ساده نگه دار.
