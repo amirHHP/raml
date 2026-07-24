@@ -22,7 +22,7 @@ export function EnergyDepletedScreen({
   onBuyRefill: () => void;
   onTimerElapsed: () => void;
 }) {
-  const { displayed, done, skip } = useWordTypewriter(DEPLETED_COPY, 420);
+  const { displayed, done, skip } = useWordTypewriter(DEPLETED_COPY, 700);
   const remaining = useLocalCountdown(msUntilNextEnergy, onTimerElapsed);
   const priceLabel =
     refillPriceTomans != null

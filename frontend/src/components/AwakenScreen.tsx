@@ -14,7 +14,7 @@ export function AwakenScreen({
 
   // Keep only the first atmospheric block (older saves may still have a second paragraph).
   const intro = storyText.split(/\n\n/)[0]?.trim() || storyText.trim();
-  const { displayed, done, skip } = useWordTypewriter(intro, 580);
+  const { displayed, done, skip } = useWordTypewriter(intro, 700);
 
   return (
     <div className="relative flex flex-1 flex-col bg-oled px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">

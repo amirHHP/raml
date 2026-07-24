@@ -1,7 +1,9 @@
-import { useTypewriter } from '../hooks/useTypewriter';
+import { useWordTypewriter } from '../hooks/useWordTypewriter';
 import type { EnemyLineArtType } from '../types/game';
 import { EnemyLineArt } from './EnemyLineArt';
 import { IconPin } from './icons';
+
+const STORY_MS_PER_WORD = 700;
 
 export function StoryArea({
   text,
@@ -14,7 +16,7 @@ export function StoryArea({
   enemyType: EnemyLineArtType;
   showLocation: boolean;
 }) {
-  const { displayed, done, skip } = useTypewriter(text, 32);
+  const { displayed, done, skip } = useWordTypewriter(text, STORY_MS_PER_WORD);
 
   return (
     <section className="px-4 pt-4">
@@ -33,9 +35,13 @@ export function StoryArea({
         className="story-scroll w-full text-right"
         aria-label="متن داستان"
       >
-        <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink">
+        <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink-dim">
           {displayed}
-          {!done && <span className="ml-0.5 inline-block w-1.5 animate-pulse bg-amber align-middle"> </span>}
+          {!done && (
+            <span className="mr-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
+              {' '}
+            </span>
+          )}
         </p>
       </button>
     </section>

@@ -16,7 +16,7 @@ import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
 
-const EYES_OPEN_MS = 2600;
+const EYES_OPEN_MS = 5400;
 
 export default function App() {
   const game = useGame();
