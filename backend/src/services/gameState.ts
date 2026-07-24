@@ -280,6 +280,36 @@ function assertNotBanned(player: IPlayer): void {
   }
 }
 
+export function normalizeSaveCode(raw: string): string {
+  return raw.trim();
+}
+
+/** Load an existing save by code without creating a new player. */
+export async function restorePlayer(saveCode: string): Promise<ReturnType<typeof toClientState>> {
+  const deviceId = normalizeSaveCode(saveCode);
+  if (deviceId.length < 8) {
+    throw Object.assign(new Error('کد ذخیره نامعتبر است'), { status: 400 });
+  }
+
+  let player: IPlayer | null = null;
+  if (useMemory) {
+    player = memoryStore.get(deviceId) ?? null;
+  } else {
+    player = await Player.findOne({ deviceId });
+  }
+
+  if (!player) {
+    throw Object.assign(new Error('کد ذخیره پیدا نشد'), { status: 404 });
+  }
+
+  assertNotBanned(player);
+  regenerateEnergy(player);
+  touchPlayDay(player);
+  player.unlockedFullUi = computeUnlocked(player);
+  await persist(player);
+  return toClientState(player);
+}
+
 export async function getOrCreatePlayer(deviceId: string): Promise<IPlayer> {
   if (useMemory) {
     let p = memoryStore.get(deviceId);

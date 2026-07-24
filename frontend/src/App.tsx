@@ -109,6 +109,7 @@ export default function App() {
             busy={game.busy || openingEyes}
             storyMsPerWord={state.storyMsPerWord}
             onAwaken={handleAwaken}
+            onRestore={(code) => game.restoreSave(code)}
           />
         ) : (
           <>
@@ -138,6 +139,7 @@ export default function App() {
                 busy={game.busy}
                 onBuy={(sku) => void game.buySku(sku)}
                 onWatchAd={() => game.setAdOpen(true)}
+                onRestore={(code) => game.restoreSave(code)}
               />
             )}
           </>

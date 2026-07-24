@@ -174,6 +174,22 @@ export function useGame() {
     }
   };
 
+  const restoreSave = async (saveCode: string) => {
+    const s = await run(async () => {
+      const state = await api.restore(saveCode);
+      const inbox = await api.getInbox();
+      setInboxItems(inbox.items);
+      setUnreadCount(inbox.unreadCount);
+      return state;
+    });
+    if (s) {
+      setState(s);
+      setTab('story');
+      return true;
+    }
+    return false;
+  };
+
   return {
     state,
     loading,
@@ -199,6 +215,7 @@ export function useGame() {
     claimAd,
     buySku,
     unlockDebug,
+    restoreSave,
     refresh,
     refreshEnergy,
   };

@@ -1,4 +1,5 @@
 import type { ClassType, GameState, InboxItem, ShopSku } from '../types/game';
+import { assertValidSaveCode } from '../utils/saveCode';
 
 const DEVICE_KEY = 'raml_device_id';
 
@@ -16,6 +17,11 @@ export function getDeviceId(): string {
     localStorage.setItem(DEVICE_KEY, id);
   }
   return id;
+}
+
+/** Switch the local save identity (used when restoring a prior code). */
+export function setDeviceId(id: string): void {
+  localStorage.setItem(DEVICE_KEY, assertValidSaveCode(id));
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -37,6 +43,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getState: () => request<GameState>('/api/game/state'),
+  /** Look up a save by code, then bind this device to that identity. */
+  restore: async (saveCode: string) => {
+    const trimmed = assertValidSaveCode(saveCode);
+    const res = await fetch('/api/game/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ saveCode: trimmed }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data as { error?: string }).error || 'خطای شبکه');
+    }
+    const state = data as GameState;
+    setDeviceId(state.deviceId);
+    return state;
+  },
   awaken: (characterName: string, classType: ClassType = 'warrior') =>
     request<GameState>('/api/game/awaken', {
       method: 'POST',

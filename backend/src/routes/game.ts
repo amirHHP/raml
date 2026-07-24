@@ -7,12 +7,30 @@ import {
   clearToast,
   debugUnlock,
   getOrCreatePlayer,
+  restorePlayer,
   submitDiceRoll,
   toClientState,
 } from '../services/gameState';
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
 
 const router = Router();
+
+/** Restore a prior save by code (deviceId). Does not create a new player. */
+router.post('/restore', async (req, res) => {
+  try {
+    const body = z.object({ saveCode: z.string().min(8).max(128) }).parse(req.body);
+    const state = await restorePlayer(body.saveCode);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'کد ذخیره نامعتبر است' });
+      return;
+    }
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در بازیابی' });
+  }
+});
 
 router.get('/state', requireDeviceId, async (req, res) => {
   try {
