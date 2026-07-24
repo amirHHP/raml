@@ -3,16 +3,18 @@ import { Player, type IPlayer } from '../models/Player';
 import { config } from '../config';
 import { regenerateEnergy, spendEnergy, msUntilNextEnergy } from './energy';
 import { generateGameTurn, resolveAiMode } from './ai';
-import { getStoryMsPerWord } from './gameSettings';
+import { getStoryMsPerWord, getUnlockTurnSettings } from './gameSettings';
 import { peekRuntimeAiSettings, type RuntimeAiSettings } from './aiSettings';
 import {
   buildActionPrompt,
   buildAwakenPrompt,
   buildDicePrompt,
 } from './promptService';
+import { withMilestonePrompt } from './milestonePromptService';
 import type {
   AiGameResponse,
   ClassType,
+  FeatureUnlocks,
   GameOption,
   PlayerDocument,
   StatsUpdate,
@@ -92,6 +94,9 @@ function defaultPlayer(deviceId: string): Partial<IPlayer> {
     toastMessage: null,
     purchasedSkus: [],
     storyHistory: [],
+    storyTurnCount: 0,
+    lastAiSource: null,
+    lastAiError: null,
   };
 }
 
@@ -100,18 +105,90 @@ function daysBetween(a: Date, b: Date): number {
   return Math.floor(ms / (24 * 60 * 60 * 1000));
 }
 
-function computeUnlocked(player: IPlayer): boolean {
-  // Full UI unlocks after 3 distinct play days OR explicit purchase / debug unlock
+function computeForceFullUi(player: IPlayer): boolean {
   if (player.unlockedFullUi) return true;
   if (player.purchasedSkus.includes('unlock_full_ui')) return true;
   return player.playDayCount >= 3;
 }
 
-function applyStatsUpdate(player: IPlayer, update: StatsUpdate): void {
+export function resolveFeatureUnlocksAtTurn(player: IPlayer, turn: number): FeatureUnlocks {
+  if (computeForceFullUi(player)) {
+    return { inventory: true, stats: true, hp: true, mana: true, gold: true };
+  }
+  const t = getUnlockTurnSettings();
+  return {
+    inventory: turn >= t.unlockInventoryAtTurn,
+    stats: turn >= t.unlockStatsAtTurn,
+    hp: turn >= t.unlockHpAtTurn,
+    mana: turn >= t.unlockManaAtTurn,
+    gold: turn >= t.unlockGoldAtTurn,
+  };
+}
+
+export function resolveFeatureUnlocks(player: IPlayer): FeatureUnlocks {
+  return resolveFeatureUnlocksAtTurn(player, getStoryTurnCount(player));
+}
+
+function computeUnlocked(player: IPlayer): boolean {
+  const u = resolveFeatureUnlocks(player);
+  return u.inventory && u.stats && u.hp && u.mana && u.gold;
+}
+
+function formatResourceUnlocks(unlocks: FeatureUnlocks): string {
+  const parts = ['energy'];
+  if (unlocks.hp) parts.push('hp');
+  if (unlocks.mana) parts.push('mana');
+  if (unlocks.gold) parts.push('gold');
+  return parts.join(',');
+}
+
+function isStatUnlocked(stat: string, unlocks: FeatureUnlocks): boolean {
+  if (stat === 'energy') return true;
+  if (stat === 'strength' || stat === 'agility' || stat === 'intellect') {
+    return unlocks.stats;
+  }
+  if (stat === 'hp') return unlocks.hp;
+  if (stat === 'mana') return unlocks.mana;
+  if (stat === 'gold') return unlocks.gold;
+  return true;
+}
+
+function getStoryTurnCount(player: IPlayer): number {
+  const historyLen = (player.storyHistory || []).length;
+  const stored = typeof player.storyTurnCount === 'number' ? player.storyTurnCount : 0;
+  // Legacy docs defaulted to 0; prefer history until the durable counter advances.
+  if (stored === 0 && historyLen > 0) return historyLen;
+  return Math.max(stored, 0);
+}
+
+function formatRecentHistory(player: IPlayer, limit = 4): string {
+  const history = player.storyHistory || [];
+  if (history.length === 0) return '—';
+  const turnCount = getStoryTurnCount(player);
+  return history
+    .slice(-limit)
+    .map((text, i, arr) => {
+      const n = turnCount - arr.length + i + 1;
+      const clipped = text.replace(/\s+/g, ' ').trim().slice(0, 180);
+      return `${n}) ${clipped}`;
+    })
+    .join('\n');
+}
+
+function markAiSource(
+  player: IPlayer,
+  source: 'live' | 'mock' | 'error',
+  error: string | null = null,
+): void {
+  player.lastAiSource = source;
+  player.lastAiError = error;
+}
+
+function applyStatsUpdate(player: IPlayer, update: StatsUpdate, unlocks: FeatureUnlocks): void {
   const s = player.stats;
-  if (update.hp) s.hp = Math.max(0, Math.min(s.maxHp, s.hp + update.hp));
-  if (update.mana) s.mana = Math.max(0, Math.min(s.maxMana, s.mana + update.mana));
-  if (update.gold) s.gold = Math.max(0, s.gold + update.gold);
+  if (unlocks.hp && update.hp) s.hp = Math.max(0, Math.min(s.maxHp, s.hp + update.hp));
+  if (unlocks.mana && update.mana) s.mana = Math.max(0, Math.min(s.maxMana, s.mana + update.mana));
+  if (unlocks.gold && update.gold) s.gold = Math.max(0, s.gold + update.gold);
   if (update.energy_change) {
     s.energy = Math.max(0, Math.min(s.maxEnergy, s.energy + update.energy_change));
   }
@@ -131,33 +208,52 @@ function applyStatsUpdate(player: IPlayer, update: StatsUpdate): void {
   }
 }
 
-function mapOptions(ai: AiGameResponse): GameOption[] {
-  return ai.options.map((o) => ({
-    id: uuidv4(),
-    text: o.text,
-    icon: o.icon,
-    condition_check: o.condition_check,
-    energy_cost: 1,
-  }));
+function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
+  return ai.options.map((o) => {
+    const raw = o.condition_check;
+    const condition_check = isStatUnlocked(raw.stat, unlocks)
+      ? raw
+      : { stat: 'energy' as const, min: 0 };
+    return {
+      id: uuidv4(),
+      text: o.text,
+      icon: o.icon,
+      condition_check,
+      energy_cost: 1,
+    };
+  });
 }
 
 function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   player.storyText = ai.story_text;
   player.currentLocation = ai.current_location;
   player.enemyLineArtType = ai.enemy_line_art_type;
+  player.storyTurnCount = getStoryTurnCount(player) + 1;
   player.storyHistory = [...(player.storyHistory || []), ai.story_text].slice(-20);
-  applyStatsUpdate(player, ai.stats_update || {});
+  const unlocks = resolveFeatureUnlocks(player);
+  applyStatsUpdate(player, ai.stats_update || {}, unlocks);
 
-  if (ai.discovered_item) {
-    const existing = player.inventory.find((i) => i.id === ai.discovered_item!.id);
+  if (ai.discovered_item && unlocks.inventory) {
+    const discovered = ai.discovered_item;
+    const existing = player.inventory.find((i) => i.id === discovered.id);
     if (existing) {
       existing.quantity += 1;
+      if (discovered.equip_slot) existing.equipSlot = discovered.equip_slot;
     } else {
-      player.inventory.push({ ...ai.discovered_item, quantity: 1 });
+      player.inventory.push({
+        id: discovered.id,
+        name: discovered.name,
+        description: discovered.description,
+        icon: discovered.icon,
+        quantity: 1,
+        ...(discovered.equip_slot ? { equipSlot: discovered.equip_slot } : {}),
+      });
     }
   }
 
-  player.toastMessage = ai.toast_message ?? (ai.discovered_item ? `آیتم جدید: ${ai.discovered_item.name}` : null);
+  player.toastMessage =
+    ai.toast_message ??
+    (ai.discovered_item && unlocks.inventory ? `آیتم جدید: ${ai.discovered_item.name}` : null);
 
   if (ai.needs_dice_roll && ai.required_roll_type && ai.min_roll_success != null) {
     player.needsDiceRoll = true;
@@ -170,7 +266,7 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   } else {
     player.needsDiceRoll = false;
     player.pendingDiceRoll = null;
-    player.options = mapOptions(ai);
+    player.options = mapOptions(ai, unlocks);
   }
 }
 
@@ -235,20 +331,26 @@ function touchPlayDay(player: IPlayer): void {
 }
 
 export function toClientState(player: IPlayer) {
-  const turnCount = (player.storyHistory || []).length;
+  const turnCount = getStoryTurnCount(player);
   const mode = resolveAiMode(settingsForClient(), Math.max(1, turnCount));
+  const featureUnlocks = resolveFeatureUnlocks(player);
+  const unlockTurns = getUnlockTurnSettings();
   return {
     deviceId: player.deviceId,
     characterName: player.characterName,
     classType: player.classType,
     awakened: player.awakened,
     unlockedFullUi: computeUnlocked(player),
+    featureUnlocks,
+    unlockTurns,
     playDayCount: player.playDayCount,
     storyTurnCount: turnCount,
     storyHistory: player.storyHistory || [],
     storyMsPerWord: getStoryMsPerWord(),
     aiMode: mode.aiMode,
     aiMockReason: mode.aiMockReason,
+    lastAiSource: player.lastAiSource ?? null,
+    lastAiError: player.lastAiError ?? null,
     currentLocation: player.currentLocation,
     storyText: player.storyText,
     enemyLineArtType: player.enemyLineArtType,
@@ -295,11 +397,25 @@ export async function awakenPlayer(
     player.stats.intellect = 3;
   }
 
-  const turnNumber = (player.storyHistory?.length || 0) + 1;
-  const ai = await generateGameTurn(await buildAwakenPrompt(name, classType), {
-    turnNumber,
-  });
-  applyAiResponse(player, ai);
+  const turnNumber = getStoryTurnCount(player) + 1;
+  try {
+    const { data, source } = await generateGameTurn(
+      await withMilestonePrompt(await buildAwakenPrompt(name, classType), turnNumber),
+      { turnNumber },
+    );
+    applyAiResponse(player, data);
+    markAiSource(player, source);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'خطای AI';
+    markAiSource(player, 'error', msg);
+    player.toastMessage = `خطای AI: ${msg}`;
+    // Keep awaken incomplete? Character already marked awakened — soft-fail with mock-less empty state is bad.
+    // Re-throw so client can retry awaken; roll back awakened flag.
+    player.awakened = false;
+    player.characterName = '';
+    await persist(player);
+    throw Object.assign(new Error(msg), { status: 502 });
+  }
   await persist(player);
   return toClientState(player);
 }
@@ -326,41 +442,70 @@ export async function chooseOption(deviceId: string, optionId: string) {
     throw Object.assign(new Error('شرایط لازم برآورده نشده'), { status: 400 });
   }
 
-  // Apply option mana cost if spell-like
-  if (option.condition_check.stat === 'mana' && option.condition_check.min > 0) {
-    player.stats.mana = Math.max(0, player.stats.mana - option.condition_check.min);
+  const manaSpent =
+    option.condition_check.stat === 'mana' &&
+    option.condition_check.min > 0 &&
+    resolveFeatureUnlocks(player).mana
+      ? option.condition_check.min
+      : 0;
+  if (manaSpent > 0) {
+    player.stats.mana = Math.max(0, player.stats.mana - manaSpent);
   }
 
   player.toastMessage = null;
 
-  const turnNumber = (player.storyHistory?.length || 0) + 1;
-  const earlyResources = computeUnlocked(player) ? 'full' : 'energy_only';
-  const ai = await generateGameTurn(
-    await buildActionPrompt({
-      name: player.characterName,
-      classType: player.classType,
-      level: player.stats.level,
-      location: player.currentLocation,
-      storySnippet: player.storyText.slice(0, 400),
-      stats: {
-        hp: player.stats.hp,
-        mana: player.stats.mana,
-        gold: player.stats.gold,
-        energy: player.stats.energy,
-        strength: player.stats.strength,
-        agility: player.stats.agility,
-        intellect: player.stats.intellect,
-      },
-      inventory: player.inventory.map((i) => i.name),
-      chosenOption: option.text,
-      earlyResources,
-    }),
-    { turnNumber },
-  );
-
-  applyAiResponse(player, ai);
-  await persist(player);
-  return toClientState(player);
+  const turnNumber = getStoryTurnCount(player) + 1;
+  const unlocksForTurn = resolveFeatureUnlocksAtTurn(player, turnNumber);
+  const earlyResources =
+    unlocksForTurn.hp || unlocksForTurn.mana || unlocksForTurn.gold || unlocksForTurn.stats
+      ? 'partial'
+      : 'energy_only';
+  try {
+    const { data, source } = await generateGameTurn(
+      await withMilestonePrompt(
+        await buildActionPrompt({
+          name: player.characterName,
+          classType: player.classType,
+          level: player.stats.level,
+          location: player.currentLocation,
+          storySnippet: player.storyText.slice(0, 400),
+          recentHistory: formatRecentHistory(player),
+          stats: {
+            hp: player.stats.hp,
+            mana: player.stats.mana,
+            gold: player.stats.gold,
+            energy: player.stats.energy,
+            strength: player.stats.strength,
+            agility: player.stats.agility,
+            intellect: player.stats.intellect,
+          },
+          inventory: unlocksForTurn.inventory
+            ? player.inventory.map((i) => i.name)
+            : [],
+          chosenOption: option.text,
+          earlyResources,
+          unlockedResources: formatResourceUnlocks(unlocksForTurn),
+        }),
+        turnNumber,
+      ),
+      { turnNumber },
+    );
+    applyAiResponse(player, data);
+    markAiSource(player, source);
+    await persist(player);
+    return toClientState(player);
+  } catch (err) {
+    // Refund energy/mana — story did not advance
+    player.stats.energy = Math.min(player.stats.maxEnergy, player.stats.energy + cost);
+    if (manaSpent > 0) {
+      player.stats.mana = Math.min(player.stats.maxMana, player.stats.mana + manaSpent);
+    }
+    const msg = err instanceof Error ? err.message : 'خطای AI';
+    markAiSource(player, 'error', msg);
+    player.toastMessage = `خطای AI: ${msg} — انرژی برگردانده شد`;
+    await persist(player);
+    return toClientState(player);
+  }
 }
 
 function getStatValue(player: IPlayer, stat: string): number {
@@ -403,25 +548,37 @@ export async function submitDiceRoll(
   const pending = player.pendingDiceRoll;
   const success = total >= pending.minRollSuccess;
 
-  const turnNumber = (player.storyHistory?.length || 0) + 1;
-  const ai = await generateGameTurn(
-    await buildDicePrompt({
-      name: player.characterName,
-      rollTotal: total,
-      rawRoll,
-      modifier,
-      requiredType: pending.requiredRollType,
-      minSuccess: pending.minRollSuccess,
-      success,
-      location: player.currentLocation,
-      storySnippet: pending.context || player.storyText.slice(0, 300),
-    }),
-    { turnNumber },
-  );
-
-  applyAiResponse(player, ai);
-  await persist(player);
-  return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };
+  const turnNumber = getStoryTurnCount(player) + 1;
+  try {
+    const { data, source } = await generateGameTurn(
+      await withMilestonePrompt(
+        await buildDicePrompt({
+          name: player.characterName,
+          rollTotal: total,
+          rawRoll,
+          modifier,
+          requiredType: pending.requiredRollType,
+          minSuccess: pending.minRollSuccess,
+          success,
+          location: player.currentLocation,
+          storySnippet: pending.context || player.storyText.slice(0, 300),
+          recentHistory: formatRecentHistory(player),
+        }),
+        turnNumber,
+      ),
+      { turnNumber },
+    );
+    applyAiResponse(player, data);
+    markAiSource(player, source);
+    await persist(player);
+    return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'خطای AI';
+    markAiSource(player, 'error', msg);
+    player.toastMessage = `خطای AI: ${msg} — دوباره تاس بریز`;
+    await persist(player);
+    return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };
+  }
 }
 
 export async function clearToast(deviceId: string) {

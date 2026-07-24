@@ -1,19 +1,39 @@
 import { CLASS_LABELS, type GameState } from '../../types/game';
 
 export function StatsPanel({ state }: { state: GameState }) {
-  const { stats, characterName, classType, playDayCount, unlockedFullUi } = state;
-  const rows = [
-    ['جان', `${stats.hp} / ${stats.maxHp}`],
-    ['مانا', `${stats.mana} / ${stats.maxMana}`],
+  const { stats, characterName, classType, playDayCount, featureUnlocks, unlockTurns } = state;
+  const unlocks = featureUnlocks || {
+    inventory: false,
+    stats: false,
+    hp: false,
+    mana: false,
+    gold: false,
+  };
+  const turns = unlockTurns || {
+    unlockInventoryAtTurn: 10,
+    unlockStatsAtTurn: 20,
+    unlockHpAtTurn: 20,
+    unlockManaAtTurn: 30,
+    unlockGoldAtTurn: 40,
+  };
+
+  const rows: Array<[string, string | number]> = [
     ['انرژی', `${stats.energy} / ${stats.maxEnergy}`],
-    ['طلا', stats.gold.toLocaleString('fa-IR')],
+  ];
+  if (unlocks.hp) rows.push(['جان', `${stats.hp} / ${stats.maxHp}`]);
+  if (unlocks.mana) rows.push(['مانا', `${stats.mana} / ${stats.maxMana}`]);
+  if (unlocks.gold) rows.push(['طلا', stats.gold.toLocaleString('fa-IR')]);
+  rows.push(
     ['قدرت', stats.strength],
     ['چابکی', stats.agility],
     ['خرد', stats.intellect],
     ['تجربه', `${stats.xp} / ${stats.level * 100}`],
     ['روز بازی', playDayCount],
-    ['رابط کامل', unlockedFullUi ? 'فعال' : `پس از ۳ روز (${playDayCount}/۳)`],
-  ] as const;
+    ['کوله‌پشتی از مرحله', turns.unlockInventoryAtTurn],
+    ['جان از مرحله', turns.unlockHpAtTurn],
+    ['مانا از مرحله', turns.unlockManaAtTurn],
+    ['طلا از مرحله', turns.unlockGoldAtTurn],
+  );
 
   return (
     <div className="px-4 py-4">

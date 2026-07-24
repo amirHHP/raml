@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import type { GameState, InboxItem, ShopSku, TabId } from '../types/game';
 
@@ -14,6 +14,8 @@ export function useGame() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const busyRef = useRef(false);
+  busyRef.current = busy;
 
   const refreshInbox = useCallback(async () => {
     const inbox = await api.getInbox();
@@ -25,6 +27,30 @@ export function useGame() {
   const refresh = useCallback(async () => {
     const s = await api.getState();
     setState(s);
+    return s;
+  }, []);
+
+  /** Background sync: energy/timers only — never overwrite story or options. */
+  const refreshEnergy = useCallback(async () => {
+    const s = await api.getState();
+    setState((prev) => {
+      if (!prev) return s;
+      return {
+        ...prev,
+        stats: {
+          ...prev.stats,
+          energy: s.stats.energy,
+          maxEnergy: s.stats.maxEnergy,
+        },
+        msUntilNextEnergy: s.msUntilNextEnergy,
+        energyRegenMinutes: s.energyRegenMinutes,
+        storyMsPerWord: s.storyMsPerWord ?? prev.storyMsPerWord,
+        aiMode: s.aiMode ?? prev.aiMode,
+        aiMockReason: s.aiMockReason ?? prev.aiMockReason,
+        lastAiSource: s.lastAiSource ?? prev.lastAiSource,
+        lastAiError: s.lastAiError ?? prev.lastAiError,
+      };
+    });
     return s;
   }, []);
 
@@ -56,22 +82,24 @@ export function useGame() {
     };
   }, []);
 
-  // Poll energy regen + inbox lightly
+  // Poll energy regen + inbox only — never advances the story
   useEffect(() => {
     if (!state?.awakened) return;
     const id = window.setInterval(() => {
-      void refresh().catch(() => undefined);
+      if (document.hidden || busyRef.current) return;
+      void refreshEnergy().catch(() => undefined);
       void refreshInbox().catch(() => undefined);
     }, 60_000);
     return () => window.clearInterval(id);
-  }, [state?.awakened, refresh, refreshInbox]);
+  }, [state?.awakened, refreshEnergy, refreshInbox]);
 
-  // Auto-dismiss toast
+  // Auto-dismiss toast (local clear only — avoid full state replace mid-story)
   useEffect(() => {
     if (!state?.toastMessage) return;
     const ms = state.toastMessage.startsWith('خطای AI') ? 7000 : 3200;
     const id = window.setTimeout(() => {
-      void api.clearToast().then(setState).catch(() => undefined);
+      void api.clearToast().catch(() => undefined);
+      setState((prev) => (prev ? { ...prev, toastMessage: null } : prev));
     }, ms);
     return () => window.clearTimeout(id);
   }, [state?.toastMessage]);
@@ -172,5 +200,6 @@ export function useGame() {
     buySku,
     unlockDebug,
     refresh,
+    refreshEnergy,
   };
 }

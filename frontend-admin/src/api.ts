@@ -7,6 +7,7 @@ import type {
   GeminiModelInfo,
   PromptItem,
   PromptKey,
+  MilestonePromptItem,
 } from './types';
 
 const TOKEN_KEY = 'raml_admin_token';
@@ -90,7 +91,14 @@ export const adminApi = {
       body: JSON.stringify(body),
     }),
   getGame: () => request<GameSettings>('/api/admin/game'),
-  putGame: (body: { storyMsPerWord: number }) =>
+  putGame: (body: {
+    storyMsPerWord?: number;
+    unlockInventoryAtTurn?: number;
+    unlockStatsAtTurn?: number;
+    unlockHpAtTurn?: number;
+    unlockManaAtTurn?: number;
+    unlockGoldAtTurn?: number;
+  }) =>
     request<GameSettings>('/api/admin/game', {
       method: 'PUT',
       body: JSON.stringify(body),
@@ -113,6 +121,19 @@ export const adminApi = {
     request<PromptItem>(`/api/admin/prompts/${key}`, {
       method: 'PUT',
       body: JSON.stringify({ body }),
+    }),
+  getMilestonePrompts: () =>
+    request<{ interval: number; prompts: MilestonePromptItem[] }>(
+      '/api/admin/milestone-prompts',
+    ),
+  putMilestonePrompt: (turn: number, body: string) =>
+    request<MilestonePromptItem>(`/api/admin/milestone-prompts/${turn}`, {
+      method: 'PUT',
+      body: JSON.stringify({ body }),
+    }),
+  deleteMilestonePrompt: (turn: number) =>
+    request<{ ok: boolean; turn: number }>(`/api/admin/milestone-prompts/${turn}`, {
+      method: 'DELETE',
     }),
   listNotifications: () =>
     request<{ items: AdminNotification[] }>('/api/admin/notifications'),

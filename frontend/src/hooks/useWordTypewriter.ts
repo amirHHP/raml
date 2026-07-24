@@ -19,7 +19,7 @@ export function joinWordParts(parts: string[]): string {
   return result;
 }
 
-/** Word-by-word typewriter for atmospheric intro text. */
+/** Word-by-word typewriter for atmospheric intro text. Pauses while the tab is hidden. */
 export function useWordTypewriter(text: string, msPerWord = 400) {
   const [displayed, setDisplayed] = useState('');
   const [done, setDone] = useState(false);
@@ -39,16 +39,43 @@ export function useWordTypewriter(text: string, msPerWord = 400) {
     }
 
     let i = 0;
-    const interval = window.setInterval(() => {
+    let interval = 0;
+
+    const clear = () => {
+      if (interval) window.clearInterval(interval);
+      interval = 0;
+    };
+
+    const tick = () => {
+      if (document.hidden) return;
       i += 1;
       setDisplayed(joinWordParts(parts.slice(0, i)));
       if (i >= parts.length) {
-        window.clearInterval(interval);
+        clear();
         setDone(true);
       }
-    }, Math.max(80, msPerWord));
+    };
 
-    return () => window.clearInterval(interval);
+    const start = () => {
+      if (interval || i >= parts.length) return;
+      interval = window.setInterval(tick, Math.max(80, msPerWord));
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        clear();
+      } else if (i < parts.length && !document.hidden) {
+        start();
+      }
+    };
+
+    if (!document.hidden) start();
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      clear();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [text, msPerWord]);
 
   const skip = () => {

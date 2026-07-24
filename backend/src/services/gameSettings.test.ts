@@ -30,14 +30,21 @@ describe('game settings (memory)', () => {
     clearGameSettingsCache();
   });
 
-  it('defaults then updates storyMsPerWord', async () => {
+  it('defaults then updates storyMsPerWord and unlock turns', async () => {
     clearGameSettingsCache();
     const initial = await getPublicGameSettings();
     assert.equal(initial.storyMsPerWord, DEFAULT_STORY_MS_PER_WORD);
     assert.equal(getStoryMsPerWord(), DEFAULT_STORY_MS_PER_WORD);
+    assert.equal(initial.unlockInventoryAtTurn, 10);
+    assert.equal(initial.unlockGoldAtTurn, 40);
 
-    const updated = await updateGameSettings({ storyMsPerWord: 250 });
+    const updated = await updateGameSettings({
+      storyMsPerWord: 250,
+      unlockGoldAtTurn: 15,
+    });
     assert.equal(updated.storyMsPerWord, 250);
     assert.equal(getStoryMsPerWord(), 250);
+    assert.equal(updated.unlockGoldAtTurn, 15);
+    assert.equal(updated.unlockInventoryAtTurn, 10);
   });
 });

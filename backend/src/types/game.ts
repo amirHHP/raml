@@ -10,6 +10,14 @@ export type EnemyLineArtType =
 
 export type StatKey = 'hp' | 'mana' | 'gold' | 'energy' | 'strength' | 'agility' | 'intellect';
 
+export type FeatureUnlocks = {
+  inventory: boolean;
+  stats: boolean;
+  hp: boolean;
+  mana: boolean;
+  gold: boolean;
+};
+
 export interface ConditionCheck {
   stat: StatKey;
   min: number;
@@ -34,6 +42,26 @@ export interface StatsUpdate {
   xp?: number;
 }
 
+/** Body slot for wearable discovered items (shown on stats silhouette). */
+export type EquipSlot =
+  | 'head'
+  | 'chest'
+  | 'hands'
+  | 'legs'
+  | 'feet'
+  | 'weapon'
+  | 'accessory';
+
+export const EQUIP_SLOTS: EquipSlot[] = [
+  'head',
+  'chest',
+  'hands',
+  'legs',
+  'feet',
+  'weapon',
+  'accessory',
+];
+
 export interface AiGameResponse {
   story_text: string;
   current_location: string;
@@ -52,6 +80,8 @@ export interface AiGameResponse {
     name: string;
     description: string;
     icon: string;
+    /** Wearable slot; null/omitted = not shown on body silhouette. */
+    equip_slot?: EquipSlot | null;
   } | null;
   toast_message?: string | null;
 }
@@ -77,6 +107,8 @@ export interface InventoryItem {
   description: string;
   icon: string;
   quantity: number;
+  /** When set, item appears on the character silhouette for that slot. */
+  equipSlot?: EquipSlot | null;
 }
 
 export interface PendingDiceRoll {
@@ -106,4 +138,5 @@ export interface PlayerDocument {
   toastMessage: string | null;
   purchasedSkus: string[];
   storyHistory: string[];
+  storyTurnCount: number;
 }

@@ -39,6 +39,11 @@ export type AiSettings = {
 
 export type GameSettings = {
   storyMsPerWord: number;
+  unlockInventoryAtTurn: number;
+  unlockStatsAtTurn: number;
+  unlockHpAtTurn: number;
+  unlockManaAtTurn: number;
+  unlockGoldAtTurn: number;
   updatedAt: string | null;
 };
 
@@ -63,6 +68,12 @@ export type PromptKey = 'system' | 'awaken' | 'action' | 'dice';
 
 export type PromptItem = {
   key: PromptKey;
+  body: string;
+  updatedAt: string | null;
+};
+
+export type MilestonePromptItem = {
+  turn: number;
   body: string;
   updatedAt: string | null;
 };

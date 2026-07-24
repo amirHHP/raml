@@ -9,6 +9,10 @@ import monetizationRoutes from './routes/monetization';
 import adminRoutes from './routes/admin';
 import { setUseMemory } from './services/gameState';
 import { setPromptServiceMemory, ensurePromptSeeds } from './services/promptService';
+import {
+  setMilestonePromptMemory,
+  ensureMilestoneSeeds,
+} from './services/milestonePromptService';
 import { setAiSettingsMemory } from './services/aiSettings';
 import {
   ensureGameSettingsLoaded,
@@ -36,9 +40,11 @@ const mongoReady = mongoose
     mongoError = null;
     setUseMemory(false);
     setPromptServiceMemory(false);
+    setMilestonePromptMemory(false);
     setAiSettingsMemory(false);
     setGameSettingsMemory(false);
     await ensurePromptSeeds();
+    await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
   })
   .catch(async (err) => {
@@ -47,10 +53,12 @@ const mongoReady = mongoose
     console.warn(mongoError);
     setUseMemory(true);
     setPromptServiceMemory(true);
+    setMilestonePromptMemory(true);
     setAiSettingsMemory(true);
     setGameSettingsMemory(true);
     (global as { __ramlMemory?: boolean }).__ramlMemory = true;
     await ensurePromptSeeds();
+    await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
   });
 

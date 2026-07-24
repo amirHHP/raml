@@ -54,8 +54,15 @@ export default function App() {
   }
 
   const { state } = game;
-  const sparse = !state.unlockedFullUi;
+  const unlocks = state.featureUnlocks || {
+    inventory: false,
+    stats: false,
+    hp: false,
+    mana: false,
+    gold: false,
+  };
   const showChrome = state.awakened && !openingEyes;
+  const showBottomNav = showChrome;
   const refillPrice =
     game.shop.find((item) => item.sku === 'energy_refill')?.priceTomans ?? null;
 
@@ -64,7 +71,6 @@ export default function App() {
       {showChrome && (
         <StatusBar
           state={state}
-          sparse={sparse}
           onSettings={() => game.setSettingsOpen(true)}
           onInbox={() => {
             void game.refreshInbox().catch(() => undefined);
@@ -94,7 +100,7 @@ export default function App() {
       <main
         ref={scrollRef}
         className={`flex-1 overflow-y-auto story-scroll ${
-          state.awakened && state.unlockedFullUi ? 'pb-24' : 'pb-8'
+          showBottomNav ? 'pb-24' : 'pb-8'
         }`}
       >
         {!state.awakened ? (
@@ -117,14 +123,14 @@ export default function App() {
                 onWatchAd={() => game.setAdOpen(true)}
                 onBuyRefill={() => void game.buySku('energy_refill')}
                 onTimerElapsed={() => {
-                  void game.refresh().catch(() => undefined);
+                  void game.refreshEnergy().catch(() => undefined);
                 }}
               />
             )}
-            {game.tab === 'inventory' && (
+            {game.tab === 'inventory' && unlocks.inventory && (
               <InventoryPanel items={state.inventory} />
             )}
-            {game.tab === 'stats' && <StatsPanel state={state} />}
+            {game.tab === 'stats' && unlocks.stats && <StatsPanel state={state} />}
             {game.tab === 'shop' && (
               <ShopPanel
                 items={game.shop}
@@ -138,30 +144,13 @@ export default function App() {
         )}
       </main>
 
-      {showChrome && state.unlockedFullUi && (
-        <BottomNav active={game.tab} onChange={game.setTab} />
-      )}
-
-      {showChrome && !state.unlockedFullUi && (
-        <div className="border-t border-line/50 px-4 py-3 text-center text-[11px] text-ink-muted">
-          رابط کامل پس از ۳ روز بازی — یا از فروشگاه / تنظیمات آنلاک کنید.
-          <div className="mt-2 flex justify-center gap-4">
-            <button
-              type="button"
-              className="text-amber underline"
-              onClick={() => game.setTab('story')}
-            >
-              داستان
-            </button>
-            <button
-              type="button"
-              className="text-amber underline"
-              onClick={() => game.setTab('shop')}
-            >
-              فروشگاه
-            </button>
-          </div>
-        </div>
+      {showBottomNav && (
+        <BottomNav
+          active={game.tab}
+          onChange={game.setTab}
+          showInventory={unlocks.inventory}
+          showStats={unlocks.stats}
+        />
       )}
 
       <SettingsModal

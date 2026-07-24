@@ -2,9 +2,51 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { adminApi } from '../api';
 import type { GameSettings } from '../types';
 
+type UnlockKey =
+  | 'unlockInventoryAtTurn'
+  | 'unlockStatsAtTurn'
+  | 'unlockHpAtTurn'
+  | 'unlockManaAtTurn'
+  | 'unlockGoldAtTurn';
+
+const UNLOCK_FIELDS: { key: UnlockKey; label: string; hint: string }[] = [
+  {
+    key: 'unlockInventoryAtTurn',
+    label: 'نمایش کوله‌پشتی',
+    hint: 'از این مرحله تب کوله‌پشتی باز می‌شود و آیتم‌ها ذخیره می‌شوند',
+  },
+  {
+    key: 'unlockStatsAtTurn',
+    label: 'نمایش بخش آمار',
+    hint: 'از این مرحله تب آمار باز می‌شود',
+  },
+  {
+    key: 'unlockHpAtTurn',
+    label: 'جان (HP)',
+    hint: 'از این مرحله جان در UI دیده می‌شود و AI می‌تواند تغییرش دهد',
+  },
+  {
+    key: 'unlockManaAtTurn',
+    label: 'مانا',
+    hint: 'از این مرحله مانا دیده و تغییر می‌کند',
+  },
+  {
+    key: 'unlockGoldAtTurn',
+    label: 'طلا',
+    hint: 'از این مرحله طلا دیده و اضافه می‌شود',
+  },
+];
+
 export function GamePage() {
   const [settings, setSettings] = useState<GameSettings | null>(null);
   const [storyMsPerWord, setStoryMsPerWord] = useState(400);
+  const [unlocks, setUnlocks] = useState<Record<UnlockKey, number>>({
+    unlockInventoryAtTurn: 10,
+    unlockStatsAtTurn: 20,
+    unlockHpAtTurn: 20,
+    unlockManaAtTurn: 30,
+    unlockGoldAtTurn: 40,
+  });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -17,6 +59,13 @@ export function GamePage() {
         if (cancelled) return;
         setSettings(s);
         setStoryMsPerWord(s.storyMsPerWord);
+        setUnlocks({
+          unlockInventoryAtTurn: s.unlockInventoryAtTurn,
+          unlockStatsAtTurn: s.unlockStatsAtTurn,
+          unlockHpAtTurn: s.unlockHpAtTurn,
+          unlockManaAtTurn: s.unlockManaAtTurn,
+          unlockGoldAtTurn: s.unlockGoldAtTurn,
+        });
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -32,9 +81,16 @@ export function GamePage() {
     setError(null);
     setMessage(null);
     try {
-      const s = await adminApi.putGame({ storyMsPerWord });
+      const s = await adminApi.putGame({ storyMsPerWord, ...unlocks });
       setSettings(s);
       setStoryMsPerWord(s.storyMsPerWord);
+      setUnlocks({
+        unlockInventoryAtTurn: s.unlockInventoryAtTurn,
+        unlockStatsAtTurn: s.unlockStatsAtTurn,
+        unlockHpAtTurn: s.unlockHpAtTurn,
+        unlockManaAtTurn: s.unlockManaAtTurn,
+        unlockGoldAtTurn: s.unlockGoldAtTurn,
+      });
       setMessage('تنظیمات بازی ذخیره شد');
     } catch (err) {
       setError((err as Error).message);
@@ -62,45 +118,70 @@ export function GamePage() {
   return (
     <form
       onSubmit={(e) => void save(e)}
-      className="max-w-xl space-y-4 rounded-xl border border-line bg-sand/70 p-5"
+      className="max-w-xl space-y-6 rounded-xl border border-line bg-sand/70 p-5"
     >
-      <h2 className="text-lg font-medium">تنظیمات بازی</h2>
-      <p className="text-sm leading-6 text-ink-dim">
-        سرعت نوشتن متن داستان (تایپ‌رایتر). عدد کمتر = نوشتن سریع‌تر.
-      </p>
+      <div className="space-y-4">
+        <h2 className="text-lg font-medium">تنظیمات بازی</h2>
+        <p className="text-sm leading-6 text-ink-dim">
+          سرعت نوشتن متن داستان (تایپ‌رایتر). عدد کمتر = نوشتن سریع‌تر.
+        </p>
 
-      <label className="block text-sm text-ink-dim">
-        میلی‌ثانیه برای هر کلمه: {storyMsPerWord}
-        <span className="mr-2 text-amber">({speedLabel})</span>
-        <div dir="ltr" className="mt-3">
+        <label className="block text-sm text-ink-dim">
+          میلی‌ثانیه برای هر کلمه: {storyMsPerWord}
+          <span className="mr-2 text-amber">({speedLabel})</span>
+          <div dir="ltr" className="mt-3">
+            <input
+              type="range"
+              min={80}
+              max={2000}
+              step={10}
+              value={storyMsPerWord}
+              onChange={(e) => setStoryMsPerWord(Number(e.target.value))}
+              className="w-full accent-amber"
+            />
+            <div className="mt-1 flex justify-between text-[11px] text-ink-muted">
+              <span>سریع (۸۰)</span>
+              <span>آرام (۲۰۰۰)</span>
+            </div>
+          </div>
+        </label>
+
+        <label className="block text-sm text-ink-dim">
+          مقدار دقیق
           <input
-            type="range"
+            type="number"
             min={80}
             max={2000}
             step={10}
             value={storyMsPerWord}
             onChange={(e) => setStoryMsPerWord(Number(e.target.value))}
-            className="w-full accent-amber"
+            className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
           />
-          <div className="mt-1 flex justify-between text-[11px] text-ink-muted">
-            <span>سریع (۸۰)</span>
-            <span>آرام (۲۰۰۰)</span>
-          </div>
-        </div>
-      </label>
+        </label>
+      </div>
 
-      <label className="block text-sm text-ink-dim">
-        مقدار دقیق
-        <input
-          type="number"
-          min={80}
-          max={2000}
-          step={10}
-          value={storyMsPerWord}
-          onChange={(e) => setStoryMsPerWord(Number(e.target.value))}
-          className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
-        />
-      </label>
+      <div className="space-y-3 border-t border-line pt-5">
+        <h3 className="text-base font-medium text-ink">باز شدن قابلیت‌ها بر اساس مرحله</h3>
+        <p className="text-xs leading-5 text-ink-muted">
+          شماره مرحله‌ای که از آن به بعد هر قابلیت فعال می‌شود (پیش‌فرض‌ها با پرامپت‌های ۱۰…۱۰۰ هم‌خوان‌اند).
+        </p>
+        {UNLOCK_FIELDS.map(({ key, label, hint }) => (
+          <label key={key} className="block text-sm text-ink-dim">
+            {label}
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={unlocks[key]}
+              onChange={(e) =>
+                setUnlocks((prev) => ({ ...prev, [key]: Number(e.target.value) || 1 }))
+              }
+              className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+            />
+            <span className="mt-1 block text-[11px] text-ink-muted">{hint}</span>
+          </label>
+        ))}
+      </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
       {message && <p className="text-sm text-emerald-400">{message}</p>}

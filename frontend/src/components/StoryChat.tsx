@@ -126,6 +126,8 @@ export function StoryChat({
   const lastTurnRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingDoneRef = useRef(false);
+  const choicePendingRef = useRef(false);
+  const turnAtChoiceRef = useRef(0);
 
   const energyEmpty = state.stats.energy < 1;
   const msPerWord = state.storyMsPerWord || DEFAULT_STORY_MS_PER_WORD;
@@ -177,17 +179,20 @@ export function StoryChat({
     setTypingDone(false);
     typingDoneRef.current = false;
     setStickToBottom(true);
-  }, [hydrated, state.storyHistory, state.storyText, state.storyTurnCount]);
+  }, [hydrated, state.storyText, state.storyTurnCount]);
 
   const handleTypingDone = () => {
     if (typingDoneRef.current) return;
     typingDoneRef.current = true;
     setTypingDone(true);
+    setAnimateLatest(false);
   };
 
   const handleChoose = (optionId: string) => {
     const opt = state.options.find((o) => o.id === optionId);
-    if (!opt) return;
+    if (!opt || busy) return;
+    choicePendingRef.current = true;
+    turnAtChoiceRef.current = state.storyTurnCount || 0;
     setBubbles((prev) => [
       ...prev,
       {
@@ -201,6 +206,19 @@ export function StoryChat({
     setStickToBottom(true);
     onChoose(optionId);
   };
+
+  // If AI failed, story turn didn't advance — remove optimistic choice bubble
+  useEffect(() => {
+    if (busy || !choicePendingRef.current) return;
+    choicePendingRef.current = false;
+    if ((state.storyTurnCount || 0) <= turnAtChoiceRef.current) {
+      setBubbles((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.kind === 'choice') return prev.slice(0, -1);
+        return prev;
+      });
+    }
+  }, [busy, state.storyTurnCount]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const el = scrollContainerRef.current;
@@ -245,7 +263,9 @@ export function StoryChat({
 
   return (
     <div className="relative flex flex-col gap-5 px-4 pb-4 pt-4">
-      {state.unlockedFullUi && (
+      {(state.featureUnlocks?.inventory ||
+        state.featureUnlocks?.stats ||
+        state.unlockedFullUi) && (
         <p className="flex items-center gap-1.5 text-xs text-ink-muted">
           <IconPin size={14} className="text-amber" />
           <span>{state.currentLocation}</span>
@@ -309,9 +329,7 @@ export function StoryChat({
         <button
           type="button"
           onClick={() => scrollToBottom('smooth')}
-          className={`fixed left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-amber/40 bg-panel text-amber shadow-lg amber-glow ${
-            state.unlockedFullUi ? 'bottom-24' : 'bottom-8'
-          }`}
+          className="fixed bottom-24 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-amber/40 bg-panel text-amber shadow-lg amber-glow"
           aria-label="رفتن به پایین"
         >
           <IconChevronDown size={20} />

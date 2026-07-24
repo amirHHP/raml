@@ -119,12 +119,15 @@ export async function buildActionPrompt(params: {
   level: number;
   location: string;
   storySnippet: string;
+  recentHistory?: string;
   stats: Record<string, number>;
   inventory: string[];
   chosenOption: string;
-  earlyResources?: 'energy_only' | 'full';
+  earlyResources?: 'energy_only' | 'partial' | 'full';
+  unlockedResources?: string;
 }): Promise<string> {
   const earlyResources = params.earlyResources ?? 'full';
+  const unlockedResources = params.unlockedResources ?? 'energy,hp,mana,gold';
   const template = await getPromptBody('action');
   const rendered = renderTemplate(template, {
     name: params.name,
@@ -134,15 +137,32 @@ export async function buildActionPrompt(params: {
     stats: JSON.stringify(params.stats),
     inventory: params.inventory.join('، ') || 'خالی',
     storySnippet: params.storySnippet,
+    recentHistory: params.recentHistory || '—',
     chosenOption: params.chosenOption,
     earlyResources,
+    unlockedResources,
   });
 
-  if (earlyResources !== 'energy_only') return rendered;
+  let out = rendered;
+  // Older DB templates may omit {{recentHistory}} — always attach context.
+  if (params.recentHistory && !rendered.includes(params.recentHistory)) {
+    out = `${out}\n\nخلاصهٔ صحنه‌های اخیر:\n${params.recentHistory}\nصحنه‌های قبلی را تکرار نکن؛ داستان را یک گام تازه جلو ببر.`;
+  }
 
-  // Ensure the constraint is present even if a stored template omits {{earlyResources}}.
-  if (rendered.includes('early_resources: energy_only')) return rendered;
-  return `${rendered}\n\nearly_resources: energy_only\nگزینه‌ها فقط با انرژی (condition_check.stat=energy، min=0) باشند.`;
+  if (!out.includes('unlocked_resources:')) {
+    out = `${out}\n\nunlocked_resources: ${unlockedResources}`;
+  }
+
+  if (earlyResources === 'energy_only') {
+    if (!out.includes('early_resources: energy_only')) {
+      out = `${out}\n\nearly_resources: energy_only\nگزینه‌ها فقط با انرژی (condition_check.stat=energy، min=0) باشند.`;
+    }
+    out = `${out}\nدر stats_update فقط energy_change مجاز است؛ hp و mana و gold را ۰ بگذار.`;
+    return out;
+  }
+
+  out = `${out}\nفقط منابع قفل‌گشایی‌شده در unlocked_resources را در stats_update تغییر بده یا شرط گزینه کن. منابع دیگر را ۰/بدون شرط بگذار.`;
+  return out;
 }
 
 export async function buildDicePrompt(params: {
@@ -155,9 +175,10 @@ export async function buildDicePrompt(params: {
   success: boolean;
   location: string;
   storySnippet: string;
+  recentHistory?: string;
 }): Promise<string> {
   const template = await getPromptBody('dice');
-  return renderTemplate(template, {
+  const rendered = renderTemplate(template, {
     name: params.name,
     requiredType: params.requiredType,
     rawRoll: params.rawRoll,
@@ -167,5 +188,10 @@ export async function buildDicePrompt(params: {
     resultLabel: params.success ? 'موفقیت' : 'شکست',
     location: params.location,
     storySnippet: params.storySnippet,
+    recentHistory: params.recentHistory || '—',
   });
+  if (params.recentHistory && !rendered.includes(params.recentHistory)) {
+    return `${rendered}\n\nخلاصهٔ صحنه‌های اخیر:\n${params.recentHistory}\nصحنهٔ قبل را تکرار نکن.`;
+  }
+  return rendered;
 }

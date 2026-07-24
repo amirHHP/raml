@@ -1,4 +1,7 @@
-import type { InventoryItem } from '../../types/game';
+import {
+  EQUIP_SLOT_LABELS,
+  type InventoryItem,
+} from '../../types/game';
 
 export function InventoryPanel({ items }: { items: InventoryItem[] }) {
   if (!items.length) {
@@ -21,6 +24,11 @@ export function InventoryPanel({ items }: { items: InventoryItem[] }) {
             <span className="text-xs text-amber">×{item.quantity}</span>
           </div>
           <p className="mt-1 text-xs leading-6 text-ink-muted">{item.description}</p>
+          {item.equipSlot ? (
+            <p className="mt-2 text-[11px] text-amber/80">
+              پوشیدنی — {EQUIP_SLOT_LABELS[item.equipSlot]}
+            </p>
+          ) : null}
         </li>
       ))}
     </ul>

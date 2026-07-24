@@ -71,6 +71,11 @@ const AiResponseSchema = z.object({
       name: z.string(),
       description: z.string(),
       icon: z.string(),
+      equip_slot: z
+        .enum(['head', 'chest', 'hands', 'legs', 'feet', 'weapon', 'accessory'])
+        .nullable()
+        .optional()
+        .catch(null),
     })
     .nullable()
     .optional()
@@ -163,6 +168,7 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
         name: 'طلسم شن',
         description: 'قطعه‌ای کهنه که گرمای خفیفی دارد.',
         icon: 'amulet',
+        equip_slot: 'accessory',
       },
       toast_message: 'آیتم جدید: طلسم شن',
     };
@@ -230,12 +236,15 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
   ) {
     const fled = chosen.includes('عقب‌نشینی');
     const usedAmulet = chosen.includes('طلسم شن');
+    const tookLoot = chosen.includes('غنیمت');
     return {
       story_text: fled
         ? 'به سایه می‌خزی. نفس نگهبان سنگین‌تر می‌شود، اما تو را از دست می‌دهد. دالانی خنک به عمق غار باز است — و بوی گوگرد قوی‌تر می‌شود.'
         : usedAmulet
           ? 'طلسم شن در مشتت گرم می‌شود. گردی زرین‌رنگ چشم نگهبان را می‌پوشاند. تا گیج است، از کنارش می‌گذری و به دالانی تاریک می‌رسی.'
-          : 'نگهبان سنگی تلوتلو می‌خورد و روی یک زانو می‌افتد. راه تالار بعدی باز است؛ از اعماق، پژواک بال‌هایی سنگین به گوش می‌رسد.',
+          : tookLoot
+            ? 'کنار مجسمه، شنلی تیره با دوخت مسی پیدا می‌کنی. روی شانه‌ات می‌اندازی — گرم و سنگین است. راه تالار بعدی باز است.'
+            : 'نگهبان سنگی تلوتلو می‌خورد و روی یک زانو می‌افتد. راه تالار بعدی باز است؛ از اعماق، پژواک بال‌هایی سنگین به گوش می‌رسد.',
       current_location: fled
         ? 'غار اژدهای تاریکی - دالان سایه'
         : 'غار اژدهای تاریکی - دالان ژرف',
@@ -249,8 +258,20 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
         energyOption('نشانه‌های روی دیوار را بخوان', 'talk'),
         energyOption('کمی استراحت کن و نیرو بگیر', 'shield'),
       ],
-      discovered_item: null,
-      toast_message: fled ? 'از چشم نگهبان دور شدی' : 'راه ادامه دارد',
+      discovered_item: tookLoot
+        ? {
+            id: 'ash_cloak',
+            name: 'شنل خاکستر',
+            description: 'پارچه‌ای تیره با دوخت مسی؛ گرمای بدن را نگه می‌دارد.',
+            icon: 'cloak',
+            equip_slot: 'chest' as const,
+          }
+        : null,
+      toast_message: tookLoot
+        ? 'پوشیدنی جدید: شنل خاکستر'
+        : fled
+          ? 'از چشم نگهبان دور شدی'
+          : 'راه ادامه دارد',
     };
   }
 
@@ -290,8 +311,8 @@ const LATE_BEATS: Array<{
 }> = [
   {
     match: /ردپا|ردیابی/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: ردپاها را دنبال می‌کنی. شن نرم زیر پا فرومی‌رود و ناگهان به لبه‌ی یک گودال می‌رسی که از آن بوی گوگرد برمی‌خیزد.\n\n(انتخاب: ${chosen})`,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: ردپاها را دنبال می‌کنی. شن نرم زیر پا فرومی‌رود و ناگهان به لبه‌ی یک گودال می‌رسی که از آن بوی گوگرد برمی‌خیزد.`,
     location: 'لبهٔ گودال گوگردی',
     enemy: 'shadow',
     options: [
@@ -302,8 +323,8 @@ const LATE_BEATS: Array<{
   },
   {
     match: /معبد|ستون/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: پای ستون‌های شکسته می‌ایستی. نقش‌های کهنه روی سنگ نامت را تکرار می‌کنند — انگار معبد تو را می‌شناسد.\n\n(انتخاب: ${chosen})`,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: پای ستون‌های شکسته می‌ایستی. نقش‌های کهنه روی سنگ نامت را تکرار می‌کنند — انگار معبد تو را می‌شناسد.`,
     location: 'معبد نیمه‌فرو‌رفته',
     enemy: 'desert_spirit',
     options: [
@@ -314,8 +335,8 @@ const LATE_BEATS: Array<{
   },
   {
     match: /سایه|استراحت|کمپ|بمان/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: در سایه می‌نشینی. نفس‌ات آرام می‌گیرد، اما از دور زوزه‌ای خشک می‌آید — چیزی در دشت بیدار شده است.\n\n(انتخاب: ${chosen})`,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: در سایه می‌نشینی. نفس‌ات آرام می‌گیرد، اما از دور زوزه‌ای خشک می‌آید — چیزی در دشت بیدار شده است.`,
     location: 'سایهٔ تپه‌های شنی',
     enemy: 'none',
     options: [
@@ -327,8 +348,8 @@ const LATE_BEATS: Array<{
   },
   {
     match: /طناب|پایین|گودال/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: طناب در دستت می‌لرزد. در تاریکی گودال، نقطه‌ای سبز می‌درخشد — مثل چشمی که پلک نمی‌زند.\n\n(انتخاب: ${chosen})`,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: طناب در دستت می‌لرزد. در تاریکی گودال، نقطه‌ای سبز می‌درخشد — مثل چشمی که پلک نمی‌زند.`,
     location: 'ژرفای گودال',
     enemy: 'shadow',
     options: [
@@ -339,8 +360,8 @@ const LATE_BEATS: Array<{
   },
   {
     match: /نیایش|محراب|ستون‌ها/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: هوا سنگین می‌شود. شن‌ها دور پاهایت می‌چرخند و شبحی از پارچه‌های پاره شکل می‌گیرد.\n\n(انتخاب: ${chosen})`,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: هوا سنگین می‌شود. شن‌ها دور پاهایت می‌چرخند و شبحی از پارچه‌های پاره شکل می‌گیرد.`,
     location: 'محراب شن',
     enemy: 'desert_spirit',
     options: [
@@ -350,9 +371,9 @@ const LATE_BEATS: Array<{
     ],
   },
   {
-    match: /زوزه|آتش|خزیدن|شبح|سبز|شمشیر/,
-    story: (chosen, turn) =>
-      `نوبت ${turn}: مسیر باریک‌تری باز می‌شود. از شکاف سنگ، نوری ناپایدار می‌گذرد و صدای نفس‌کشی سنگین به گوش می‌رسد — انگار داستان تازه دارد شروع می‌شود.\n\n(انتخاب: ${chosen})`,
+    match: /زوزه|آتش|خزیدن|شبح|سبز|شمشیر|شکاف|گوش/,
+    story: (_chosen, turn) =>
+      `نوبت ${turn}: مسیر باریک‌تری باز می‌شود. از شکاف سنگ، نوری ناپایدار می‌گذرد و صدای نفس‌کشی سنگین به گوش می‌رسد — انگار داستان تازه دارد شروع می‌شود.`,
     location: 'شکاف بادگیر',
     enemy: 'none',
     options: [
@@ -367,7 +388,7 @@ function lateMockBeat(chosen: string, turnNumber?: number): AiGameResponse {
   const turn = turnNumber && turnNumber > 0 ? turnNumber : 5;
   const beat =
     LATE_BEATS.find((b) => b.match && b.match.test(chosen)) ||
-    LATE_BEATS[(Math.abs(hashStr(chosen)) + turn) % LATE_BEATS.length]!;
+    LATE_BEATS[(Math.abs(hashStr(chosen + String(turn))) + turn) % LATE_BEATS.length]!;
 
   return {
     story_text: beat.story(chosen || 'گام در ناشناخته', turn),
@@ -399,6 +420,11 @@ export { AI_LIVE_FROM_TURN } from './aiPolicy';
 export type GenerateGameTurnOptions = {
   /** 1-based turn number (awaken / action / dice). Defaults to live AI when omitted. */
   turnNumber?: number;
+};
+
+export type GenerateGameTurnResult = {
+  data: AiGameResponse;
+  source: 'live' | 'mock';
 };
 
 export function shouldUseMockAi(
@@ -444,27 +470,13 @@ export function resolveAiMode(
 export async function generateGameTurn(
   userPrompt: string,
   options: GenerateGameTurnOptions = {},
-): Promise<AiGameResponse> {
+): Promise<GenerateGameTurnResult> {
   const settings = await getRuntimeAiSettings();
   if (shouldUseMockAi(settings, options.turnNumber)) {
-    const mocked = mockAi(userPrompt, options.turnNumber);
-    if (!settings.openaiApiKey) {
-      return {
-        ...mocked,
-        toast_message:
-          mocked.toast_message ||
-          'کلید AI تنظیم نشده — داستان آفلاین است',
-      };
-    }
-    if (settings.useMockAi) {
-      return {
-        ...mocked,
-        toast_message:
-          mocked.toast_message ||
-          'حالت Mock کامل فعال است — از ادمین خاموشش کنید',
-      };
-    }
-    return mocked;
+    return {
+      data: mockAi(userPrompt, options.turnNumber),
+      source: 'mock',
+    };
   }
 
   const systemPrompt = await getPromptBody('system');
@@ -476,15 +488,11 @@ export async function generateGameTurn(
     } else if (!parsed.options.length) {
       throw new Error('AI گزینه‌ای برنگرداند');
     }
-    return parsed as AiGameResponse;
+    return { data: parsed as AiGameResponse, source: 'live' };
   } catch (err) {
     const detail = formatAiError(err);
-    console.error('Live AI failed — falling back to mock:', detail, err);
-    const fallback = mockAi(userPrompt, options.turnNumber);
-    return {
-      ...fallback,
-      toast_message: `خطای AI: ${detail}`,
-    };
+    console.error('Live AI failed (no mock fallback):', detail, err);
+    throw Object.assign(new Error(detail), { status: 502, aiError: true });
   }
 }
 

@@ -7,6 +7,8 @@ import {
   getPublicGameSettings,
   MAX_STORY_MS_PER_WORD,
   MIN_STORY_MS_PER_WORD,
+  MAX_UNLOCK_TURN,
+  MIN_UNLOCK_TURN,
   updateGameSettings,
 } from '../services/gameSettings';
 import { listGeminiModels } from '../services/geminiModels';
@@ -14,6 +16,12 @@ import { formatAiError, resetAiClient } from '../services/ai';
 import OpenAI from 'openai';
 import { listPrompts, updatePrompt } from '../services/promptService';
 import { PROMPT_KEYS } from '../models/PromptTemplate';
+import {
+  deleteMilestonePrompt,
+  listMilestonePrompts,
+  MILESTONE_INTERVAL,
+  upsertMilestonePrompt,
+} from '../services/milestonePromptService';
 import {
   listAdminNotifications,
   sendNotification,
@@ -124,13 +132,20 @@ router.get('/game', async (_req, res) => {
 
 router.put('/game', async (req, res) => {
   try {
+    const unlockTurn = z.number().int().min(MIN_UNLOCK_TURN).max(MAX_UNLOCK_TURN);
     const body = z
       .object({
         storyMsPerWord: z
           .number()
           .int()
           .min(MIN_STORY_MS_PER_WORD)
-          .max(MAX_STORY_MS_PER_WORD),
+          .max(MAX_STORY_MS_PER_WORD)
+          .optional(),
+        unlockInventoryAtTurn: unlockTurn.optional(),
+        unlockStatsAtTurn: unlockTurn.optional(),
+        unlockHpAtTurn: unlockTurn.optional(),
+        unlockManaAtTurn: unlockTurn.optional(),
+        unlockGoldAtTurn: unlockTurn.optional(),
       })
       .parse(req.body);
 
@@ -243,6 +258,36 @@ router.put('/prompts/:key', async (req, res) => {
     res.json(prompt);
   } catch (err) {
     sendError(res, err, 'خطا در ذخیره پرامپت');
+  }
+});
+
+router.get('/milestone-prompts', async (_req, res) => {
+  try {
+    const prompts = await listMilestonePrompts();
+    res.json({ interval: MILESTONE_INTERVAL, prompts });
+  } catch (err) {
+    sendError(res, err, 'خطا در پرامپت‌های مرحله‌ای');
+  }
+});
+
+router.put('/milestone-prompts/:turn', async (req, res) => {
+  try {
+    const turn = z.coerce.number().int().parse(req.params.turn);
+    const body = z.object({ body: z.string().min(1) }).parse(req.body);
+    const prompt = await upsertMilestonePrompt(turn, body.body);
+    res.json(prompt);
+  } catch (err) {
+    sendError(res, err, 'خطا در ذخیره پرامپت مرحله‌ای');
+  }
+});
+
+router.delete('/milestone-prompts/:turn', async (req, res) => {
+  try {
+    const turn = z.coerce.number().int().parse(req.params.turn);
+    await deleteMilestonePrompt(turn);
+    res.json({ ok: true, turn });
+  } catch (err) {
+    sendError(res, err, 'خطا در حذف پرامپت مرحله‌ای');
   }
 });
 

@@ -9,24 +9,32 @@ import {
 import { CLASS_LABELS, type GameState } from '../types/game';
 import { toFaDigits } from '../utils/formatCountdown';
 
+const DEFAULT_UNLOCKS = {
+  inventory: false,
+  stats: false,
+  hp: false,
+  mana: false,
+  gold: false,
+};
+
 export function StatusBar({
   state,
-  sparse,
   onSettings,
   onInbox,
   unreadCount = 0,
 }: {
   state: GameState;
-  sparse?: boolean;
   onSettings: () => void;
   onInbox?: () => void;
   unreadCount?: number;
 }) {
   const { stats, characterName, classType, storyTurnCount } = state;
+  const unlocks = state.featureUnlocks || DEFAULT_UNLOCKS;
   const stepLabel = `مرحله ${toFaDigits(storyTurnCount || 0)}`;
+  const showResources = unlocks.hp || unlocks.mana || unlocks.gold;
+  const showIdentity = unlocks.stats || showResources || unlocks.inventory;
 
-  // Early game: dark minimal chrome — energy + step count
-  if (sparse || !state.unlockedFullUi) {
+  if (!showIdentity) {
     return (
       <header className="sticky top-0 z-20 bg-oled px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="grid grid-cols-3 items-center gap-2">
@@ -46,11 +54,21 @@ export function StatusBar({
             <IconSettings size={18} />
           </button>
         </div>
-        {state.aiMode === 'mock' && (storyTurnCount || 0) >= 5 && state.aiMockReason && (
+        {state.lastAiSource === 'error' && state.lastAiError ? (
+          <p className="mt-2 text-center text-[10px] leading-4 text-red-400/90">
+            خطای AI: {state.lastAiError}
+          </p>
+        ) : state.lastAiSource === 'live' ? (
+          <p className="mt-2 text-center text-[10px] leading-4 text-emerald-400/80">
+            استاد بازی (زنده)
+          </p>
+        ) : state.aiMode === 'mock' &&
+          (storyTurnCount || 0) >= 5 &&
+          state.aiMockReason ? (
           <p className="mt-2 text-center text-[10px] leading-4 text-amber/80">
             آفلاین: {state.aiMockReason}
           </p>
-        )}
+        ) : null}
       </header>
     );
   }
@@ -94,21 +112,33 @@ export function StatusBar({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-dim">
-        <span className="inline-flex items-center gap-1">
-          <IconHeart size={14} className="text-red-400/80" />
-          جان: {stats.hp}/{stats.maxHp}
-        </span>
-        <span className="text-line">|</span>
-        <span className="inline-flex items-center gap-1">
-          <IconFlask size={14} className="text-sky-400/80" />
-          مانا: {stats.mana}/{stats.maxMana}
-        </span>
-        <span className="text-line">|</span>
-        <span className="inline-flex items-center gap-1">
-          <IconCoin size={14} className="text-amber" />
-          {stats.gold.toLocaleString('fa-IR')}
-        </span>
-        <span className="text-line">|</span>
+        {unlocks.hp && (
+          <>
+            <span className="inline-flex items-center gap-1">
+              <IconHeart size={14} className="text-red-400/80" />
+              جان: {stats.hp}/{stats.maxHp}
+            </span>
+            <span className="text-line">|</span>
+          </>
+        )}
+        {unlocks.mana && (
+          <>
+            <span className="inline-flex items-center gap-1">
+              <IconFlask size={14} className="text-sky-400/80" />
+              مانا: {stats.mana}/{stats.maxMana}
+            </span>
+            <span className="text-line">|</span>
+          </>
+        )}
+        {unlocks.gold && (
+          <>
+            <span className="inline-flex items-center gap-1">
+              <IconCoin size={14} className="text-amber" />
+              {stats.gold.toLocaleString('fa-IR')}
+            </span>
+            <span className="text-line">|</span>
+          </>
+        )}
         <span className="inline-flex items-center gap-1 text-amber amber-text-glow">
           <IconBolt size={14} />
           {stats.energy}/{stats.maxEnergy}

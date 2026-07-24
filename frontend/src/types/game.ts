@@ -10,6 +10,36 @@ export type EnemyLineArtType =
 
 export type StatKey = 'hp' | 'mana' | 'gold' | 'energy' | 'strength' | 'agility' | 'intellect';
 
+/** Body slot for wearable inventory items (stats silhouette). */
+export type EquipSlot =
+  | 'head'
+  | 'chest'
+  | 'hands'
+  | 'legs'
+  | 'feet'
+  | 'weapon'
+  | 'accessory';
+
+export const EQUIP_SLOTS: EquipSlot[] = [
+  'head',
+  'chest',
+  'hands',
+  'legs',
+  'feet',
+  'weapon',
+  'accessory',
+];
+
+export const EQUIP_SLOT_LABELS: Record<EquipSlot, string> = {
+  head: 'سر',
+  chest: 'سینه',
+  hands: 'دست',
+  legs: 'پا',
+  feet: 'کفش',
+  weapon: 'سلاح',
+  accessory: 'زیور',
+};
+
 export interface ConditionCheck {
   stat: StatKey;
   min: number;
@@ -44,6 +74,8 @@ export interface InventoryItem {
   description: string;
   icon: string;
   quantity: number;
+  /** When set, item appears on the character silhouette for that slot. */
+  equipSlot?: EquipSlot | null;
 }
 
 export interface PendingDiceRoll {
@@ -58,6 +90,20 @@ export interface GameState {
   classType: ClassType;
   awakened: boolean;
   unlockedFullUi: boolean;
+  featureUnlocks: {
+    inventory: boolean;
+    stats: boolean;
+    hp: boolean;
+    mana: boolean;
+    gold: boolean;
+  };
+  unlockTurns: {
+    unlockInventoryAtTurn: number;
+    unlockStatsAtTurn: number;
+    unlockHpAtTurn: number;
+    unlockManaAtTurn: number;
+    unlockGoldAtTurn: number;
+  };
   playDayCount: number;
   storyTurnCount: number;
   storyHistory: string[];
@@ -65,6 +111,8 @@ export interface GameState {
   storyMsPerWord: number;
   aiMode: 'mock' | 'live';
   aiMockReason: string | null;
+  lastAiSource: 'live' | 'mock' | 'error' | null;
+  lastAiError: string | null;
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
