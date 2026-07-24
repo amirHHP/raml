@@ -46,14 +46,25 @@ npm run dev
 
 ### ۳) پنل ادمین
 
+محلی:
+
 ```bash
 cd frontend-admin
 npm install
 npm run dev
 ```
 
-یا از ریشه: `npm run dev:admin`  
-باز کنید: `http://localhost:5174` و با مقدار `ADMIN_TOKEN` وارد شوید.
+یا از ریشه: `npm run dev:admin` → `http://localhost:5174`
+
+روی Vercel (همان دامنه بازی): **`https://raml-ten.vercel.app/admin`**  
+با مقدار `ADMIN_TOKEN` وارد شوید.
+
+در env بک‌اند روی Vercel حتماً ست کنید:
+
+```env
+ADMIN_TOKEN=change-me
+CORS_ORIGIN=https://raml-ten.vercel.app,http://localhost:5173,http://localhost:5174
+```
 
 قابلیت‌ها:
 - داشبورد آمار (کل، بیدار شده، DAU/WAU، توزیع کلاس، خرید)

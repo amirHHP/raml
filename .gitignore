@@ -39,3 +39,6 @@ yarn-error.log*
 
 # PWA generated
 frontend/dev-dist/
+
+# Embedded admin build (generated during frontend build)
+frontend/public/admin/
