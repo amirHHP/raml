@@ -16,6 +16,7 @@ export const SYSTEM_PROMPT = `تو «رمل» هستی؛ یک استاد باز�
 5) گاهی (حدود ۳۰٪ صحنه‌های خطرناک) needs_dice_roll را true کن.
 6) stats_update فقط مقادیر دلتا است (مثلاً hp: -10 یعنی ۱۰ واحد کم شود).
 7) اگر آیتمی پیدا شد، discovered_item را پر کن و toast_message بنویس.
+8) اگر در پرامپت early_resources=energy_only بود، همهٔ گزینه‌ها فقط condition_check با stat=energy و min=0 داشته باشند (هزینه از energy_cost است). مانا، قدرت، چابکی یا خرد را شرط قفل گزینه نکن.
 
 ساختار دقیق JSON:
 {
@@ -53,6 +54,7 @@ export function buildActionUserPrompt(params: {
   stats: Record<string, number>;
   inventory: string[];
   chosenOption: string;
+  earlyResources?: 'energy_only' | 'full';
 }): string {
   return renderTemplate(DEFAULT_ACTION_TEMPLATE, {
     name: params.name,
@@ -63,6 +65,7 @@ export function buildActionUserPrompt(params: {
     inventory: params.inventory.join('، ') || 'خالی',
     storySnippet: params.storySnippet,
     chosenOption: params.chosenOption,
+    earlyResources: params.earlyResources ?? 'full',
   });
 }
 

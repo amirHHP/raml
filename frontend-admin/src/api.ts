@@ -3,6 +3,7 @@ import type {
   AdminPlayerSummary,
   AdminStats,
   AiSettings,
+  GameSettings,
   GeminiModelInfo,
   PromptItem,
   PromptKey,
@@ -85,6 +86,12 @@ export const adminApi = {
     useMockAi?: boolean;
   }) =>
     request<AiSettings>('/api/admin/ai', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  getGame: () => request<GameSettings>('/api/admin/game'),
+  putGame: (body: { storyMsPerWord: number }) =>
+    request<GameSettings>('/api/admin/game', {
       method: 'PUT',
       body: JSON.stringify(body),
     }),

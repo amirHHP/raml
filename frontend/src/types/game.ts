@@ -61,6 +61,10 @@ export interface GameState {
   playDayCount: number;
   storyTurnCount: number;
   storyHistory: string[];
+  /** Milliseconds per word for story typewriter (lower = faster). */
+  storyMsPerWord: number;
+  aiMode: 'mock' | 'live';
+  aiMockReason: string | null;
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;

@@ -5,12 +5,14 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { AiPage } from './pages/AiPage';
+import { GamePage } from './pages/GamePage';
 import { PromptsPage } from './pages/PromptsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'dashboard', label: 'داشبورد' },
   { id: 'players', label: 'بازیکن‌ها' },
+  { id: 'game', label: 'بازی' },
   { id: 'ai', label: 'هوش مصنوعی' },
   { id: 'prompts', label: 'پرامپت‌ها' },
   { id: 'notifications', label: 'اعلان‌ها' },
@@ -107,6 +109,7 @@ export default function App() {
       <main className="flex-1 pb-10">
         {tab === 'dashboard' && <DashboardPage />}
         {tab === 'players' && <PlayersPage />}
+        {tab === 'game' && <GamePage />}
         {tab === 'ai' && <AiPage />}
         {tab === 'prompts' && <PromptsPage />}
         {tab === 'notifications' && <NotificationsPage />}

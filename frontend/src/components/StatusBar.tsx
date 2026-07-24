@@ -46,6 +46,11 @@ export function StatusBar({
             <IconSettings size={18} />
           </button>
         </div>
+        {state.aiMode === 'mock' && (storyTurnCount || 0) >= 5 && state.aiMockReason && (
+          <p className="mt-2 text-center text-[10px] leading-4 text-amber/80">
+            آفلاین: {state.aiMockReason}
+          </p>
+        )}
       </header>
     );
   }

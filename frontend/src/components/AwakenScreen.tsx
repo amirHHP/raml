@@ -1,20 +1,27 @@
 import { useState } from 'react';
 import { useWordTypewriter } from '../hooks/useWordTypewriter';
 
+const DEFAULT_STORY_MS_PER_WORD = 400;
+
 export function AwakenScreen({
   storyText,
   busy,
+  storyMsPerWord = DEFAULT_STORY_MS_PER_WORD,
   onAwaken,
 }: {
   storyText: string;
   busy: boolean;
+  storyMsPerWord?: number;
   onAwaken: (name: string) => Promise<void>;
 }) {
   const [name, setName] = useState('');
 
   // Keep only the first atmospheric block (older saves may still have a second paragraph).
   const intro = storyText.split(/\n\n/)[0]?.trim() || storyText.trim();
-  const { displayed, done, skip } = useWordTypewriter(intro, 700);
+  const { displayed, done, skip } = useWordTypewriter(
+    intro,
+    storyMsPerWord || DEFAULT_STORY_MS_PER_WORD,
+  );
 
   return (
     <div className="relative flex flex-1 flex-col bg-oled px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">

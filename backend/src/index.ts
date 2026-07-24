@@ -10,6 +10,10 @@ import adminRoutes from './routes/admin';
 import { setUseMemory } from './services/gameState';
 import { setPromptServiceMemory, ensurePromptSeeds } from './services/promptService';
 import { setAiSettingsMemory } from './services/aiSettings';
+import {
+  ensureGameSettingsLoaded,
+  setGameSettingsMemory,
+} from './services/gameSettings';
 
 const app = express();
 
@@ -33,7 +37,9 @@ const mongoReady = mongoose
     setUseMemory(false);
     setPromptServiceMemory(false);
     setAiSettingsMemory(false);
+    setGameSettingsMemory(false);
     await ensurePromptSeeds();
+    await ensureGameSettingsLoaded();
   })
   .catch(async (err) => {
     mongoError = err instanceof Error ? err.message : String(err);
@@ -42,8 +48,10 @@ const mongoReady = mongoose
     setUseMemory(true);
     setPromptServiceMemory(true);
     setAiSettingsMemory(true);
+    setGameSettingsMemory(true);
     (global as { __ramlMemory?: boolean }).__ramlMemory = true;
     await ensurePromptSeeds();
+    await ensureGameSettingsLoaded();
   });
 
 app.use(async (_req, _res, next) => {

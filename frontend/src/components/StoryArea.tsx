@@ -3,7 +3,7 @@ import type { EnemyLineArtType } from '../types/game';
 import { EnemyLineArt } from './EnemyLineArt';
 import { IconPin } from './icons';
 
-const STORY_MS_PER_WORD = 700;
+const STORY_MS_PER_WORD = 400;
 
 export function StoryArea({
   text,

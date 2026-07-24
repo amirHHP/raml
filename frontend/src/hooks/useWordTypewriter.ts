@@ -20,7 +20,7 @@ export function joinWordParts(parts: string[]): string {
 }
 
 /** Word-by-word typewriter for atmospheric intro text. */
-export function useWordTypewriter(text: string, msPerWord = 700) {
+export function useWordTypewriter(text: string, msPerWord = 400) {
   const [displayed, setDisplayed] = useState('');
   const [done, setDone] = useState(false);
 

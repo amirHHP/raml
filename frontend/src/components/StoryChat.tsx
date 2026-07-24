@@ -14,7 +14,7 @@ import { EnemyLineArt } from './EnemyLineArt';
 import { EnergyDepletedScreen } from './EnergyDepletedScreen';
 import { ACTION_ICONS, IconChevronDown, IconPin } from './icons';
 
-const STORY_MS_PER_WORD = 700;
+const DEFAULT_STORY_MS_PER_WORD = 400;
 const NEAR_BOTTOM_PX = 80;
 
 type StoryBubble = {
@@ -42,13 +42,15 @@ function nextId(prefix: string): string {
 function StoryBubbleView({
   text,
   animate,
+  msPerWord,
   onDone,
 }: {
   text: string;
   animate: boolean;
+  msPerWord: number;
   onDone?: () => void;
 }) {
-  const { displayed, done, skip } = useWordTypewriter(text, STORY_MS_PER_WORD);
+  const { displayed, done, skip } = useWordTypewriter(text, msPerWord);
 
   useEffect(() => {
     if (!animate) skip();
@@ -121,14 +123,16 @@ export function StoryChat({
   const [stickToBottom, setStickToBottom] = useState(true);
 
   const lastStoryRef = useRef<string | null>(null);
+  const lastTurnRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingDoneRef = useRef(false);
 
   const energyEmpty = state.stats.energy < 1;
-  const latestIsStory =
-    bubbles.length > 0 && bubbles[bubbles.length - 1]?.kind === 'story';
+  const msPerWord = state.storyMsPerWord || DEFAULT_STORY_MS_PER_WORD;
+  const latestKind = bubbles.length > 0 ? bubbles[bubbles.length - 1]?.kind : null;
+  const latestIsStory = latestKind === 'story';
 
-  // Hydrate past turns, then append new story texts as they arrive
+  // Hydrate past turns, then append when a new turn arrives (even if text repeats)
   useEffect(() => {
     if (!hydrated) {
       const history =
@@ -145,6 +149,7 @@ export function StoryChat({
         })),
       );
       lastStoryRef.current = state.storyText;
+      lastTurnRef.current = state.storyTurnCount || history.length;
       // Fresh awaken (single beat): type it out. Returning mid-run: show history instantly.
       const animateFirst = history.length <= 1;
       setAnimateLatest(animateFirst);
@@ -154,9 +159,16 @@ export function StoryChat({
       return;
     }
 
-    if (!state.storyText || state.storyText === lastStoryRef.current) return;
+    const turn = state.storyTurnCount || 0;
+    const textChanged = Boolean(state.storyText) && state.storyText !== lastStoryRef.current;
+    const turnAdvanced = turn > lastTurnRef.current;
+
+    if (!textChanged && !turnAdvanced) return;
+    if (!state.storyText) return;
 
     lastStoryRef.current = state.storyText;
+    lastTurnRef.current = turnAdvanced ? turn : lastTurnRef.current + 1;
+
     setBubbles((prev) => [
       ...prev,
       { id: nextId('story'), kind: 'story', text: state.storyText },
@@ -165,7 +177,7 @@ export function StoryChat({
     setTypingDone(false);
     typingDoneRef.current = false;
     setStickToBottom(true);
-  }, [hydrated, state.storyHistory, state.storyText]);
+  }, [hydrated, state.storyHistory, state.storyText, state.storyTurnCount]);
 
   const handleTypingDone = () => {
     if (typingDoneRef.current) return;
@@ -198,7 +210,6 @@ export function StoryChat({
     setShowJump(false);
   };
 
-  // Track whether user is near the bottom
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -215,7 +226,6 @@ export function StoryChat({
     return () => el.removeEventListener('scroll', onScroll);
   }, [scrollContainerRef]);
 
-  // Keep pinned to bottom while typing / new content arrives
   useLayoutEffect(() => {
     if (!stickToBottom) return;
     const el = scrollContainerRef.current;
@@ -223,12 +233,15 @@ export function StoryChat({
     el.scrollTop = el.scrollHeight;
   }, [bubbles, typingDone, busy, stickToBottom, scrollContainerRef, state.options]);
 
+  // If a choice was locked in but story didn't advance (error), still allow picking again
+  // once busy clears and options are present.
   const showActions =
     typingDone &&
     !busy &&
     !state.needsDiceRoll &&
     !energyEmpty &&
-    latestIsStory;
+    state.options.length > 0 &&
+    (latestIsStory || latestKind === 'choice');
 
   return (
     <div className="relative flex flex-col gap-5 px-4 pb-4 pt-4">
@@ -250,6 +263,7 @@ export function StoryChat({
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}
+              msPerWord={msPerWord}
               onDone={isLatest ? handleTypingDone : undefined}
             />
           </div>

@@ -2,7 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { Player, type IPlayer } from '../models/Player';
 import { config } from '../config';
 import { regenerateEnergy, spendEnergy, msUntilNextEnergy } from './energy';
-import { generateGameTurn } from './ai';
+import { generateGameTurn, resolveAiMode } from './ai';
+import { getStoryMsPerWord } from './gameSettings';
+import { peekRuntimeAiSettings, type RuntimeAiSettings } from './aiSettings';
 import {
   buildActionPrompt,
   buildAwakenPrompt,
@@ -27,6 +29,17 @@ export function setUseMemory(value: boolean): void {
 
 export function isUsingMemory(): boolean {
   return useMemory;
+}
+
+function settingsForClient(): RuntimeAiSettings {
+  return (
+    peekRuntimeAiSettings() || {
+      openaiApiKey: config.openaiApiKey,
+      openaiBaseUrl: config.openaiBaseUrl,
+      openaiModel: config.openaiModel,
+      useMockAi: config.useMockAi,
+    }
+  );
 }
 
 export function getMemoryPlayers(): Map<string, IPlayer> {
@@ -222,6 +235,8 @@ function touchPlayDay(player: IPlayer): void {
 }
 
 export function toClientState(player: IPlayer) {
+  const turnCount = (player.storyHistory || []).length;
+  const mode = resolveAiMode(settingsForClient(), Math.max(1, turnCount));
   return {
     deviceId: player.deviceId,
     characterName: player.characterName,
@@ -229,8 +244,11 @@ export function toClientState(player: IPlayer) {
     awakened: player.awakened,
     unlockedFullUi: computeUnlocked(player),
     playDayCount: player.playDayCount,
-    storyTurnCount: (player.storyHistory || []).length,
+    storyTurnCount: turnCount,
     storyHistory: player.storyHistory || [],
+    storyMsPerWord: getStoryMsPerWord(),
+    aiMode: mode.aiMode,
+    aiMockReason: mode.aiMockReason,
     currentLocation: player.currentLocation,
     storyText: player.storyText,
     enemyLineArtType: player.enemyLineArtType,
@@ -316,6 +334,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
   player.toastMessage = null;
 
   const turnNumber = (player.storyHistory?.length || 0) + 1;
+  const earlyResources = computeUnlocked(player) ? 'full' : 'energy_only';
   const ai = await generateGameTurn(
     await buildActionPrompt({
       name: player.characterName,
@@ -334,6 +353,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
       },
       inventory: player.inventory.map((i) => i.name),
       chosenOption: option.text,
+      earlyResources,
     }),
     { turnNumber },
   );

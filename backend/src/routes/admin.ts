@@ -3,6 +3,12 @@ import { z } from 'zod';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { getAdminStats, getPlayerDetail, listPlayers, patchPlayer } from '../services/adminPlayers';
 import { getPublicAiSettings, getRuntimeAiSettings, updateAiSettings } from '../services/aiSettings';
+import {
+  getPublicGameSettings,
+  MAX_STORY_MS_PER_WORD,
+  MIN_STORY_MS_PER_WORD,
+  updateGameSettings,
+} from '../services/gameSettings';
 import { listGeminiModels } from '../services/geminiModels';
 import { listPrompts, updatePrompt } from '../services/promptService';
 import { PROMPT_KEYS } from '../models/PromptTemplate';
@@ -102,6 +108,34 @@ router.put('/ai', async (req, res) => {
     res.json(settings);
   } catch (err) {
     sendError(res, err, 'خطا در ذخیره تنظیمات AI');
+  }
+});
+
+router.get('/game', async (_req, res) => {
+  try {
+    const settings = await getPublicGameSettings();
+    res.json(settings);
+  } catch (err) {
+    sendError(res, err, 'خطا در تنظیمات بازی');
+  }
+});
+
+router.put('/game', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        storyMsPerWord: z
+          .number()
+          .int()
+          .min(MIN_STORY_MS_PER_WORD)
+          .max(MAX_STORY_MS_PER_WORD),
+      })
+      .parse(req.body);
+
+    const settings = await updateGameSettings(body);
+    res.json(settings);
+  } catch (err) {
+    sendError(res, err, 'خطا در ذخیره تنظیمات بازی');
   }
 });
 

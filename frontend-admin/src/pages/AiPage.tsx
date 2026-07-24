@@ -125,6 +125,12 @@ export function AiPage() {
         <span className="text-amber">{liveFrom}</span> به بعد — اگر کلید تنظیم باشد و Mock
         خاموش باشد — با AI واقعی ادامه می‌یابد.
       </p>
+      {!settings?.openaiApiKeySet && (
+        <p className="rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-xs leading-6 text-amber">
+          بدون کلید API، بازی حتی بعد از نوبت {liveFrom} هم روی Mock می‌ماند و داستان تکراری
+          می‌شود. کلید Gemini یا OpenAI را ذخیره کنید و تیک «Mock کامل» را بردارید.
+        </p>
+      )}
 
       <label className="block text-sm text-ink-dim">
         API Key جدید (Gemini یا OpenAI — خالی بگذارید تا همان قبلی بماند)

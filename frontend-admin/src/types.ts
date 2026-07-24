@@ -37,6 +37,11 @@ export type AiSettings = {
   aiLiveFromTurn?: number;
 };
 
+export type GameSettings = {
+  storyMsPerWord: number;
+  updatedAt: string | null;
+};
+
 export type GeminiRateLimit = {
   rpm: number | null;
   tpm: number | null;
@@ -71,7 +76,7 @@ export type AdminNotification = {
   createdAt: string;
 };
 
-export type TabId = 'dashboard' | 'players' | 'ai' | 'prompts' | 'notifications';
+export type TabId = 'dashboard' | 'players' | 'game' | 'ai' | 'prompts' | 'notifications';
 
 export const CLASS_LABELS: Record<string, string> = {
   warrior: 'جنگجو',

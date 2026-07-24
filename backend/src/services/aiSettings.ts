@@ -175,3 +175,8 @@ export async function updateAiSettings(input: {
 export function clearAiSettingsCache(): void {
   cached = null;
 }
+
+/** Sync peek at cached settings (null until first load). */
+export function peekRuntimeAiSettings(): RuntimeAiSettings | null {
+  return cached;
+}

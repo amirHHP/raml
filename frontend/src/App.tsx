@@ -101,6 +101,7 @@ export default function App() {
           <AwakenScreen
             storyText={state.storyText}
             busy={game.busy || openingEyes}
+            storyMsPerWord={state.storyMsPerWord}
             onAwaken={handleAwaken}
           />
         ) : (

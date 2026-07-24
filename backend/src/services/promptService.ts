@@ -122,9 +122,11 @@ export async function buildActionPrompt(params: {
   stats: Record<string, number>;
   inventory: string[];
   chosenOption: string;
+  earlyResources?: 'energy_only' | 'full';
 }): Promise<string> {
+  const earlyResources = params.earlyResources ?? 'full';
   const template = await getPromptBody('action');
-  return renderTemplate(template, {
+  const rendered = renderTemplate(template, {
     name: params.name,
     classType: params.classType,
     level: params.level,
@@ -133,7 +135,14 @@ export async function buildActionPrompt(params: {
     inventory: params.inventory.join('، ') || 'خالی',
     storySnippet: params.storySnippet,
     chosenOption: params.chosenOption,
+    earlyResources,
   });
+
+  if (earlyResources !== 'energy_only') return rendered;
+
+  // Ensure the constraint is present even if a stored template omits {{earlyResources}}.
+  if (rendered.includes('early_resources: energy_only')) return rendered;
+  return `${rendered}\n\nearly_resources: energy_only\nگزینه‌ها فقط با انرژی (condition_check.stat=energy، min=0) باشند.`;
 }
 
 export async function buildDicePrompt(params: {
