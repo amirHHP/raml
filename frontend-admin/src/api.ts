@@ -103,6 +103,11 @@ export const adminApi = {
         body: JSON.stringify(apiKey ? { apiKey } : {}),
       },
     ),
+  testAi: () =>
+    request<{ ok: boolean; model?: string; ms?: number; sample?: string; error?: string }>(
+      '/api/admin/ai/test',
+      { method: 'POST', body: '{}' },
+    ),
   getPrompts: () => request<{ prompts: PromptItem[] }>('/api/admin/prompts'),
   putPrompt: (key: PromptKey, body: string) =>
     request<PromptItem>(`/api/admin/prompts/${key}`, {

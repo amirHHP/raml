@@ -10,16 +10,18 @@ import { getPromptBody } from './promptService';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 const AiResponseSchema = z.object({
-  story_text: z.string(),
-  current_location: z.string(),
-  enemy_line_art_type: z.enum([
-    'none',
-    'orc_guardian',
-    'dragon',
-    'skeleton',
-    'shadow',
-    'desert_spirit',
-  ]),
+  story_text: z.string().min(1),
+  current_location: z.string().default('ناشناخته'),
+  enemy_line_art_type: z
+    .enum([
+      'none',
+      'orc_guardian',
+      'dragon',
+      'skeleton',
+      'shadow',
+      'desert_spirit',
+    ])
+    .catch('none'),
   stats_update: z
     .object({
       hp: z.number().optional(),
@@ -32,28 +34,33 @@ const AiResponseSchema = z.object({
       xp: z.number().optional(),
     })
     .default({}),
-  needs_dice_roll: z.boolean(),
+  needs_dice_roll: z.boolean().default(false),
   required_roll_type: z
     .enum(['strength', 'agility', 'intellect', 'luck'])
     .nullable()
-    .optional(),
-  min_roll_success: z.number().nullable().optional(),
+    .optional()
+    .catch(null),
+  min_roll_success: z.number().nullable().optional().catch(null),
   options: z
     .array(
       z.object({
         text: z.string(),
-        icon: z.enum(['sword', 'spell', 'key', 'retreat', 'talk', 'search', 'shield']),
+        icon: z
+          .enum(['sword', 'spell', 'key', 'retreat', 'talk', 'search', 'shield'])
+          .catch('search'),
         condition_check: z.object({
-          stat: z.enum([
-            'hp',
-            'mana',
-            'gold',
-            'energy',
-            'strength',
-            'agility',
-            'intellect',
-          ]),
-          min: z.number(),
+          stat: z
+            .enum([
+              'hp',
+              'mana',
+              'gold',
+              'energy',
+              'strength',
+              'agility',
+              'intellect',
+            ])
+            .catch('energy'),
+          min: z.number().catch(0),
         }),
       }),
     )
@@ -66,8 +73,9 @@ const AiResponseSchema = z.object({
       icon: z.string(),
     })
     .nullable()
-    .optional(),
-  toast_message: z.string().nullable().optional(),
+    .optional()
+    .catch(null),
+  toast_message: z.string().nullable().optional().catch(null),
 });
 
 let client: OpenAI | null = null;
@@ -375,11 +383,7 @@ function lateMockBeat(chosen: string, turnNumber?: number): AiGameResponse {
     min_roll_success: null,
     options: beat.options,
     discovered_item: null,
-    toast_message:
-      beat.toast ??
-      (turn >= 5
-        ? 'هنوز حالت آفلاین (Mock) است — برای داستان زنده، کلید AI را در ادمین تنظیم کنید'
-        : null),
+    toast_message: beat.toast ?? null,
   };
 }
 
@@ -443,36 +447,109 @@ export async function generateGameTurn(
 ): Promise<AiGameResponse> {
   const settings = await getRuntimeAiSettings();
   if (shouldUseMockAi(settings, options.turnNumber)) {
-    return mockAi(userPrompt, options.turnNumber);
+    const mocked = mockAi(userPrompt, options.turnNumber);
+    if (!settings.openaiApiKey) {
+      return {
+        ...mocked,
+        toast_message:
+          mocked.toast_message ||
+          'کلید AI تنظیم نشده — داستان آفلاین است',
+      };
+    }
+    if (settings.useMockAi) {
+      return {
+        ...mocked,
+        toast_message:
+          mocked.toast_message ||
+          'حالت Mock کامل فعال است — از ادمین خاموشش کنید',
+      };
+    }
+    return mocked;
   }
 
   const systemPrompt = await getPromptBody('system');
   try {
-    const completion = await getClient(settings).chat.completions.create({
-      model: settings.openaiModel,
-      temperature: 0.8,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty AI response');
-
+    const content = await requestLiveCompletion(settings, systemPrompt, userPrompt);
     const parsed = AiResponseSchema.parse(extractJson(content));
+    if (parsed.needs_dice_roll) {
+      parsed.options = [];
+    } else if (!parsed.options.length) {
+      throw new Error('AI گزینه‌ای برنگرداند');
+    }
     return parsed as AiGameResponse;
   } catch (err) {
-    console.error('Live AI failed — falling back to mock:', err);
+    const detail = formatAiError(err);
+    console.error('Live AI failed — falling back to mock:', detail, err);
     const fallback = mockAi(userPrompt, options.turnNumber);
     return {
       ...fallback,
-      toast_message:
-        fallback.toast_message ||
-        'ارتباط با AI برقرار نشد؛ ادامه با حالت آفلاین',
+      toast_message: `خطای AI: ${detail}`,
     };
   }
+}
+
+async function requestLiveCompletion(
+  settings: RuntimeAiSettings,
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<string> {
+  const client = getClient(settings);
+  const base = {
+    model: settings.openaiModel,
+    temperature: 0.8,
+    messages: [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: userPrompt },
+    ],
+  };
+
+  // Gemini OpenAI-compat often rejects response_format on some models — retry plain.
+  try {
+    const withFormat = await client.chat.completions.create({
+      ...base,
+      response_format: { type: 'json_object' },
+    });
+    const content = withFormat.choices[0]?.message?.content;
+    if (!content) throw new Error('Empty AI response');
+    return content;
+  } catch (firstErr) {
+    console.warn('AI json_object mode failed, retrying without it:', formatAiError(firstErr));
+    const plain = await client.chat.completions.create(base);
+    const content = plain.choices[0]?.message?.content;
+    if (!content) throw firstErr;
+    return content;
+  }
+}
+
+/** Short Persian-friendly error for toast / logs. */
+export function formatAiError(err: unknown): string {
+  if (!err) return 'خطای نامشخص';
+  const e = err as {
+    message?: string;
+    status?: number;
+    code?: string;
+    error?: { message?: string; code?: string };
+  };
+  const raw = e.error?.message || e.message || String(err);
+  const status = e.status;
+  const lower = raw.toLowerCase();
+
+  if (status === 429 || lower.includes('rate') || lower.includes('quota') || lower.includes('resource_exhausted')) {
+    return 'ریت‌لیمیت یا سهمیه مدل پر شده — مدل سبک‌تر یا بعداً دوباره';
+  }
+  if (status === 401 || status === 403 || lower.includes('api key') || lower.includes('permission')) {
+    return 'کلید API نامعتبر یا بدون دسترسی';
+  }
+  if (lower.includes('response_format') || lower.includes('json_object')) {
+    return 'این مدل فرمت JSON را پشتیبانی نکرد';
+  }
+  if (lower.includes('model') && (lower.includes('not found') || lower.includes('invalid'))) {
+    return 'نام مدل نامعتبر است — مدل دیگری انتخاب کنید';
+  }
+  if (err instanceof z.ZodError) {
+    return 'پاسخ AI با قالب بازی جور نبود';
+  }
+  return raw.replace(/\s+/g, ' ').trim().slice(0, 140);
 }
 
 export function resetAiClient(): void {

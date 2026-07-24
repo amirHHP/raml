@@ -33,7 +33,12 @@ describe('gemini model helpers', () => {
     assert.equal(flash.tpm, 1_000_000);
     assert.match(flash.label, /15 RPM/);
 
-    const unknown = lookupGeminiRateLimit('gemini-experimental-xyz');
+    const gemma = lookupGeminiRateLimit('gemma-4-31b-it');
+    assert.equal(gemma.rpm, 15);
+    assert.equal(gemma.tpm, 16_000);
+    assert.match(gemma.label, /TPM/);
+
+    const unknown = lookupGeminiRateLimit('totally-unknown-model-xyz');
     assert.equal(unknown.rpm, null);
     assert.match(unknown.label, /نامشخص/);
   });

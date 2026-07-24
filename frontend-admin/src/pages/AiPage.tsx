@@ -15,6 +15,7 @@ export function AiPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +59,10 @@ export function AiPage() {
       if (result.models.length === 0) {
         setMessage('مدلی یافت نشد');
       } else {
-        setMessage(`${result.models.length} مدل Gemini بارگذاری شد (ریت‌لیمیت Free tier)`);
+        const gemmaCount = result.models.filter((m) => m.id.startsWith('gemma')).length;
+        setMessage(
+          `${result.models.length} مدل (شامل ${gemmaCount} مدل Gemma) بارگذاری شد`,
+        );
         if (!result.models.some((m) => m.id === model) && result.models[0]) {
           setModel(result.models[0].id);
         }
@@ -67,6 +71,26 @@ export function AiPage() {
       setError((err as Error).message);
     } finally {
       setLoadingModels(false);
+    }
+  };
+
+  const testConnection = async () => {
+    setTesting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await adminApi.testAi();
+      if (result.ok) {
+        setMessage(
+          `اتصال OK — مدل ${result.model} در ${result.ms}ms پاسخ داد`,
+        );
+      } else {
+        setError(result.error || 'تست ناموفق');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -150,13 +174,23 @@ export function AiPage() {
           onClick={() => void loadGeminiModels()}
           className="rounded-md border border-amber/40 px-3 py-2 text-sm text-amber disabled:opacity-50"
         >
-          {loadingModels ? 'در حال دریافت مدل‌ها...' : 'نمایش مدل‌های Gemini + ریت‌لیمیت'}
+          {loadingModels ? 'در حال دریافت مدل‌ها...' : 'مدل‌های Gemini/Gemma + ریت‌لیمیت'}
+        </button>
+        <button
+          type="button"
+          disabled={testing || !settings?.openaiApiKeySet || useMockAi}
+          onClick={() => void testConnection()}
+          className="rounded-md border border-emerald-500/40 px-3 py-2 text-sm text-emerald-400 disabled:opacity-50"
+        >
+          {testing ? 'در حال تست...' : 'تست اتصال AI'}
         </button>
         <button
           type="button"
           onClick={() => {
             setBaseUrl(GEMINI_BASE);
-            if (!model.startsWith('gemini')) setModel('gemini-2.0-flash');
+            if (!model.startsWith('gemini') && !model.startsWith('gemma')) {
+              setModel('gemini-2.0-flash');
+            }
           }}
           className="rounded-md border border-line px-3 py-2 text-sm text-ink-dim"
         >
@@ -175,7 +209,7 @@ export function AiPage() {
 
       {models.length > 0 ? (
         <label className="block text-sm text-ink-dim">
-          مدل Gemini
+          مدل Gemini / Gemma
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}

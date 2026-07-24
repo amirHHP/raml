@@ -10,6 +10,8 @@ import {
   updateGameSettings,
 } from '../services/gameSettings';
 import { listGeminiModels } from '../services/geminiModels';
+import { formatAiError, resetAiClient } from '../services/ai';
+import OpenAI from 'openai';
 import { listPrompts, updatePrompt } from '../services/promptService';
 import { PROMPT_KEYS } from '../models/PromptTemplate';
 import {
@@ -154,6 +156,73 @@ router.post('/ai/gemini-models', async (req, res) => {
     res.json({ models, baseUrlHint: 'https://generativelanguage.googleapis.com/v1beta/openai/' });
   } catch (err) {
     sendError(res, err, 'خطا در دریافت مدل‌های Gemini');
+  }
+});
+
+/** Smoke-test current AI key/model with a tiny JSON completion. */
+router.post('/ai/test', async (_req, res) => {
+  try {
+    const runtime = await getRuntimeAiSettings();
+    if (!runtime.openaiApiKey) {
+      res.status(400).json({ ok: false, error: 'کلید API تنظیم نشده' });
+      return;
+    }
+    if (runtime.useMockAi) {
+      res.status(400).json({
+        ok: false,
+        error: 'حالت Mock کامل روشن است — اول خاموشش کنید',
+      });
+      return;
+    }
+
+    resetAiClient();
+    const client = new OpenAI({
+      apiKey: runtime.openaiApiKey,
+      baseURL: runtime.openaiBaseUrl,
+    });
+
+    const started = Date.now();
+    let content: string | null = null;
+    try {
+      const completion = await client.chat.completions.create({
+        model: runtime.openaiModel,
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'user',
+            content: 'فقط این JSON را برگردان: {"ok":true,"ping":"رمـل"}',
+          },
+        ],
+      });
+      content = completion.choices[0]?.message?.content ?? null;
+    } catch {
+      const completion = await client.chat.completions.create({
+        model: runtime.openaiModel,
+        temperature: 0,
+        messages: [
+          {
+            role: 'user',
+            content: 'فقط این JSON را برگردان: {"ok":true,"ping":"رمـل"}',
+          },
+        ],
+      });
+      content = completion.choices[0]?.message?.content ?? null;
+    }
+
+    if (!content) {
+      res.status(502).json({ ok: false, error: 'پاسخ خالی از مدل' });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      model: runtime.openaiModel,
+      ms: Date.now() - started,
+      sample: content.slice(0, 200),
+    });
+  } catch (err) {
+    res.status(502).json({ ok: false, error: formatAiError(err) });
   }
 });
 

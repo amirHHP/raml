@@ -69,9 +69,10 @@ export function useGame() {
   // Auto-dismiss toast
   useEffect(() => {
     if (!state?.toastMessage) return;
+    const ms = state.toastMessage.startsWith('خطای AI') ? 7000 : 3200;
     const id = window.setTimeout(() => {
       void api.clearToast().then(setState).catch(() => undefined);
-    }, 3200);
+    }, ms);
     return () => window.clearTimeout(id);
   }, [state?.toastMessage]);
 
