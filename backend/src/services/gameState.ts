@@ -229,6 +229,8 @@ export function toClientState(player: IPlayer) {
     awakened: player.awakened,
     unlockedFullUi: computeUnlocked(player),
     playDayCount: player.playDayCount,
+    storyTurnCount: (player.storyHistory || []).length,
+    storyHistory: player.storyHistory || [],
     currentLocation: player.currentLocation,
     storyText: player.storyText,
     enemyLineArtType: player.enemyLineArtType,

@@ -23,18 +23,22 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
+let mongoError: string | null = null;
+
 const mongoReady = mongoose
-  .connect(config.mongoUri, { serverSelectionTimeoutMS: 2500 })
+  .connect(config.mongoUri, { serverSelectionTimeoutMS: 10000 })
   .then(async () => {
     console.log('MongoDB connected');
+    mongoError = null;
     setUseMemory(false);
     setPromptServiceMemory(false);
     setAiSettingsMemory(false);
     await ensurePromptSeeds();
   })
   .catch(async (err) => {
+    mongoError = err instanceof Error ? err.message : String(err);
     console.warn('MongoDB unavailable — using in-memory store for development.');
-    console.warn(String(err));
+    console.warn(mongoError);
     setUseMemory(true);
     setPromptServiceMemory(true);
     setAiSettingsMemory(true);
@@ -48,11 +52,21 @@ app.use(async (_req, _res, next) => {
 });
 
 function healthHandler(_req: express.Request, res: express.Response): void {
+  const memoryStore = (global as { __ramlMemory?: boolean }).__ramlMemory === true;
   res.json({
     ok: true,
     service: 'raml-backend',
     mockAi: config.useMockAi,
-    memoryStore: (global as { __ramlMemory?: boolean }).__ramlMemory === true,
+    memoryStore,
+    mongoConfigured: Boolean(process.env.MONGODB_URI),
+    mongoHost: (() => {
+      try {
+        return new URL(config.mongoUri.replace('mongodb+srv://', 'https://')).hostname;
+      } catch {
+        return null;
+      }
+    })(),
+    mongoError: memoryStore ? mongoError : null,
     adminConfigured: Boolean(config.adminToken),
   });
 }

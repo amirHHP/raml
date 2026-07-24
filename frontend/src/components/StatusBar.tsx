@@ -7,6 +7,7 @@ import {
   IconSettings,
 } from './icons';
 import { CLASS_LABELS, type GameState } from '../types/game';
+import { toFaDigits } from '../utils/formatCountdown';
 
 export function StatusBar({
   state,
@@ -21,21 +22,25 @@ export function StatusBar({
   onInbox?: () => void;
   unreadCount?: number;
 }) {
-  const { stats, characterName, classType } = state;
+  const { stats, characterName, classType, storyTurnCount } = state;
+  const stepLabel = `مرحله ${toFaDigits(storyTurnCount || 0)}`;
 
-  // Early game: dark minimal chrome — energy only
+  // Early game: dark minimal chrome — energy + step count
   if (sparse || !state.unlockedFullUi) {
     return (
       <header className="sticky top-0 z-20 bg-oled px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 text-xs text-ink-dim">
+        <div className="grid grid-cols-3 items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 justify-self-start text-xs text-ink-dim">
             <IconBolt size={14} className="text-ink-muted" />
             انرژی {stats.energy}/{stats.maxEnergy}
+          </span>
+          <span className="justify-self-center text-xs text-ink-muted" aria-label={stepLabel}>
+            {stepLabel}
           </span>
           <button
             type="button"
             onClick={onSettings}
-            className="rounded-full p-2 text-ink-muted transition hover:text-ink-dim"
+            className="justify-self-end rounded-full p-2 text-ink-muted transition hover:text-ink-dim"
             aria-label="تنظیمات"
           >
             <IconSettings size={18} />
@@ -56,6 +61,7 @@ export function StatusBar({
               — {CLASS_LABELS[classType]} — سطح {stats.level}
             </span>
           </h1>
+          <p className="mt-0.5 text-xs text-ink-muted">{stepLabel}</p>
         </div>
         <div className="flex items-center gap-1">
           {onInbox && (

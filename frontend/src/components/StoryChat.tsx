@@ -1,0 +1,308 @@
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
+import { useWordTypewriter } from '../hooks/useWordTypewriter';
+import type { GameOption, GameState } from '../types/game';
+import { optionEffectLabel } from '../utils/optionEffect';
+import { ActionCards } from './ActionCards';
+import { DiceRoller } from './DiceRoller';
+import { EnemyLineArt } from './EnemyLineArt';
+import { EnergyDepletedScreen } from './EnergyDepletedScreen';
+import { ACTION_ICONS, IconChevronDown, IconPin } from './icons';
+
+const STORY_MS_PER_WORD = 700;
+const NEAR_BOTTOM_PX = 80;
+
+type StoryBubble = {
+  id: string;
+  kind: 'story';
+  text: string;
+};
+
+type ChoiceBubble = {
+  id: string;
+  kind: 'choice';
+  text: string;
+  effect: string;
+  icon: GameOption['icon'];
+};
+
+type ChatBubble = StoryBubble | ChoiceBubble;
+
+let bubbleSeq = 0;
+function nextId(prefix: string): string {
+  bubbleSeq += 1;
+  return `${prefix}-${bubbleSeq}`;
+}
+
+function StoryBubbleView({
+  text,
+  animate,
+  onDone,
+}: {
+  text: string;
+  animate: boolean;
+  onDone?: () => void;
+}) {
+  const { displayed, done, skip } = useWordTypewriter(text, STORY_MS_PER_WORD);
+
+  useEffect(() => {
+    if (!animate) skip();
+    // intentionally omit skip — unstable identity from hook
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animate, text]);
+
+  useEffect(() => {
+    if (!animate || done) onDone?.();
+  }, [animate, done, onDone]);
+
+  return (
+    <button
+      type="button"
+      onClick={skip}
+      className="w-full text-right"
+      aria-label="متن داستان"
+    >
+      <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink">
+        {animate ? displayed : text}
+        {animate && !done && (
+          <span className="mr-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
+            {' '}
+          </span>
+        )}
+      </p>
+    </button>
+  );
+}
+
+function ChoiceBubbleView({ bubble }: { bubble: ChoiceBubble }) {
+  const Icon = ACTION_ICONS[bubble.icon] || ACTION_ICONS.search;
+  return (
+    <div className="flex justify-end px-1">
+      <div className="inline-flex max-w-[92%] items-center gap-2 rounded-xl border border-amber/50 bg-panel px-3 py-2.5">
+        <Icon size={16} className="shrink-0 text-amber" />
+        <p className="text-sm leading-6 text-ink">{bubble.text}</p>
+        <span className="shrink-0 text-[11px] text-amber">{bubble.effect}</span>
+      </div>
+    </div>
+  );
+}
+
+export function StoryChat({
+  state,
+  busy,
+  refillPriceTomans,
+  scrollContainerRef,
+  onChoose,
+  onRoll,
+  onWatchAd,
+  onBuyRefill,
+  onTimerElapsed,
+}: {
+  state: GameState;
+  busy: boolean;
+  refillPriceTomans: number | null;
+  scrollContainerRef: RefObject<HTMLElement | null>;
+  onChoose: (optionId: string) => void;
+  onRoll: (raw: number, modifier: number) => Promise<void>;
+  onWatchAd: () => void;
+  onBuyRefill: () => void;
+  onTimerElapsed: () => void;
+}) {
+  const [bubbles, setBubbles] = useState<ChatBubble[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [animateLatest, setAnimateLatest] = useState(false);
+  const [typingDone, setTypingDone] = useState(false);
+  const [showJump, setShowJump] = useState(false);
+  const [stickToBottom, setStickToBottom] = useState(true);
+
+  const lastStoryRef = useRef<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const typingDoneRef = useRef(false);
+
+  const energyEmpty = state.stats.energy < 1;
+  const latestIsStory =
+    bubbles.length > 0 && bubbles[bubbles.length - 1]?.kind === 'story';
+
+  // Hydrate past turns, then append new story texts as they arrive
+  useEffect(() => {
+    if (!hydrated) {
+      const history =
+        state.storyHistory?.length > 0
+          ? state.storyHistory
+          : state.storyText
+            ? [state.storyText]
+            : [];
+      setBubbles(
+        history.map((text) => ({
+          id: nextId('story'),
+          kind: 'story' as const,
+          text,
+        })),
+      );
+      lastStoryRef.current = state.storyText;
+      // Fresh awaken (single beat): type it out. Returning mid-run: show history instantly.
+      const animateFirst = history.length <= 1;
+      setAnimateLatest(animateFirst);
+      setTypingDone(!animateFirst);
+      typingDoneRef.current = !animateFirst;
+      setHydrated(true);
+      return;
+    }
+
+    if (!state.storyText || state.storyText === lastStoryRef.current) return;
+
+    lastStoryRef.current = state.storyText;
+    setBubbles((prev) => [
+      ...prev,
+      { id: nextId('story'), kind: 'story', text: state.storyText },
+    ]);
+    setAnimateLatest(true);
+    setTypingDone(false);
+    typingDoneRef.current = false;
+    setStickToBottom(true);
+  }, [hydrated, state.storyHistory, state.storyText]);
+
+  const handleTypingDone = () => {
+    if (typingDoneRef.current) return;
+    typingDoneRef.current = true;
+    setTypingDone(true);
+  };
+
+  const handleChoose = (optionId: string) => {
+    const opt = state.options.find((o) => o.id === optionId);
+    if (!opt) return;
+    setBubbles((prev) => [
+      ...prev,
+      {
+        id: nextId('choice'),
+        kind: 'choice',
+        text: opt.text,
+        effect: optionEffectLabel(opt),
+        icon: opt.icon,
+      },
+    ]);
+    setStickToBottom(true);
+    onChoose(optionId);
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+    setStickToBottom(true);
+    setShowJump(false);
+  };
+
+  // Track whether user is near the bottom
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+      const near = distance <= NEAR_BOTTOM_PX;
+      setStickToBottom(near);
+      setShowJump(!near);
+    };
+
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [scrollContainerRef]);
+
+  // Keep pinned to bottom while typing / new content arrives
+  useLayoutEffect(() => {
+    if (!stickToBottom) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [bubbles, typingDone, busy, stickToBottom, scrollContainerRef, state.options]);
+
+  const showActions =
+    typingDone &&
+    !busy &&
+    !state.needsDiceRoll &&
+    !energyEmpty &&
+    latestIsStory;
+
+  return (
+    <div className="relative flex flex-col gap-5 px-4 pb-4 pt-4">
+      {state.unlockedFullUi && (
+        <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <IconPin size={14} className="text-amber" />
+          <span>{state.currentLocation}</span>
+        </p>
+      )}
+
+      {bubbles.map((bubble, index) => {
+        const isLatest = index === bubbles.length - 1;
+        if (bubble.kind === 'choice') {
+          return <ChoiceBubbleView key={bubble.id} bubble={bubble} />;
+        }
+        return (
+          <div key={bubble.id} className="flex flex-col gap-3">
+            {isLatest && <EnemyLineArt type={state.enemyLineArtType} />}
+            <StoryBubbleView
+              text={bubble.text}
+              animate={isLatest && animateLatest}
+              onDone={isLatest ? handleTypingDone : undefined}
+            />
+          </div>
+        );
+      })}
+
+      {typingDone && state.needsDiceRoll && (
+        <DiceRoller state={state} busy={busy} onRoll={onRoll} />
+      )}
+
+      {typingDone && !state.needsDiceRoll && energyEmpty && (
+        <EnergyDepletedScreen
+          msUntilNextEnergy={state.msUntilNextEnergy}
+          energyRegenMinutes={state.energyRegenMinutes}
+          refillPriceTomans={refillPriceTomans}
+          busy={busy}
+          onWatchAd={onWatchAd}
+          onBuyRefill={onBuyRefill}
+          onTimerElapsed={onTimerElapsed}
+        />
+      )}
+
+      {showActions && (
+        <div className="-mx-4">
+          <ActionCards
+            options={state.options}
+            stats={state.stats}
+            busy={busy}
+            onChoose={handleChoose}
+          />
+        </div>
+      )}
+
+      {busy && (
+        <p className="text-center text-xs text-ink-muted">
+          استاد بازی در حال نوشتن...
+        </p>
+      )}
+
+      <div ref={bottomRef} />
+
+      {showJump && (
+        <button
+          type="button"
+          onClick={() => scrollToBottom('smooth')}
+          className={`fixed left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-amber/40 bg-panel text-amber shadow-lg amber-glow ${
+            state.unlockedFullUi ? 'bottom-24' : 'bottom-8'
+          }`}
+          aria-label="رفتن به پایین"
+        >
+          <IconChevronDown size={20} />
+        </button>
+      )}
+    </div>
+  );
+}

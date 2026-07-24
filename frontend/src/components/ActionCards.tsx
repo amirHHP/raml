@@ -1,15 +1,6 @@
 import { ACTION_ICONS } from './icons';
 import type { GameOption, PlayerStats, StatKey } from '../types/game';
-
-const STAT_LABEL: Record<StatKey, string> = {
-  hp: 'جان',
-  mana: 'مانا',
-  gold: 'طلا',
-  energy: 'انرژی',
-  strength: 'قدرت',
-  agility: 'چابکی',
-  intellect: 'خرد',
-};
+import { optionEffectLabel } from '../utils/optionEffect';
 
 function readStat(stats: PlayerStats, key: StatKey): number {
   return stats[key];
@@ -52,11 +43,7 @@ export function ActionCards({
           >
             <Icon size={20} className={disabled ? 'text-ink-muted' : 'text-amber'} />
             <span className="text-sm leading-6">{opt.text}</span>
-            {need > 0 && (
-              <span className="text-[11px] text-ink-muted">
-                {STAT_LABEL[opt.condition_check.stat]} {need}
-              </span>
-            )}
+            <span className="text-[11px] text-ink-muted">{optionEffectLabel(opt)}</span>
           </button>
         );
       })}

@@ -59,6 +59,8 @@ export interface GameState {
   awakened: boolean;
   unlockedFullUi: boolean;
   playDayCount: number;
+  storyTurnCount: number;
+  storyHistory: string[];
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;

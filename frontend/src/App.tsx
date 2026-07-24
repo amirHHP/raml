@@ -1,13 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useGame } from './hooks/useGame';
 import { StatusBar } from './components/StatusBar';
-import { StoryArea } from './components/StoryArea';
-import { DiceRoller } from './components/DiceRoller';
-import { ActionCards } from './components/ActionCards';
+import { StoryChat } from './components/StoryChat';
 import { BottomNav } from './components/BottomNav';
 import { Toast } from './components/Toast';
 import { AwakenScreen } from './components/AwakenScreen';
-import { EnergyDepletedScreen } from './components/EnergyDepletedScreen';
 import { EyesOpenOverlay } from './components/EyesOpenOverlay';
 import { InventoryPanel } from './components/panels/InventoryPanel';
 import { StatsPanel } from './components/panels/StatsPanel';
@@ -21,6 +18,7 @@ const EYES_OPEN_MS = 5400;
 export default function App() {
   const game = useGame();
   const [openingEyes, setOpeningEyes] = useState(false);
+  const scrollRef = useRef<HTMLElement>(null);
 
   const handleAwaken = async (name: string) => {
     setOpeningEyes(true);
@@ -58,7 +56,6 @@ export default function App() {
   const { state } = game;
   const sparse = !state.unlockedFullUi;
   const showChrome = state.awakened && !openingEyes;
-  const energyEmpty = state.stats.energy < 1;
   const refillPrice =
     game.shop.find((item) => item.sku === 'energy_refill')?.priceTomans ?? null;
 
@@ -95,6 +92,7 @@ export default function App() {
       <EyesOpenOverlay visible={openingEyes} />
 
       <main
+        ref={scrollRef}
         className={`flex-1 overflow-y-auto story-scroll ${
           state.awakened && state.unlockedFullUi ? 'pb-24' : 'pb-8'
         }`}
@@ -108,47 +106,19 @@ export default function App() {
         ) : (
           <>
             {game.tab === 'story' && (
-              <>
-                <StoryArea
-                  text={state.storyText}
-                  location={state.currentLocation}
-                  enemyType={state.enemyLineArtType}
-                  showLocation={state.unlockedFullUi}
-                />
-                {state.needsDiceRoll && (
-                  <DiceRoller
-                    state={state}
-                    busy={game.busy}
-                    onRoll={game.submitDice}
-                  />
-                )}
-                {!state.needsDiceRoll && energyEmpty && (
-                  <EnergyDepletedScreen
-                    msUntilNextEnergy={state.msUntilNextEnergy}
-                    energyRegenMinutes={state.energyRegenMinutes}
-                    refillPriceTomans={refillPrice}
-                    busy={game.busy}
-                    onWatchAd={() => game.setAdOpen(true)}
-                    onBuyRefill={() => void game.buySku('energy_refill')}
-                    onTimerElapsed={() => {
-                      void game.refresh().catch(() => undefined);
-                    }}
-                  />
-                )}
-                {!state.needsDiceRoll && !energyEmpty && (
-                  <ActionCards
-                    options={state.options}
-                    stats={state.stats}
-                    busy={game.busy}
-                    onChoose={(id) => void game.choose(id)}
-                  />
-                )}
-                {game.busy && (
-                  <p className="px-4 pb-4 text-center text-xs text-ink-muted">
-                    استاد بازی در حال نوشتن...
-                  </p>
-                )}
-              </>
+              <StoryChat
+                state={state}
+                busy={game.busy}
+                refillPriceTomans={refillPrice}
+                scrollContainerRef={scrollRef}
+                onChoose={(id) => void game.choose(id)}
+                onRoll={game.submitDice}
+                onWatchAd={() => game.setAdOpen(true)}
+                onBuyRefill={() => void game.buySku('energy_refill')}
+                onTimerElapsed={() => {
+                  void game.refresh().catch(() => undefined);
+                }}
+              />
             )}
             {game.tab === 'inventory' && (
               <InventoryPanel items={state.inventory} />

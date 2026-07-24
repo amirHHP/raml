@@ -196,6 +196,14 @@ export function IconShield(p: IconProps) {
   );
 }
 
+export function IconChevronDown(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 export const ACTION_ICONS = {
   sword: IconSword,
   spell: IconSpell,
