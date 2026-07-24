@@ -275,7 +275,10 @@ export async function awakenPlayer(
     player.stats.intellect = 3;
   }
 
-  const ai = await generateGameTurn(await buildAwakenPrompt(name, classType));
+  const turnNumber = (player.storyHistory?.length || 0) + 1;
+  const ai = await generateGameTurn(await buildAwakenPrompt(name, classType), {
+    turnNumber,
+  });
   applyAiResponse(player, ai);
   await persist(player);
   return toClientState(player);
@@ -310,6 +313,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
 
   player.toastMessage = null;
 
+  const turnNumber = (player.storyHistory?.length || 0) + 1;
   const ai = await generateGameTurn(
     await buildActionPrompt({
       name: player.characterName,
@@ -329,6 +333,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
       inventory: player.inventory.map((i) => i.name),
       chosenOption: option.text,
     }),
+    { turnNumber },
   );
 
   applyAiResponse(player, ai);
@@ -376,6 +381,7 @@ export async function submitDiceRoll(
   const pending = player.pendingDiceRoll;
   const success = total >= pending.minRollSuccess;
 
+  const turnNumber = (player.storyHistory?.length || 0) + 1;
   const ai = await generateGameTurn(
     await buildDicePrompt({
       name: player.characterName,
@@ -388,6 +394,7 @@ export async function submitDiceRoll(
       location: player.currentLocation,
       storySnippet: pending.context || player.storyText.slice(0, 300),
     }),
+    { turnNumber },
   );
 
   applyAiResponse(player, ai);

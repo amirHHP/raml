@@ -3,6 +3,7 @@ import type {
   AdminPlayerSummary,
   AdminStats,
   AiSettings,
+  GeminiModelInfo,
   PromptItem,
   PromptKey,
 } from './types';
@@ -87,6 +88,14 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  listGeminiModels: (apiKey?: string) =>
+    request<{ models: GeminiModelInfo[]; baseUrlHint: string }>(
+      '/api/admin/ai/gemini-models',
+      {
+        method: 'POST',
+        body: JSON.stringify(apiKey ? { apiKey } : {}),
+      },
+    ),
   getPrompts: () => request<{ prompts: PromptItem[] }>('/api/admin/prompts'),
   putPrompt: (key: PromptKey, body: string) =>
     request<PromptItem>(`/api/admin/prompts/${key}`, {

@@ -33,6 +33,25 @@ export type AiSettings = {
   openaiModel: string;
   useMockAi: boolean;
   updatedAt: string | null;
+  provider?: 'gemini' | 'openai' | 'other';
+  aiLiveFromTurn?: number;
+};
+
+export type GeminiRateLimit = {
+  rpm: number | null;
+  tpm: number | null;
+  rpd: number | null;
+  label: string;
+  tier: 'free';
+};
+
+export type GeminiModelInfo = {
+  id: string;
+  displayName: string;
+  description: string;
+  inputTokenLimit: number | null;
+  outputTokenLimit: number | null;
+  rateLimit: GeminiRateLimit;
 };
 
 export type PromptKey = 'system' | 'awaken' | 'action' | 'dice';

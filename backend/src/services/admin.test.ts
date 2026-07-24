@@ -105,10 +105,23 @@ describe('ai settings', () => {
     assert.equal(publicSettings.openaiModel, 'gpt-test');
     assert.equal(publicSettings.useMockAi, true);
     assert.equal(publicSettings.openaiApiKeySet, false);
+    assert.equal(publicSettings.aiLiveFromTurn, 5);
 
     const runtime = await getRuntimeAiSettings();
     assert.equal(runtime.useMockAi, true);
     assert.equal(runtime.openaiModel, 'gpt-test');
+  });
+
+  it('switches Gemini key to Gemini OpenAI-compatible base URL', async () => {
+    const publicSettings = await updateAiSettings({
+      openaiApiKey: 'AIzaSyTestKeyForAdmin123456',
+      openaiBaseUrl: 'https://api.openai.com/v1',
+      openaiModel: 'gemini-2.0-flash',
+      useMockAi: false,
+    });
+    assert.equal(publicSettings.provider, 'gemini');
+    assert.match(publicSettings.openaiBaseUrl, /generativelanguage\.googleapis\.com/);
+    assert.equal(publicSettings.useMockAi, false);
   });
 });
 

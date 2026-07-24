@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { getAdminStats, getPlayerDetail, listPlayers, patchPlayer } from '../services/adminPlayers';
-import { getPublicAiSettings, updateAiSettings } from '../services/aiSettings';
+import { getPublicAiSettings, getRuntimeAiSettings, updateAiSettings } from '../services/aiSettings';
+import { listGeminiModels } from '../services/geminiModels';
 import { listPrompts, updatePrompt } from '../services/promptService';
 import { PROMPT_KEYS } from '../models/PromptTemplate';
 import {
@@ -101,6 +102,24 @@ router.put('/ai', async (req, res) => {
     res.json(settings);
   } catch (err) {
     sendError(res, err, 'خطا در ذخیره تنظیمات AI');
+  }
+});
+
+/** List Gemini generative models + free-tier rate limits for the admin picker. */
+router.post('/ai/gemini-models', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        apiKey: z.string().optional(),
+      })
+      .parse(req.body ?? {});
+
+    const runtime = await getRuntimeAiSettings();
+    const apiKey = (body.apiKey?.trim() || runtime.openaiApiKey).trim();
+    const models = await listGeminiModels(apiKey);
+    res.json({ models, baseUrlHint: 'https://generativelanguage.googleapis.com/v1beta/openai/' });
+  } catch (err) {
+    sendError(res, err, 'خطا در دریافت مدل‌های Gemini');
   }
 });
 

@@ -1,5 +1,11 @@
 import { config } from '../config';
 import { AdminSettings, type IAdminSettings } from '../models/AdminSettings';
+import {
+  GEMINI_OPENAI_BASE_URL,
+  isGeminiBaseUrl,
+  looksLikeGeminiApiKey,
+} from './geminiModels';
+import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 export type RuntimeAiSettings = {
   openaiApiKey: string;
@@ -15,6 +21,8 @@ type PublicAiSettings = {
   openaiModel: string;
   useMockAi: boolean;
   updatedAt: string | null;
+  provider: 'gemini' | 'openai' | 'other';
+  aiLiveFromTurn: number;
 };
 
 let useMemory = false;
@@ -46,6 +54,14 @@ export function maskApiKey(key: string): string {
   return `${key.slice(0, 3)}…${key.slice(-4)}`;
 }
 
+function detectProvider(settings: RuntimeAiSettings): PublicAiSettings['provider'] {
+  if (isGeminiBaseUrl(settings.openaiBaseUrl) || looksLikeGeminiApiKey(settings.openaiApiKey)) {
+    return 'gemini';
+  }
+  if (/api\.openai\.com/i.test(settings.openaiBaseUrl)) return 'openai';
+  return 'other';
+}
+
 function toPublic(settings: RuntimeAiSettings, updatedAt: Date | null): PublicAiSettings {
   return {
     openaiApiKeyMasked: maskApiKey(settings.openaiApiKey),
@@ -54,13 +70,24 @@ function toPublic(settings: RuntimeAiSettings, updatedAt: Date | null): PublicAi
     openaiModel: settings.openaiModel,
     useMockAi: settings.useMockAi,
     updatedAt: updatedAt ? updatedAt.toISOString() : null,
+    provider: detectProvider(settings),
+    aiLiveFromTurn: AI_LIVE_FROM_TURN,
   };
 }
 
 function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
-  const openaiBaseUrl = settings.openaiBaseUrl.replace(/\/$/, '') || 'https://api.openai.com/v1';
-  const openaiModel = settings.openaiModel.trim() || 'gpt-4o-mini';
+  let openaiBaseUrl = settings.openaiBaseUrl.replace(/\/$/, '') || 'https://api.openai.com/v1';
   const openaiApiKey = settings.openaiApiKey;
+  // Gemini keys work via Google's OpenAI-compatible endpoint
+  if (
+    looksLikeGeminiApiKey(openaiApiKey) &&
+    (/api\.openai\.com/i.test(openaiBaseUrl) || !openaiBaseUrl)
+  ) {
+    openaiBaseUrl = GEMINI_OPENAI_BASE_URL.replace(/\/$/, '');
+  }
+  const openaiModel =
+    settings.openaiModel.trim() ||
+    (isGeminiBaseUrl(openaiBaseUrl) ? 'gemini-2.0-flash' : 'gpt-4o-mini');
   const useMockAi = !openaiApiKey ? true : settings.useMockAi;
   return { openaiApiKey, openaiBaseUrl, openaiModel, useMockAi };
 }

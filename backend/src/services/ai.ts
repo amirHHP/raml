@@ -7,6 +7,7 @@ import {
   type RuntimeAiSettings,
 } from './aiSettings';
 import { getPromptBody } from './promptService';
+import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 const AiResponseSchema = z.object({
   story_text: z.string(),
@@ -237,9 +238,29 @@ function mockAi(userPrompt: string): AiGameResponse {
   };
 }
 
-export async function generateGameTurn(userPrompt: string): Promise<AiGameResponse> {
+/** First N turns stay on deterministic offline mock; from this turn onward use real AI. */
+export { AI_LIVE_FROM_TURN } from './aiPolicy';
+
+export type GenerateGameTurnOptions = {
+  /** 1-based turn number (awaken / action / dice). Defaults to live AI when omitted. */
+  turnNumber?: number;
+};
+
+export function shouldUseMockAi(
+  settings: RuntimeAiSettings,
+  turnNumber?: number,
+): boolean {
+  if (settings.useMockAi || !settings.openaiApiKey) return true;
+  if (turnNumber == null) return false;
+  return turnNumber < AI_LIVE_FROM_TURN;
+}
+
+export async function generateGameTurn(
+  userPrompt: string,
+  options: GenerateGameTurnOptions = {},
+): Promise<AiGameResponse> {
   const settings = await getRuntimeAiSettings();
-  if (settings.useMockAi || !settings.openaiApiKey) {
+  if (shouldUseMockAi(settings, options.turnNumber)) {
     return mockAi(userPrompt);
   }
 
