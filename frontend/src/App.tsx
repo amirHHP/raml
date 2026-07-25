@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useGame } from './hooks/useGame';
 import { StatusBar } from './components/StatusBar';
 import { StoryChat } from './components/StoryChat';
@@ -177,6 +178,7 @@ export default function App() {
         onClose={() => game.setAdOpen(false)}
         onComplete={() => void game.claimAd()}
       />
+      <SpeedInsights />
     </div>
   );
 }
