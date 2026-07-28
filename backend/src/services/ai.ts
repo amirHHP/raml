@@ -473,7 +473,28 @@ export async function generateGameTurn(
   const systemPrompt = await getPromptBody('system');
   try {
     const content = await requestLiveCompletion(settings, systemPrompt, userPrompt);
-    const parsed = parseAiResponse(content);
+    let parsed: AiGameResponse;
+    try {
+      parsed = parseAiResponse(content);
+    } catch (parseErr) {
+      const zodIssues =
+        parseErr instanceof z.ZodError
+          ? parseErr.issues.map((issue) => ({
+              path: issue.path.join('.') || '(root)',
+              message: issue.message,
+            }))
+          : null;
+      console.error('AI payload parse/shape failure', {
+        turnNumber: options.turnNumber ?? null,
+        model: settings.openaiModel,
+        aiError: formatAiError(parseErr),
+        zodIssues,
+        rawPreview: content.slice(0, 1200),
+        rawLength: content.length,
+        promptPreview: userPrompt.slice(0, 600),
+      });
+      throw parseErr;
+    }
     if (parsed.needs_dice_roll) {
       parsed.options = [];
     } else if (!parsed.options.length) {
