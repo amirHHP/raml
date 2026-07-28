@@ -7,6 +7,7 @@ import {
   type RuntimeAiSettings,
 } from './aiSettings';
 import { getPromptBody } from './promptService';
+import { extractJson } from './jsonExtract';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 const AiResponseSchema = z.object({
@@ -105,17 +106,6 @@ function getClient(settings: RuntimeAiSettings): OpenAI {
     clientFingerprint = fp;
   }
   return client;
-}
-
-function extractJson(raw: string): unknown {
-  const trimmed = raw.trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI response is not valid JSON');
-    return JSON.parse(match[0]);
-  }
 }
 
 /** Early-game options: only energy is visible/spent before full UI unlock. */
@@ -544,6 +534,13 @@ export function formatAiError(err: unknown): string {
   }
   if (err instanceof z.ZodError) {
     return 'پاسخ AI با قالب بازی جور نبود';
+  }
+  if (
+    err instanceof SyntaxError ||
+    lower.includes('after json') ||
+    lower.includes('unexpected token')
+  ) {
+    return 'مدل متن اضافی بعد از JSON برگرداند — دوباره تلاش کنید';
   }
   return raw.replace(/\s+/g, ' ').trim().slice(0, 140);
 }
