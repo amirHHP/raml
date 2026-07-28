@@ -8,7 +8,7 @@ import {
 } from './aiSettings';
 import { getPromptBody } from './promptService';
 import { extractJson } from './jsonExtract';
-import { normalizeAiPayload } from './aiNormalize';
+import { ensureAiOptions, normalizeAiPayload } from './aiNormalize';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 const AiStatSchema = z.coerce.number().optional();
@@ -498,8 +498,14 @@ export async function generateGameTurn(
     }
     if (parsed.needs_dice_roll) {
       parsed.options = [];
-    } else if (!parsed.options.length) {
-      throw new Error('AI گزینه‌ای برنگرداند');
+    } else if (parsed.options.length < 2) {
+      console.warn('AI returned too few options — using fallbacks', {
+        turnNumber: options.turnNumber ?? null,
+        model: settings.openaiModel,
+        got: parsed.options.length,
+        rawPreview: content.slice(0, 800),
+      });
+      ensureAiOptions(parsed);
     }
     return { data: parsed as AiGameResponse, source: 'live' };
   } catch (err) {

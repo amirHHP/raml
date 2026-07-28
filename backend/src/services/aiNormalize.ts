@@ -28,8 +28,23 @@ function normalizeOptions(raw: unknown): unknown[] {
   if (Array.isArray(raw)) return raw;
   const record = asRecord(raw);
   if (!record) return [];
+
+  // Single option sent as an object instead of an array.
+  if (pickString(record, 'text', 'label', 'option', 'title', 'name', 'description', 'action')) {
+    return [record];
+  }
+
+  const numericKeys = Object.keys(record).filter((key) => /^\d+$/.test(key));
+  if (numericKeys.length > 0) {
+    return numericKeys
+      .sort((a, b) => Number(a) - Number(b))
+      .map((key) => record[key]);
+  }
+
+  // Named buckets like option_a / choice_1
   return Object.keys(record)
-    .sort((a, b) => Number(a) - Number(b))
+    .filter((key) => /^(option|choice|action)/i.test(key))
+    .sort()
     .map((key) => record[key]);
 }
 
@@ -62,7 +77,17 @@ function normalizeOption(raw: unknown): Record<string, unknown> | null {
   const record = asRecord(raw);
   if (!record) return null;
 
-  const text = pickString(record, 'text', 'label', 'option', 'title');
+  const text = pickString(
+    record,
+    'text',
+    'label',
+    'option',
+    'title',
+    'name',
+    'description',
+    'action',
+    'choice',
+  );
   if (!text) return null;
 
   const icon =
@@ -103,7 +128,7 @@ export function normalizeAiPayload(raw: unknown): unknown {
   let record = asRecord(raw);
   if (!record) return raw;
 
-  for (const key of ['data', 'result', 'response', 'output']) {
+  for (const key of ['data', 'result', 'response', 'output', 'game_state', 'gameState']) {
     const nested = asRecord(record[key]);
     if (nested && pickString(nested, 'story_text', 'storyText', 'story')) {
       record = nested;
@@ -115,7 +140,13 @@ export function normalizeAiPayload(raw: unknown): unknown {
     pickString(record, 'story_text', 'storyText', 'story', 'narrative') ??
     'ادامه می‌دهی...';
 
-  const options = normalizeOptions(record.options ?? record.choices)
+  const options = normalizeOptions(
+    record.options ??
+      record.choices ??
+      record.actions ??
+      record.action_options ??
+      record.actionOptions,
+  )
     .map(normalizeOption)
     .filter(Boolean);
 
@@ -137,4 +168,41 @@ export function normalizeAiPayload(raw: unknown): unknown {
     ),
     toast_message: record.toast_message ?? record.toastMessage ?? null,
   };
+}
+
+/** Last-resort choices so a live turn never dead-ends on an empty options array. */
+export function fallbackAiOptions(): Array<{
+  text: string;
+  icon: 'search' | 'talk' | 'shield';
+  condition_check: { stat: 'energy'; min: 0 };
+}> {
+  return [
+    {
+      text: 'جلو برو',
+      icon: 'search',
+      condition_check: { stat: 'energy', min: 0 },
+    },
+    {
+      text: 'اطراف را بپای',
+      icon: 'search',
+      condition_check: { stat: 'energy', min: 0 },
+    },
+    {
+      text: 'لحظه‌ای مکث کن',
+      icon: 'shield',
+      condition_check: { stat: 'energy', min: 0 },
+    },
+  ];
+}
+
+export function ensureAiOptions<T extends { needs_dice_roll: boolean; options: unknown[] }>(
+  parsed: T,
+): T {
+  if (parsed.needs_dice_roll) {
+    parsed.options = [];
+    return parsed;
+  }
+  if (parsed.options.length >= 2) return parsed;
+  parsed.options = fallbackAiOptions();
+  return parsed;
 }

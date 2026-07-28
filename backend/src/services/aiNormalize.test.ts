@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAiPayload } from './aiNormalize';
+import { ensureAiOptions, normalizeAiPayload } from './aiNormalize';
 import { parseAiResponse } from './ai';
 
 describe('normalizeAiPayload', () => {
@@ -41,6 +41,25 @@ describe('normalizeAiPayload', () => {
     }) as Record<string, unknown>;
 
     assert.equal(normalized.discovered_item, null);
+  });
+
+  it('ensureAiOptions injects fallbacks when options are empty', () => {
+    const parsed = {
+      needs_dice_roll: false,
+      options: [] as unknown[],
+    };
+    ensureAiOptions(parsed);
+    assert.equal(parsed.options.length, 3);
+    assert.equal((parsed.options[0] as { text: string }).text, 'جلو برو');
+  });
+
+  it('ensureAiOptions leaves dice-roll turns with no options', () => {
+    const parsed = {
+      needs_dice_roll: true,
+      options: [{ text: 'ignored' }] as unknown[],
+    };
+    ensureAiOptions(parsed);
+    assert.deepEqual(parsed.options, []);
   });
 });
 
