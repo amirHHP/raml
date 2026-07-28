@@ -8,6 +8,7 @@ import {
 } from './aiSettings';
 import { getPromptBody } from './promptService';
 import { extractJson } from './jsonExtract';
+import { normalizeAiPayload } from './aiNormalize';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
 const AiStatSchema = z.coerce.number().optional();
@@ -71,7 +72,7 @@ const AiResponseSchema = z.object({
       xp: AiStatSchema,
     })
     .default({}),
-  needs_dice_roll: z.boolean().default(false),
+  needs_dice_roll: z.coerce.boolean().default(false),
   required_roll_type: z
     .enum(['strength', 'agility', 'intellect', 'luck'])
     .nullable()
@@ -509,7 +510,7 @@ export async function generateGameTurn(
 }
 
 export function parseAiResponse(content: string): AiGameResponse {
-  return AiResponseSchema.parse(extractJson(content)) as AiGameResponse;
+  return AiResponseSchema.parse(normalizeAiPayload(extractJson(content))) as AiGameResponse;
 }
 
 async function requestLiveCompletion(
@@ -571,7 +572,9 @@ export function formatAiError(err: unknown): string {
     return 'نام مدل نامعتبر است — مدل دیگری انتخاب کنید';
   }
   if (err instanceof z.ZodError) {
-    return 'پاسخ AI با قالب بازی جور نبود';
+    const first = err.issues[0];
+    const where = first?.path.length ? first.path.join('.') : 'root';
+    return `پاسخ AI با قالب بازی جور نبود (${where})`;
   }
   if (
     err instanceof SyntaxError ||
