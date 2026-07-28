@@ -26,6 +26,7 @@ import {
   listAdminNotifications,
   sendNotification,
 } from '../services/notifications';
+import { getFunnelReport } from '../services/funnel';
 
 const router = Router();
 
@@ -47,6 +48,15 @@ router.get('/stats', async (_req, res) => {
     res.json(stats);
   } catch (err) {
     sendError(res, err, 'خطا در آمار');
+  }
+});
+
+router.get('/funnel', async (_req, res) => {
+  try {
+    const report = await getFunnelReport();
+    res.json(report);
+  } catch (err) {
+    sendError(res, err, 'خطا در قیف انگیجمنت');
   }
 });
 

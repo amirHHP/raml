@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
+import { initFunnel, track } from '../analytics/funnel';
 import type { GameState, InboxItem, ShopSku, TabId } from '../types/game';
 
 export function useGame() {
@@ -70,6 +71,8 @@ export function useGame() {
           setInboxItems(inbox.items);
           setUnreadCount(inbox.unreadCount);
           setError(null);
+          initFunnel(!s.awakened);
+          track('app_open');
         }
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -132,11 +135,13 @@ export function useGame() {
     if (s) {
       setState(s);
       setTab('story');
+      if ((s.storyTurnCount || 0) >= 5) track('turn_5');
     }
   };
 
   const submitDice = async (rawRoll: number, modifier: number) => {
     const total = rawRoll + modifier;
+    track('first_dice');
     const s = await run(() => api.dice({ rawRoll, modifier, total }));
     if (s) setState(s);
   };

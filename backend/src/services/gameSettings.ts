@@ -1,7 +1,7 @@
 import { config } from '../config';
 import { AdminSettings, type IAdminSettings } from '../models/AdminSettings';
 
-export const DEFAULT_STORY_MS_PER_WORD = 400;
+export const DEFAULT_STORY_MS_PER_WORD = 160;
 export const MIN_STORY_MS_PER_WORD = 80;
 export const MAX_STORY_MS_PER_WORD = 2000;
 

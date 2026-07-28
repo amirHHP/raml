@@ -3,6 +3,7 @@ import type {
   AdminPlayerSummary,
   AdminStats,
   AiSettings,
+  FunnelReport,
   GameSettings,
   GeminiModelInfo,
   PromptItem,
@@ -43,6 +44,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const adminApi = {
   getStats: () => request<AdminStats>('/api/admin/stats'),
+  getFunnel: () => request<FunnelReport>('/api/admin/funnel'),
   listPlayers: (params: {
     q?: string;
     status?: string;

@@ -18,6 +18,7 @@ import {
   ensureGameSettingsLoaded,
   setGameSettingsMemory,
 } from './services/gameSettings';
+import { setFunnelMemory } from './services/funnel';
 
 const app = express();
 
@@ -43,6 +44,7 @@ const mongoReady = mongoose
     setMilestonePromptMemory(false);
     setAiSettingsMemory(false);
     setGameSettingsMemory(false);
+    setFunnelMemory(false);
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
@@ -56,6 +58,7 @@ const mongoReady = mongoose
     setMilestonePromptMemory(true);
     setAiSettingsMemory(true);
     setGameSettingsMemory(true);
+    setFunnelMemory(true);
     (global as { __ramlMemory?: boolean }).__ramlMemory = true;
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();

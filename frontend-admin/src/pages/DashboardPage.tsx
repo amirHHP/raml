@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api';
-import type { AdminStats } from '../types';
-import { CLASS_LABELS } from '../types';
+import type { AdminStats, FunnelReport } from '../types';
+import { CLASS_LABELS, FUNNEL_LABELS } from '../types';
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -12,16 +12,92 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+function seconds(ms: number | null): string {
+  if (ms == null) return '—';
+  return `${(ms / 1000).toFixed(1)} ثانیه`;
+}
+
+/** Ordered drop-off across the first minute, plus how long that minute takes. */
+function FunnelSection({ report }: { report: FunnelReport }) {
+  const total = report.steps[0]?.sessions ?? 0;
+
+  if (total === 0) {
+    return (
+      <section className="rounded-xl border border-line bg-sand/70 p-4">
+        <h2 className="text-sm font-medium text-ink-dim">قیف انگیجمنت اولیه</h2>
+        <p className="mt-3 text-sm text-ink-muted">
+          هنوز رویدادی ثبت نشده. قیف فقط برای بازیکن‌هایی ثبت می‌شود که برای اولین بار
+          بازی را باز می‌کنند.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-xl border border-line bg-sand/70 p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 className="text-sm font-medium text-ink-dim">قیف انگیجمنت اولیه</h2>
+        <p className="text-xs text-ink-muted">
+          زمان تا اولین انتخاب — میانه {seconds(report.timeToFirstChoiceMs.median)} / نود‌ک{' '}
+          {seconds(report.timeToFirstChoiceMs.p90)} (
+          {report.timeToFirstChoiceMs.samples} نمونه)
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {report.steps.map((step) => (
+          <div key={step.name} className="rounded-md bg-sand-2 px-3 py-2">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span>{FUNNEL_LABELS[step.name] || step.name}</span>
+              <span className="shrink-0 text-xs text-ink-muted">
+                {step.sessions} نفر — {step.reachedPct}%
+                {step.dropPct > 0 && (
+                  <span className="text-red-400"> (ریزش {step.dropPct}%)</span>
+                )}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
+              <div
+                className="h-full rounded-full bg-amber"
+                style={{ width: `${step.reachedPct}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="mt-5 text-xs font-medium text-ink-dim">
+        رد کردن انیمیشن‌ها (نشانهٔ کند بودن)
+      </h3>
+      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+        {report.signals.map((signal) => (
+          <div
+            key={signal.name}
+            className="flex items-center justify-between rounded-md bg-sand-2 px-3 py-2 text-sm"
+          >
+            <span>{FUNNEL_LABELS[signal.name] || signal.name}</span>
+            <span className="text-amber">
+              {total > 0 ? Math.round((signal.sessions / total) * 100) : 0}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [funnel, setFunnel] = useState<FunnelReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    adminApi
-      .getStats()
-      .then((s) => {
-        if (!cancelled) setStats(s);
+    Promise.all([adminApi.getStats(), adminApi.getFunnel()])
+      .then(([s, f]) => {
+        if (cancelled) return;
+        setStats(s);
+        setFunnel(f);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -46,6 +122,8 @@ export function DashboardPage() {
         <StatCard label="دارای خرید" value={stats.withPurchases} />
         <StatCard label="حالت حافظه" value={stats.memoryStore ? 'بله' : 'خیر'} />
       </div>
+
+      {funnel && <FunnelSection report={funnel} />}
 
       <section className="rounded-xl border border-line bg-sand/70 p-4">
         <h2 className="text-sm font-medium text-ink-dim">توزیع کلاس</h2>

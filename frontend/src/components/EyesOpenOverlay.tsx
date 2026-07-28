@@ -1,15 +1,28 @@
 import { useEffect, useState } from 'react';
+import { EYES_OPEN_SKIPPABLE_AFTER_MS } from '../utils/storyPacing';
 
 /** Full-screen natural eye-opening transition before entering the world. */
-export function EyesOpenOverlay({ visible }: { visible: boolean }) {
+export function EyesOpenOverlay({
+  visible,
+  onSkip,
+}: {
+  visible: boolean;
+  onSkip?: () => void;
+}) {
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [skippable, setSkippable] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
       setExiting(false);
-      return;
+      setSkippable(false);
+      const t = window.setTimeout(
+        () => setSkippable(true),
+        EYES_OPEN_SKIPPABLE_AFTER_MS,
+      );
+      return () => window.clearTimeout(t);
     }
     if (!mounted) return;
 
@@ -26,13 +39,21 @@ export function EyesOpenOverlay({ visible }: { visible: boolean }) {
   return (
     <div
       className={`eyes-open-overlay${exiting ? ' is-exiting' : ''}`}
-      role="presentation"
-      aria-hidden
+      role={skippable ? 'button' : 'presentation'}
+      tabIndex={skippable ? 0 : -1}
+      aria-label={skippable ? 'رد کردن بیداری' : undefined}
+      aria-hidden={!skippable}
+      onClick={skippable ? onSkip : undefined}
     >
       <div className="eyes-open-pair">
         <Eye />
         <Eye />
       </div>
+      <span
+        className={`eyes-open-hint${skippable && !exiting ? ' is-visible' : ''}`}
+      >
+        برای رد کردن، لمس کن
+      </span>
     </div>
   );
 }

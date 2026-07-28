@@ -1,33 +1,27 @@
 import {
+  EQUIP_SLOTS,
   EQUIP_SLOT_LABELS,
-  type EquipSlot,
   type InventoryItem,
 } from '../types/game';
 import { getEquippedBySlot } from '../utils/equipment';
+import { toFaDigits } from '../utils/formatCountdown';
 
-/** CSS % positions for slot markers on the silhouette figure. */
-const SLOT_LAYOUT: Record<
-  EquipSlot,
-  { top: string; left: string; side?: 'left' | 'right' | 'center' }
-> = {
-  head: { top: '6%', left: '50%', side: 'center' },
-  accessory: { top: '18%', left: '50%', side: 'center' },
-  chest: { top: '32%', left: '50%', side: 'center' },
-  hands: { top: '38%', left: '18%', side: 'left' },
-  weapon: { top: '42%', left: '82%', side: 'right' },
-  legs: { top: '62%', left: '50%', side: 'center' },
-  feet: { top: '88%', left: '50%', side: 'center' },
-};
-
-const SLOT_ORDER: EquipSlot[] = [
-  'head',
-  'accessory',
-  'chest',
-  'hands',
-  'weapon',
-  'legs',
-  'feet',
-];
+/** Stone when the slot is empty, gilded when something is worn there. */
+function gear(worn: boolean) {
+  return worn
+    ? {
+        fill: 'url(#gearWorn)',
+        stroke: '#c9a227',
+        strokeWidth: 0.9,
+        strokeOpacity: 0.6,
+      }
+    : {
+        fill: '#0d0c0a',
+        stroke: '#3a3428',
+        strokeWidth: 0.9,
+        strokeOpacity: 0.9,
+      };
+}
 
 export function CharacterSilhouette({
   inventory,
@@ -38,175 +32,174 @@ export function CharacterSilhouette({
   const wornCount = Object.keys(equipped).length;
 
   return (
-    <div className="relative mx-auto w-full max-w-[220px]">
-      <div className="relative aspect-[3/5] w-full">
-        {/* Dark human figure */}
-        <svg
-          viewBox="0 0 120 200"
-          className="h-full w-full"
-          aria-hidden
-          role="img"
-        >
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-[210px]">
+        <svg viewBox="0 0 130 200" className="h-auto w-full" aria-hidden>
           <defs>
-            <linearGradient id="bodyShade" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#141414" />
-              <stop offset="55%" stopColor="#0a0a0a" />
-              <stop offset="100%" stopColor="#050505" />
+            <linearGradient id="gearWorn" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6d5720" stopOpacity="0.32" />
+              <stop offset="100%" stopColor="#20190d" stopOpacity="0.5" />
             </linearGradient>
-            <radialGradient id="bodyGlow" cx="50%" cy="35%" r="55%">
-              <stop offset="0%" stopColor="#27272a" stopOpacity="0.45" />
+            <radialGradient id="emberHalo" cx="50%" cy="42%" r="52%">
+              <stop offset="0%" stopColor="#8a7038" stopOpacity="0.22" />
               <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
           </defs>
 
-          {/* Soft ground shadow */}
-          <ellipse cx="60" cy="192" rx="28" ry="5" fill="#18181b" opacity="0.9" />
+          <ellipse cx="62" cy="92" rx="56" ry="82" fill="url(#emberHalo)" />
 
-          {/* Head */}
-          <ellipse cx="60" cy="28" rx="16" ry="18" fill="url(#bodyShade)" />
-          <ellipse cx="60" cy="28" rx="16" ry="18" fill="url(#bodyGlow)" />
-
-          {/* Neck */}
-          <rect x="54" y="42" width="12" height="10" rx="2" fill="#0c0c0c" />
-
-          {/* Torso */}
+          {/* Cape hanging behind the armour */}
           <path
-            d="M38 52 C38 48, 82 48, 82 52 L88 108 C88 118, 78 122, 60 122 C42 122, 32 118, 32 108 Z"
-            fill="url(#bodyShade)"
+            d="M45 54 C30 86, 29 128, 34 158 L62 148 L90 158 C95 128, 94 86, 79 54 Z"
+            fill="#070706"
+            stroke="#282419"
+            strokeWidth="0.75"
+          />
+
+          {/* Greaves */}
+          <path d="M51 118 L59 118 L58 170 L52 170 Z" {...gear(Boolean(equipped.legs))} />
+          <path d="M65 118 L73 118 L72 170 L66 170 Z" {...gear(Boolean(equipped.legs))} />
+
+          {/* Boots */}
+          <path
+            d="M50 170 L59 170 L61 182 L47 182 Z"
+            {...gear(Boolean(equipped.feet))}
           />
           <path
-            d="M38 52 C38 48, 82 48, 82 52 L88 108 C88 118, 78 122, 60 122 C42 122, 32 118, 32 108 Z"
-            fill="url(#bodyGlow)"
+            d="M65 170 L74 170 L77 182 L63 182 Z"
+            {...gear(Boolean(equipped.feet))}
+          />
+
+          {/* Tassets over the hips */}
+          <path
+            d="M48 100 L76 100 L74 120 L50 120 Z"
+            {...gear(Boolean(equipped.legs))}
           />
 
           {/* Arms */}
           <path
-            d="M38 56 C28 62, 20 78, 18 98 C17 108, 22 112, 28 108 L40 78"
-            fill="#0a0a0a"
+            d="M39 60 C31 74, 29 92, 32 106 L41 106 C38 90, 40 74, 47 62 Z"
+            fill="#0a0908"
+            stroke="#2f2b23"
+            strokeWidth="0.75"
           />
           <path
-            d="M82 56 C92 62, 100 78, 102 98 C103 108, 98 112, 92 108 L80 78"
-            fill="#0a0a0a"
+            d="M85 60 C93 74, 95 92, 92 106 L83 106 C86 90, 84 74, 77 62 Z"
+            fill="#0a0908"
+            stroke="#2f2b23"
+            strokeWidth="0.75"
           />
 
-          {/* Legs */}
+          {/* Cuirass */}
           <path
-            d="M48 120 L42 178 C41 184, 46 188, 52 186 L56 122"
-            fill="#0a0a0a"
+            d="M49 52 L75 52 L78 90 C72 98, 52 98, 46 90 Z"
+            {...gear(Boolean(equipped.chest))}
           />
-          <path
-            d="M72 120 L78 178 C79 184, 74 188, 68 186 L64 122"
-            fill="#0a0a0a"
-          />
-
-          {/* Subtle outline so the figure reads on OLED */}
-          <path
-            d="M60 10 C48 10, 44 22, 44 28 C44 36, 50 42, 54 44 L38 52 L32 108 L48 122 L42 178 L52 186 L56 122 L64 122 L68 186 L78 178 L72 122 L88 108 L82 52 L66 44 C70 42, 76 36, 76 28 C76 22, 72 10, 60 10Z"
-            fill="none"
-            stroke="#27272a"
-            strokeWidth="1"
-            opacity="0.85"
-          />
-
-          {/* Equipped overlays: faint amber accents on filled regions */}
-          {equipped.head && (
-            <ellipse
-              cx="60"
-              cy="26"
-              rx="17"
-              ry="19"
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth="1.25"
-              opacity="0.55"
-            />
-          )}
-          {equipped.accessory && (
-            <path
-              d="M52 44 Q60 50 68 44"
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth="1.5"
-              opacity="0.7"
-            />
-          )}
           {equipped.chest && (
             <path
-              d="M44 58 L76 58 L80 105 L40 105 Z"
-              fill="#f59e0b"
-              opacity="0.08"
+              d="M62 54 V94 M53 64 H71"
+              stroke="#c9a227"
+              strokeWidth="0.6"
+              opacity="0.4"
+              fill="none"
             />
           )}
-          {equipped.hands && (
-            <>
-              <circle cx="20" cy="100" r="6" fill="#f59e0b" opacity="0.2" />
-              <circle cx="100" cy="100" r="6" fill="#f59e0b" opacity="0.2" />
-            </>
-          )}
-          {equipped.weapon && (
-            <path
-              d="M98 70 L108 50 M103 58 L112 62"
-              stroke="#f59e0b"
-              strokeWidth="1.75"
-              opacity="0.75"
-              strokeLinecap="round"
-            />
-          )}
-          {equipped.legs && (
-            <path
-              d="M46 130 L54 170 M74 130 L66 170"
-              stroke="#f59e0b"
-              strokeWidth="3"
-              opacity="0.12"
-              strokeLinecap="round"
-            />
-          )}
-          {equipped.feet && (
-            <>
-              <ellipse cx="48" cy="186" rx="8" ry="3.5" fill="#f59e0b" opacity="0.25" />
-              <ellipse cx="72" cy="186" rx="8" ry="3.5" fill="#f59e0b" opacity="0.25" />
-            </>
-          )}
-        </svg>
 
-        {/* Slot markers */}
-        {SLOT_ORDER.map((slot) => {
-          const layout = SLOT_LAYOUT[slot];
+          {/* Belt */}
+          <path d="M47 91 L77 91 L76 100 L48 100 Z" fill="#100e0b" stroke="#332e25" strokeWidth="0.75" />
+
+          {/* Pauldrons */}
+          <path
+            d="M35 61 C36 50, 47 48, 51 54 L48 65 C43 68, 37 66, 35 61 Z"
+            {...gear(Boolean(equipped.chest))}
+          />
+          <path
+            d="M89 61 C88 50, 77 48, 73 54 L76 65 C81 68, 87 66, 89 61 Z"
+            {...gear(Boolean(equipped.chest))}
+          />
+
+          {/* Gauntlets */}
+          <path
+            d="M31 104 L41 104 L40 114 Q35 117, 32 113 Z"
+            {...gear(Boolean(equipped.hands))}
+          />
+          <path
+            d="M83 104 L93 104 L92 113 Q87 117, 84 114 Z"
+            {...gear(Boolean(equipped.hands))}
+          />
+
+          {/* Gorget */}
+          <path d="M56 43 L68 43 L69 52 L55 52 Z" fill="#0c0b09" stroke="#332e25" strokeWidth="0.75" />
+
+          {/* Helm with an ember-lit visor */}
+          <path
+            d="M51 21 Q62 8, 73 21 L74 37 Q62 48, 50 37 Z"
+            {...gear(Boolean(equipped.head))}
+          />
+          <path d="M53 29 H71" stroke="#c9a227" strokeWidth="2" opacity="0.45" />
+          <path d="M62 21 V37" stroke="#000" strokeWidth="1.25" opacity="0.55" />
+
+          {/* Amulet chain across the chest */}
+          {equipped.accessory && (
+            <>
+              <path
+                d="M52 53 Q62 68, 72 53"
+                fill="none"
+                stroke="#c9a227"
+                strokeWidth="1.1"
+                opacity="0.8"
+              />
+              <path d="M62 66 L65 70 L62 74 L59 70 Z" fill="#c9a227" opacity="0.85" />
+            </>
+          )}
+
+          {/* Sword held point-down at the knight's side */}
+          {equipped.weapon && (
+            <g stroke="#c9a227" strokeOpacity="0.8" fill="#c9a227" fillOpacity="0.22">
+              <path d="M96 112 L101 112 L99 178 L98 178 Z" strokeWidth="0.7" />
+              <path d="M92 106 L105 106 L105 111 L92 111 Z" strokeWidth="0.7" />
+              <path d="M96 94 L100 94 L100 106 L96 106 Z" strokeWidth="0.7" />
+              <circle cx="98" cy="91" r="2.4" strokeWidth="0.7" />
+            </g>
+          )}
+
+          {/* Ground */}
+          <ellipse cx="62" cy="186" rx="32" ry="4.5" fill="#100e0a" />
+          <ellipse
+            cx="62"
+            cy="186"
+            rx="32"
+            ry="4.5"
+            fill="none"
+            stroke="#c9a227"
+            strokeWidth="0.6"
+            opacity="0.2"
+          />
+        </svg>
+      </div>
+
+      <dl className="mt-5 border-t border-bone/10 pt-4">
+        {EQUIP_SLOTS.map((slot) => {
           const item = equipped[slot];
-          const filled = Boolean(item);
           return (
             <div
               key={slot}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ top: layout.top, left: layout.left }}
-              title={
-                item
-                  ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}`
-                  : EQUIP_SLOT_LABELS[slot]
-              }
+              className="flex items-baseline gap-2 border-b border-bone/5 py-2 text-xs last:border-0"
             >
-              <span
-                className={[
-                  'block h-2.5 w-2.5 rounded-full border transition duration-300',
-                  filled
-                    ? 'border-amber bg-amber/80 shadow-[0_0_10px_rgba(245,158,11,0.55)] scale-110'
-                    : 'border-line bg-oled/80',
-                ].join(' ')}
-                aria-label={
-                  item
-                    ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}`
-                    : `${EQUIP_SLOT_LABELS[slot]} خالی`
-                }
-              />
+              <dt className="shrink-0 text-bone-dim">{EQUIP_SLOT_LABELS[slot]}</dt>
+              <span className="souls-leader" aria-hidden />
+              <dd className={item ? 'truncate text-gold' : 'text-bone-muted'}>
+                {item ? item.name : 'تهی'}
+              </dd>
             </div>
           );
         })}
-      </div>
+      </dl>
 
-      <p className="mt-3 text-center text-[11px] text-ink-muted">
+      <p className="mt-4 text-center text-[10px] tracking-widest text-bone-muted">
         {wornCount > 0
-          ? `${wornCount} پوشیدنی روی پیکر`
-          : 'هنوز پوشیدنی‌ای پیدا نکرده‌ای'}
+          ? `${toFaDigits(wornCount)} پوشیدنی بر پیکر`
+          : 'پیکری بی‌جامه در تاریکی'}
       </p>
     </div>
   );

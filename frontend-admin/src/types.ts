@@ -10,6 +10,37 @@ export type AdminStats = {
   memoryStore: boolean;
 };
 
+export type FunnelStep = {
+  name: string;
+  sessions: number;
+  reachedPct: number;
+  dropPct: number;
+};
+
+export type FunnelReport = {
+  steps: FunnelStep[];
+  signals: Array<{ name: string; sessions: number }>;
+  timeToFirstChoiceMs: {
+    median: number | null;
+    p90: number | null;
+    samples: number;
+  };
+  memoryStore: boolean;
+};
+
+export const FUNNEL_LABELS: Record<string, string> = {
+  app_open: 'باز کردن بازی',
+  name_focused: 'لمس فیلد اسم',
+  awaken_submitted: 'زدن «باز کردن چشم‌ها»',
+  awaken_complete: 'پایان انیمیشن بیداری',
+  first_choice: 'اولین انتخاب',
+  first_dice: 'اولین تاس',
+  turn_5: 'رسیدن به نوبت ۵',
+  intro_skipped: 'رد کردن متن آغازین',
+  eyes_skipped: 'رد کردن انیمیشن چشم',
+  story_skipped: 'رد کردن متن داستان',
+};
+
 export type AdminPlayerSummary = {
   deviceId: string;
   characterName: string;

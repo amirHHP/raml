@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ROLL_TYPE_LABELS, type GameState } from '../types/game';
 import { IconDice } from './icons';
+import { diceFeedback, failureFeedback, successFeedback } from '../utils/haptics';
 
 function modifierFor(state: GameState): number {
   const type = state.pendingDiceRoll?.requiredRollType;
@@ -26,6 +27,7 @@ export function DiceRoller({
 
   const handleRoll = async () => {
     if (busy || spinning) return;
+    diceFeedback();
     setSpinning(true);
     let ticks = 0;
     const anim = window.setInterval(() => {
@@ -39,6 +41,11 @@ export function DiceRoller({
     const raw = 1 + Math.floor(Math.random() * 20);
     setFace(raw);
     setSpinning(false);
+    if (raw + mod >= pending.minRollSuccess) {
+      successFeedback();
+    } else {
+      failureFeedback();
+    }
     await onRoll(raw, mod);
   };
 

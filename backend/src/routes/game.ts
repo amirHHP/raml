@@ -12,8 +12,42 @@ import {
   toClientState,
 } from '../services/gameState';
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
+import { recordEvents } from '../services/funnel';
+import { FUNNEL_EVENT_NAMES } from '../models/FunnelEvent';
 
 const router = Router();
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Onboarding telemetry. Failures are swallowed: never break a turn over a metric. */
+router.post('/events', requireDeviceId, async (req, res) => {
+  try {
+    const body = z
+      .object({
+        sessionId: z.string().min(8).max(64),
+        events: z
+          .array(
+            z.object({
+              name: z.enum(FUNNEL_EVENT_NAMES),
+              atMs: z.number().int().min(0).max(DAY_MS),
+            }),
+          )
+          .min(1)
+          .max(20),
+      })
+      .parse(req.body);
+
+    await recordEvents(req.deviceId, body.sessionId, body.events);
+    res.status(204).end();
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'رویداد نامعتبر' });
+      return;
+    }
+    console.error(err);
+    res.status(204).end();
+  }
+});
 
 /** Restore a prior save by code (deviceId). Does not create a new player. */
 router.post('/restore', async (req, res) => {

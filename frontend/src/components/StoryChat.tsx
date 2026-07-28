@@ -13,8 +13,9 @@ import { DiceRoller } from './DiceRoller';
 import { EnemyLineArt } from './EnemyLineArt';
 import { EnergyDepletedScreen } from './EnergyDepletedScreen';
 import { ACTION_ICONS, IconChevronDown, IconPin } from './icons';
+import { DEFAULT_STORY_MS_PER_WORD } from '../utils/storyPacing';
+import { track } from '../analytics/funnel';
 
-const DEFAULT_STORY_MS_PER_WORD = 400;
 const NEAR_BOTTOM_PX = 80;
 
 type StoryBubble = {
@@ -65,9 +66,12 @@ function StoryBubbleView({
   return (
     <button
       type="button"
-      onClick={skip}
+      onClick={() => {
+        if (animate && !done) track('story_skipped');
+        skip();
+      }}
       className="w-full text-right"
-      aria-label="متن داستان"
+      aria-label="متن داستان — برای نمایش کامل لمس کنید"
     >
       <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink">
         {animate ? displayed : text}
@@ -77,6 +81,11 @@ function StoryBubbleView({
           </span>
         )}
       </p>
+      {animate && !done && (
+        <span className="mt-3 block text-[11px] text-ink-muted">
+          برای رد کردن، لمس کن
+        </span>
+      )}
     </button>
   );
 }
@@ -191,6 +200,7 @@ export function StoryChat({
   const handleChoose = (optionId: string) => {
     const opt = state.options.find((o) => o.id === optionId);
     if (!opt || busy) return;
+    track('first_choice');
     choicePendingRef.current = true;
     turnAtChoiceRef.current = state.storyTurnCount || 0;
     setBubbles((prev) => [

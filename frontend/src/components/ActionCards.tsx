@@ -1,6 +1,8 @@
+import type { CSSProperties } from 'react';
 import { ACTION_ICONS } from './icons';
 import type { GameOption, PlayerStats, StatKey } from '../types/game';
 import { optionEffectLabel } from '../utils/optionEffect';
+import { tapFeedback } from '../utils/haptics';
 
 function readStat(stats: PlayerStats, key: StatKey): number {
   return stats[key];
@@ -21,7 +23,7 @@ export function ActionCards({
 
   return (
     <div className="grid grid-cols-2 gap-2.5 px-4 pb-4 pt-5">
-      {options.map((opt) => {
+      {options.map((opt, index) => {
         const Icon = ACTION_ICONS[opt.icon] || ACTION_ICONS.search;
         const need = opt.condition_check.min;
         const have = readStat(stats, opt.condition_check.stat);
@@ -34,8 +36,12 @@ export function ActionCards({
             key={opt.id}
             type="button"
             disabled={disabled}
-            onClick={() => onChoose(opt.id)}
-            className={`flex flex-col items-start gap-2 rounded-xl border px-3 py-3 text-right transition ${
+            style={{ '--card-index': index } as CSSProperties}
+            onClick={() => {
+              tapFeedback();
+              onChoose(opt.id);
+            }}
+            className={`card-enter flex flex-col items-start gap-2 rounded-xl border px-3 py-3 text-right transition active:scale-[0.97] ${
               disabled
                 ? 'border-line/50 bg-panel/40 text-ink-muted opacity-45'
                 : 'border-amber/40 bg-panel text-ink hover:border-amber hover:amber-glow'

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useWordTypewriter } from '../hooks/useWordTypewriter';
-
-const DEFAULT_STORY_MS_PER_WORD = 400;
+import { DEFAULT_STORY_MS_PER_WORD } from '../utils/storyPacing';
+import { tapFeedback } from '../utils/haptics';
+import { track } from '../analytics/funnel';
 
 export function AwakenScreen({
   storyText,
@@ -45,9 +46,12 @@ export function AwakenScreen({
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
         <button
           type="button"
-          onClick={skip}
+          onClick={() => {
+            if (!done) track('intro_skipped');
+            skip();
+          }}
           className="mb-10 w-full text-center"
-          aria-label="متن آغازین"
+          aria-label="متن آغازین — برای نمایش کامل لمس کنید"
         >
           <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink-dim">
             {displayed}
@@ -57,17 +61,21 @@ export function AwakenScreen({
               </span>
             )}
           </p>
+          <span
+            className={`mt-4 block text-[11px] text-ink-muted transition-opacity duration-500 ${
+              done ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
+            برای رد کردن، لمس کن
+          </span>
         </button>
 
-        <div
-          className={`flex flex-col items-stretch transition-opacity duration-[1400ms] ease-out ${
-            done ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
-        >
+        <div className="fade-in-soft flex flex-col items-stretch">
           <input
             id="char-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onFocus={() => track('name_focused')}
             maxLength={24}
             placeholder="اسمت رو بگو"
             disabled={busy}
@@ -79,7 +87,11 @@ export function AwakenScreen({
           <button
             type="button"
             disabled={busy || name.trim().length < 1}
-            onClick={() => void onAwaken(name.trim())}
+            onClick={() => {
+              tapFeedback();
+              track('awaken_submitted');
+              void onAwaken(name.trim());
+            }}
             className="w-full py-3.5 text-base text-ink transition enabled:active:opacity-70 disabled:opacity-30"
           >
             باز کردن چشم‌ها

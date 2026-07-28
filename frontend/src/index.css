@@ -10,7 +10,19 @@
   --color-amber-dim: #b45309;
   --color-panel: #0a0a0a;
   --color-line: #27272a;
+
+  /* Soulslike sheet palette: aged bone type on stone, gold ornament */
+  --color-bone: #d8cfba;
+  --color-bone-dim: #b0a693;
+  --color-bone-muted: #857e70;
+  --color-gold: #c9a227;
+  --color-blood: #a33a30;
+  --color-steel: #4f7fa3;
+  --color-moss: #8aa356;
+  --color-ash: #221e18;
+
   --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Noto Naskh Arabic', 'Vazirmatn', serif;
 }
 
 @layer base {
@@ -49,17 +61,158 @@
   }
 }
 
-/* Natural eye-opening transition into the world */
+/* ─── Soulslike character sheet ───────────────────────────────── */
+
+.souls-sheet {
+  font-family: var(--font-display);
+  color: var(--color-bone);
+  background:
+    radial-gradient(90% 55% at 50% 0%, rgba(122, 104, 68, 0.16) 0%, rgba(0, 0, 0, 0) 60%),
+    #000;
+}
+
+.souls-panel {
+  position: relative;
+  border: 1px solid var(--color-ash);
+  background:
+    radial-gradient(115% 80% at 50% 0%, rgba(88, 78, 56, 0.22) 0%, rgba(0, 0, 0, 0) 68%),
+    linear-gradient(180deg, #0b0a08 0%, #040403 100%);
+  box-shadow: inset 0 1px 0 rgba(211, 201, 178, 0.05);
+}
+
+/* Engraved corner ticks on opposite corners, like inventory frames */
+.souls-corners::before,
+.souls-corners::after {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-color: color-mix(in oklab, var(--color-gold) 45%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+
+.souls-corners::before {
+  top: 5px;
+  right: 5px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.souls-corners::after {
+  bottom: 5px;
+  left: 5px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+/* Section heading framed by hairlines: «── عنوان ──» */
+.souls-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--color-bone-dim);
+  letter-spacing: 0.08em;
+}
+
+.souls-divider::before,
+.souls-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-gold) 32%, transparent),
+    transparent
+  );
+}
+
+.souls-bar {
+  position: relative;
+  height: 9px;
+  border: 1px solid #2b261d;
+  background: linear-gradient(180deg, #100f0c, #050504);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Segment notches sit above the fill so the bar reads as forged metal */
+.souls-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.4) 0 1px,
+    transparent 1px 8px
+  );
+}
+
+.souls-bar-fill {
+  height: 100%;
+  transition: width 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.souls-bar-hp {
+  background: linear-gradient(180deg, #8e332b, #4a120f);
+}
+
+.souls-bar-mana {
+  background: linear-gradient(180deg, #426a88, #1d3448);
+}
+
+.souls-bar-energy {
+  background: linear-gradient(180deg, #74904a, #3a4d24);
+}
+
+.souls-bar-xp {
+  background: linear-gradient(180deg, #bb9a37, #6a4f13);
+}
+
+/* Dotted leader between a stat label and its value */
+.souls-leader {
+  flex: 1;
+  align-self: center;
+  height: 0;
+  border-bottom: 1px dotted rgba(211, 201, 178, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .souls-bar-fill {
+    transition: none;
+  }
+}
+
+/* Natural eye-opening transition into the world.
+   --eyes-open-duration must match EYES_OPEN_MS in src/utils/storyPacing.ts. */
 .eyes-open-overlay {
+  --eyes-open-duration: 2400ms;
   position: fixed;
   inset: 0;
   z-index: 80;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3rem;
   background: #000;
   opacity: 1;
   transition: opacity 0.7s ease-out;
+}
+
+.eyes-open-hint {
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+.eyes-open-hint.is-visible {
+  opacity: 1;
 }
 
 .eyes-open-overlay.is-exiting {
@@ -89,7 +242,7 @@
   justify-content: center;
   background: radial-gradient(circle at 50% 45%, #d4d4d8 0%, #a1a1aa 55%, #52525b 100%);
   opacity: 0;
-  animation: eye-globe-in 5.2s ease-out forwards;
+  animation: eye-globe-in var(--eyes-open-duration) ease-out forwards;
 }
 
 .eye-iris {
@@ -130,41 +283,34 @@
   top: 0;
   height: 55%;
   transform-origin: top center;
-  animation: lid-upper-awaken 5.2s cubic-bezier(0.33, 0.1, 0.25, 1) forwards;
+  animation: lid-upper-awaken var(--eyes-open-duration)
+    cubic-bezier(0.33, 0.1, 0.25, 1) forwards;
 }
 
 .eye-lid-lower {
   bottom: 0;
   height: 45%;
   transform-origin: bottom center;
-  animation: lid-lower-awaken 5.2s cubic-bezier(0.33, 0.1, 0.25, 1) forwards;
+  animation: lid-lower-awaken var(--eyes-open-duration)
+    cubic-bezier(0.33, 0.1, 0.25, 1) forwards;
 }
 
-/* Slow open, then two natural blinks, then stay open */
+/* Open, one natural blink, then stay open */
 @keyframes lid-upper-awaken {
   0%,
-  4% {
+  6% {
     transform: translateY(0);
   }
-  38% {
+  40% {
     transform: translateY(-105%);
-  }
-  46% {
-    transform: translateY(-105%);
-  }
-  52% {
-    transform: translateY(0);
   }
   58% {
     transform: translateY(-105%);
   }
-  68% {
-    transform: translateY(-105%);
-  }
-  74% {
+  66% {
     transform: translateY(0);
   }
-  80%,
+  78%,
   100% {
     transform: translateY(-105%);
   }
@@ -172,28 +318,19 @@
 
 @keyframes lid-lower-awaken {
   0%,
-  4% {
+  6% {
     transform: translateY(0);
   }
-  38% {
+  40% {
     transform: translateY(105%);
-  }
-  46% {
-    transform: translateY(105%);
-  }
-  52% {
-    transform: translateY(20%);
   }
   58% {
     transform: translateY(105%);
   }
-  68% {
-    transform: translateY(105%);
-  }
-  74% {
+  66% {
     transform: translateY(20%);
   }
-  80%,
+  78%,
   100% {
     transform: translateY(105%);
   }
@@ -201,10 +338,10 @@
 
 @keyframes eye-globe-in {
   0%,
-  6% {
+  8% {
     opacity: 0;
   }
-  30% {
+  34% {
     opacity: 1;
   }
   100% {
@@ -233,5 +370,44 @@
 
   .eye-lid-lower {
     transform: translateY(105%);
+  }
+}
+
+/* ─── Entrance motion ─────────────────────────────────────────── */
+
+.fade-in-soft {
+  animation: fade-in-soft 400ms ease-out both;
+}
+
+@keyframes fade-in-soft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Choice cards arrive staggered so the eye lands on them one at a time */
+.card-enter {
+  animation: card-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-soft,
+  .card-enter {
+    animation: none;
   }
 }

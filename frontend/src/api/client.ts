@@ -85,6 +85,20 @@ export const api = {
       `/api/game/inbox/${encodeURIComponent(id)}/read`,
       { method: 'POST', body: '{}' },
     ),
+  /** Fire-and-forget onboarding telemetry; keepalive so it survives page unload. */
+  sendFunnelEvents: (
+    sessionId: string,
+    events: Array<{ name: string; atMs: number }>,
+  ) =>
+    fetch('/api/game/events', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-device-id': getDeviceId(),
+      },
+      body: JSON.stringify({ sessionId, events }),
+    }),
   getShop: () => request<{ items: ShopSku[] }>('/api/mono/shop'),
   claimAdReward: () =>
     request<GameState>('/api/mono/ads/reward', { method: 'POST', body: '{}' }),

@@ -135,6 +135,20 @@ function chosenOptionFromPrompt(userPrompt: string): string {
   return match?.[1]?.trim() ?? '';
 }
 
+/** Turn-1 option texts, used only when no turn number is supplied. */
+const PROLOGUE_FIRST_CHOICES = /بیرون بکش|فانوس|تو کیستی/;
+
+/** Echoes the player's first choice back before the prologue dice check. */
+function prologueDiceSetup(chosen: string): string {
+  if (chosen.includes('فانوس')) {
+    return 'نوک انگشتانت به شیشهٔ فانوس می‌رسد. فتیله می‌لرزد و سایه‌ای بلند روی شن کشیده می‌شود.';
+  }
+  if (chosen.includes('کیستی')) {
+    return 'صدایت در کویر می‌شکند. آنچه زیر شن است یک لحظه بی‌حرکت می‌ماند — دارد گوش می‌دهد.';
+  }
+  return 'زور می‌زنی. شن مثل دهانی بسته می‌شود و چیزی پایین‌تر، محکم‌تر می‌کشد.';
+}
+
 /** Deterministic offline AI for local/dev and the first story turns. Exported for tests. */
 export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse {
   const isAwaken = userPrompt.includes('چشم‌هایش را باز کرده');
@@ -147,26 +161,26 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     return lateMockBeat(chosen || userPrompt.slice(0, 40), turnNumber);
   }
 
-  // Turn 1 — بیداری؛ فقط انرژی
+  // Turn 1 — بیداری وسط بحران: تهدید مشخص، یک سؤال بی‌جواب، و سه گزینه با سه لحن متفاوت
   if (isAwaken) {
     return {
       story_text:
-        'چشم‌هایت را باز می‌کنی. شن‌های سرد زیر انگشتانت می‌لغزند. افقی از ماهِ رنگ‌پریده، کویر را به دو نیم کرده است.\n\nاز دور، نوری کم‌سو از دهانهٔ غاری می‌درخشد — و صدایی خش‌دار نامت را زمزمه می‌کند.',
-      current_location: 'کرانه‌های کویر رمل — آستانه',
-      enemy_line_art_type: 'none',
+        'چشم باز می‌کنی و شن تا گلویت بالا آمده است. چیزی زیر خاک، مچ پایت را گرفته و آرام به پایین می‌کشد.\n\nچند قدم آن‌طرف‌تر فانوسی روی شن افتاده، و صدایی خش‌دار نامت را می‌خواند: «تو زودتر از موعد بیدار شدی.»',
+      current_location: 'کویر رمل — گودِ شن',
+      enemy_line_art_type: 'shadow',
       stats_update: { xp: 5 },
       needs_dice_roll: false,
       required_roll_type: null,
       min_roll_success: null,
       options: [
-        energyOption('به سوی نور غار برو', 'search'),
-        energyOption('با باد سخن بگو', 'talk'),
-        energyOption('اطراف را بپای', 'search'),
+        energyOption('با تمام توان خودت را بیرون بکش', 'sword'),
+        energyOption('دست به سوی فانوس دراز کن', 'key'),
+        energyOption('فریاد بزن: تو کیستی؟', 'talk'),
       ],
       discovered_item: {
         id: 'sand_amulet',
         name: 'طلسم شن',
-        description: 'قطعه‌ای کهنه که گرمای خفیفی دارد.',
+        description: 'در شن به دستت آمد؛ گرمای خفیفی دارد و به تپش قلبت پاسخ می‌دهد.',
         icon: 'amulet',
         equip_slot: 'accessory',
       },
@@ -174,14 +188,14 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     };
   }
 
-  // Turn 3 — نتیجهٔ تاس نگهبان؛ گزینه‌ها فقط انرژی (نه مانا/قدرت/چابکی)
+  // Turn 3 — نتیجهٔ تاس؛ گزینه‌ها فقط انرژی (نه مانا/قدرت/چابکی)
   if (isDice) {
     return {
       story_text: success
-        ? 'تاس به نفع تو می‌چرخد. ضربه‌ات دقیق فرود می‌آید و نگهبان یک قدم عقب می‌رود. راهی باریک به تالار بعدی باز می‌شود.'
-        : 'تاس علیه توست. پنجهٔ سنگی به شانه‌ات می‌خورد و نفس‌ات در سینه حبس می‌شود. باید سریع تصمیم بگیری.',
-      current_location: 'غار اژدهای تاریکی - تالار ورودی',
-      enemy_line_art_type: 'orc_guardian',
+        ? 'تاس به نفع تو می‌چرخد. با یک تکان از شن بیرون می‌آیی و آنچه پایت را گرفته بود در تاریکی فرومی‌رود. فانوس در دستت است و دهانهٔ غاری در چند قدمی می‌درخشد.'
+        : 'تاس علیه توست. شن تا سینه‌ات بالا می‌آید و چیزی زیر خاک، ساق پایت را می‌درد. باید همین حالا تصمیم بگیری.',
+      current_location: 'کویر رمل — گودِ شن',
+      enemy_line_art_type: 'shadow',
       stats_update: success
         ? { xp: 15, gold: 25 }
         : { hp: -12, xp: 5 },
@@ -191,7 +205,7 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
       options: success
         ? [
             energyOption('از شکاف باریک پیش برو', 'key'),
-            energyOption('غنیمت کنار مجسمه را بردار', 'search'),
+            energyOption('غنیمت کنار فانوس را بردار', 'search'),
             energyOption('لحظه‌ای گوش بسپار', 'talk'),
           ]
         : [
@@ -204,21 +218,17 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     };
   }
 
-  // Turn 2 — ورود به غار → تاس بخت (آمار پنهان قدرت را جلو نمی‌آوریم)
-  if (
-    chosen.includes('به سوی نور') ||
-    chosen.includes('نور غار') ||
-    chosen.includes('ورود به غار')
-  ) {
+  // Turn 2 — هر انتخابِ نوبت اول به تاس می‌رسد: زودترین لحظهٔ «بازی‌وار» بازی.
+  // آستانهٔ ۸ عمداً پایین است تا اولین تاس بازیکن معمولاً برد باشد.
+  if (turnNumber === 2 || (turnNumber == null && PROLOGUE_FIRST_CHOICES.test(chosen))) {
     return {
-      story_text:
-        'وارد تالار ورودی می‌شوی. مجسمه‌ای غول‌پیکر از سنگ سیاه بیدار می‌شود — نگهبان غار. چشمانش چون اخگر می‌درخشند.\n\nبرای عبور، باید اقبال خود را بیازمایی.',
-      current_location: 'غار اژدهای تاریکی - تالار ورودی',
-      enemy_line_art_type: 'orc_guardian',
+      story_text: `${prologueDiceSetup(chosen)}\n\nاین لحظه به بخت تو بند است.`,
+      current_location: 'کویر رمل — گودِ شن',
+      enemy_line_art_type: 'shadow',
       stats_update: { energy_change: 0 },
       needs_dice_roll: true,
       required_roll_type: 'luck',
-      min_roll_success: 12,
+      min_roll_success: 8,
       options: [],
       discovered_item: null,
       toast_message: 'بررسی مهارت: اقبال',
@@ -239,12 +249,12 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     const tookLoot = chosen.includes('غنیمت');
     return {
       story_text: fled
-        ? 'به سایه می‌خزی. نفس نگهبان سنگین‌تر می‌شود، اما تو را از دست می‌دهد. دالانی خنک به عمق غار باز است — و بوی گوگرد قوی‌تر می‌شود.'
+        ? 'به سایه می‌خزی. نفس آن چیز سنگین‌تر می‌شود، اما تو را از دست می‌دهد. دالانی خنک به عمق غار باز است — و بوی گوگرد قوی‌تر می‌شود.'
         : usedAmulet
-          ? 'طلسم شن در مشتت گرم می‌شود. گردی زرین‌رنگ چشم نگهبان را می‌پوشاند. تا گیج است، از کنارش می‌گذری و به دالانی تاریک می‌رسی.'
+          ? 'طلسم شن در مشتت گرم می‌شود. گردی زرین‌رنگ روی گودال می‌پاشد و پنجه رهایت می‌کند. از دهانهٔ غار می‌گذری و به دالانی تاریک می‌رسی.'
           : tookLoot
-            ? 'کنار مجسمه، شنلی تیره با دوخت مسی پیدا می‌کنی. روی شانه‌ات می‌اندازی — گرم و سنگین است. راه تالار بعدی باز است.'
-            : 'نگهبان سنگی تلوتلو می‌خورد و روی یک زانو می‌افتد. راه تالار بعدی باز است؛ از اعماق، پژواک بال‌هایی سنگین به گوش می‌رسد.',
+            ? 'کنار فانوس، شنلی تیره با دوخت مسی پیدا می‌کنی. روی شانه‌ات می‌اندازی — گرم و سنگین است. راه دالان بعدی باز است.'
+            : 'آنچه زیر شن بود عقب می‌کشد و در گودی محو می‌شود. راه دالان بعدی باز است؛ از اعماق، پژواک بال‌هایی سنگین به گوش می‌رسد.',
       current_location: fled
         ? 'غار اژدهای تاریکی - دالان سایه'
         : 'غار اژدهای تاریکی - دالان ژرف',
@@ -272,28 +282,6 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
         : fled
           ? 'از چشم نگهبان دور شدی'
           : 'راه ادامه دارد',
-    };
-  }
-
-  // شاخه‌های فرعی بیداری → هنوز به غار ختم می‌شوند
-  if (chosen.includes('باد') || chosen.includes('اطراف')) {
-    return {
-      story_text: chosen.includes('باد')
-        ? 'باد نامت را زمزمه می‌کند و شن‌ها را به سمت دهانهٔ غار می‌راند. انگار چیزی آنجا منتظرت است.'
-        : 'روی شن رد پایی تازه می‌بینی — به سوی همان نور کم‌سو می‌رود. هوا بوی سنگ خیس می‌دهد.',
-      current_location: 'کرانه‌های کویر رمل — آستانه',
-      enemy_line_art_type: 'none',
-      stats_update: { xp: 5 },
-      needs_dice_roll: false,
-      required_roll_type: null,
-      min_roll_success: null,
-      options: [
-        energyOption('به سوی نور غار برو', 'search'),
-        energyOption('همان‌جا کمین کن', 'shield'),
-        energyOption('بازگشت به تاریکی امن', 'retreat'),
-      ],
-      discovered_item: null,
-      toast_message: null,
     };
   }
 

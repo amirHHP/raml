@@ -13,22 +13,29 @@ import { ShopPanel } from './components/panels/ShopPanel';
 import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
-
-const EYES_OPEN_MS = 5400;
+import { EYES_OPEN_MS } from './utils/storyPacing';
+import { track } from './analytics/funnel';
 
 export default function App() {
   const game = useGame();
   const [openingEyes, setOpeningEyes] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
+  const skipEyesRef = useRef<(() => void) | null>(null);
 
   const handleAwaken = async (name: string) => {
     setOpeningEyes(true);
     const minAnim = new Promise<void>((resolve) => {
-      window.setTimeout(resolve, EYES_OPEN_MS);
+      const timer = window.setTimeout(resolve, EYES_OPEN_MS);
+      skipEyesRef.current = () => {
+        window.clearTimeout(timer);
+        resolve();
+      };
     });
     await game.awaken(name);
     await minAnim;
+    skipEyesRef.current = null;
     setOpeningEyes(false);
+    track('awaken_complete');
   };
 
   if (game.loading) {
@@ -96,7 +103,13 @@ export default function App() {
         </div>
       )}
 
-      <EyesOpenOverlay visible={openingEyes} />
+      <EyesOpenOverlay
+        visible={openingEyes}
+        onSkip={() => {
+          track('eyes_skipped');
+          skipEyesRef.current?.();
+        }}
+      />
 
       <main
         ref={scrollRef}
