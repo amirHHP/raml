@@ -123,6 +123,19 @@ describe('ai settings', () => {
     assert.match(publicSettings.openaiBaseUrl, /generativelanguage\.googleapis\.com/);
     assert.equal(publicSettings.useMockAi, false);
   });
+
+  it('keeps a saved key after the process cache is cleared', async () => {
+    await updateAiSettings({
+      openaiApiKey: 'AIzaSyPersistedKeyValue999999',
+      openaiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      openaiModel: 'gemini-2.0-flash',
+      useMockAi: false,
+    });
+    clearAiSettingsCache();
+    const runtime = await getRuntimeAiSettings();
+    assert.equal(runtime.openaiApiKey, 'AIzaSyPersistedKeyValue999999');
+    assert.equal(runtime.useMockAi, false);
+  });
 });
 
 describe('admin players + notifications (memory)', () => {

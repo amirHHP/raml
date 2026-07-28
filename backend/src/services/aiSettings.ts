@@ -28,11 +28,16 @@ type PublicAiSettings = {
 let useMemory = false;
 let memorySettings: RuntimeAiSettings | null = null;
 let cached: RuntimeAiSettings | null = null;
+/** Wall-clock of the last Mongo read. Serverless instances keep a process cache
+ * that would otherwise serve a stale key after another instance saved a new one. */
+let cachedAtMs = 0;
+const CACHE_TTL_MS = 5_000;
 let onSettingsChanged: (() => void) | null = null;
 
 export function setAiSettingsMemory(value: boolean): void {
   useMemory = value;
   cached = null;
+  cachedAtMs = 0;
 }
 
 export function onAiSettingsChange(handler: () => void): void {
@@ -93,26 +98,32 @@ function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
 }
 
 export async function getRuntimeAiSettings(): Promise<RuntimeAiSettings> {
-  if (cached) return cached;
+  if (cached && (useMemory || Date.now() - cachedAtMs < CACHE_TTL_MS)) {
+    return cached;
+  }
 
   if (useMemory) {
     cached = finalize(memorySettings || fromEnv());
+    cachedAtMs = Date.now();
     return cached;
   }
 
   const doc = await AdminSettings.findOne({ singletonKey: 'default' }).lean<IAdminSettings | null>();
   if (!doc) {
     cached = finalize(fromEnv());
+    cachedAtMs = Date.now();
     return cached;
   }
 
+  // Prefer a non-empty DB key; otherwise fall back to the env key.
   cached = finalize({
-    openaiApiKey: doc.openaiApiKey || config.openaiApiKey,
+    openaiApiKey: doc.openaiApiKey?.trim() ? doc.openaiApiKey : config.openaiApiKey,
     openaiBaseUrl: doc.openaiBaseUrl || config.openaiBaseUrl,
     openaiModel: doc.openaiModel || config.openaiModel,
     useMockAi:
       typeof doc.useMockAi === 'boolean' ? doc.useMockAi : config.useMockAi,
   });
+  cachedAtMs = Date.now();
   return cached;
 }
 
@@ -151,29 +162,36 @@ export async function updateAiSettings(input: {
   if (useMemory) {
     memorySettings = next;
     cached = next;
+    cachedAtMs = Date.now();
     onSettingsChanged?.();
     return toPublic(next, new Date());
   }
 
+  // Explicit $set so we never replace the whole AdminSettings document
+  // (game unlock turns / storyMsPerWord live on the same singleton).
   const doc = await AdminSettings.findOneAndUpdate(
     { singletonKey: 'default' },
     {
-      singletonKey: 'default',
-      openaiApiKey: next.openaiApiKey,
-      openaiBaseUrl: next.openaiBaseUrl,
-      openaiModel: next.openaiModel,
-      useMockAi: next.useMockAi,
+      $set: {
+        openaiApiKey: next.openaiApiKey,
+        openaiBaseUrl: next.openaiBaseUrl,
+        openaiModel: next.openaiModel,
+        useMockAi: next.useMockAi,
+      },
+      $setOnInsert: { singletonKey: 'default' },
     },
     { upsert: true, new: true },
   );
 
   cached = next;
+  cachedAtMs = Date.now();
   onSettingsChanged?.();
   return toPublic(next, doc.updatedAt);
 }
 
 export function clearAiSettingsCache(): void {
   cached = null;
+  cachedAtMs = 0;
 }
 
 /** Sync peek at cached settings (null until first load). */

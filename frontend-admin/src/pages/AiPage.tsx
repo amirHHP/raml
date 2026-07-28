@@ -4,6 +4,11 @@ import type { AiSettings, GeminiModelInfo } from '../types';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai/';
 
+function looksLikeApiKey(value: string): boolean {
+  const v = value.trim();
+  return v.startsWith('AIza') || v.startsWith('sk-');
+}
+
 export function AiPage() {
   const [settings, setSettings] = useState<AiSettings | null>(null);
   const [apiKey, setApiKey] = useState('');
@@ -100,6 +105,14 @@ export function AiPage() {
     setError(null);
     setMessage(null);
     try {
+      const trimmedKey = apiKey.trim();
+      if (trimmedKey && !looksLikeApiKey(trimmedKey)) {
+        setError(
+          'این شبیه کلید Gemini (AIza…) یا OpenAI (sk-…) نیست. اگر مرورگر رمز ادمین را اینجا پر کرده، فیلد را پاک کنید.',
+        );
+        return;
+      }
+
       const body: {
         openaiApiKey?: string;
         openaiBaseUrl: string;
@@ -110,14 +123,26 @@ export function AiPage() {
         openaiModel: model.trim(),
         useMockAi,
       };
-      if (apiKey.trim()) body.openaiApiKey = apiKey.trim();
+      if (trimmedKey) body.openaiApiKey = trimmedKey;
       const s = await adminApi.putAi(body);
       setSettings(s);
       setBaseUrl(s.openaiBaseUrl);
       setModel(s.openaiModel);
       setApiKey('');
       setUseMockAi(s.useMockAi);
-      setMessage('تنظیمات ذخیره شد');
+      if (trimmedKey) {
+        setMessage(
+          s.openaiApiKeySet
+            ? `کلید جدید ذخیره شد (${s.openaiApiKeyMasked})`
+            : 'ذخیره شد ولی کلید خالی است',
+        );
+      } else {
+        setMessage(
+          s.openaiApiKeySet
+            ? `تنظیمات ذخیره شد — کلید قبلی نگه داشته شد (${s.openaiApiKeyMasked})`
+            : 'تنظیمات ذخیره شد — هنوز کلیدی تنظیم نشده',
+        );
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -144,6 +169,12 @@ export function AiPage() {
           <span className="mr-2 text-emerald-400"> · Gemini</span>
         )}
       </p>
+      {settings?.updatedAt && (
+        <p className="text-xs text-ink-muted">
+          آخرین ذخیره:{' '}
+          {new Date(settings.updatedAt).toLocaleString('fa-IR')}
+        </p>
+      )}
       <p className="rounded-md border border-line/60 bg-sand-2/50 px-3 py-2 text-xs leading-6 text-ink-dim">
         چهار نوبت اول بازی آفلاین (Mock) است؛ از نوبت{' '}
         <span className="text-amber">{liveFrom}</span> به بعد — اگر کلید تنظیم باشد و Mock
@@ -160,12 +191,21 @@ export function AiPage() {
         API Key جدید (Gemini یا OpenAI — خالی بگذارید تا همان قبلی بماند)
         <input
           type="password"
+          name="raml-ai-api-key"
+          autoComplete="new-password"
+          data-1p-ignore
+          data-lpignore="true"
           value={apiKey}
           onChange={(e) => onApiKeyChange(e.target.value)}
           className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
           placeholder="AIza... یا sk-..."
         />
       </label>
+      {apiKey.trim() && !looksLikeApiKey(apiKey) && (
+        <p className="text-xs text-amber">
+          این مقدار شبیه کلید API نیست — مراقب autofill مرورگر باشید.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button
