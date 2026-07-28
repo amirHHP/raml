@@ -10,6 +10,42 @@ import { getPromptBody } from './promptService';
 import { extractJson } from './jsonExtract';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
 
+const AiStatSchema = z.coerce.number().optional();
+
+const AiConditionSchema = z
+  .object({
+    stat: z
+      .enum(['hp', 'mana', 'gold', 'energy', 'strength', 'agility', 'intellect'])
+      .catch('energy'),
+    min: z.coerce.number().catch(0),
+  })
+  .default({ stat: 'energy', min: 0 });
+
+const AiOptionSchema = z
+  .union([
+    z.string().transform((text) => ({
+      text,
+      icon: 'search' as const,
+      condition_check: { stat: 'energy' as const, min: 0 },
+    })),
+    z.object({
+      text: z.string().catch('ادامه بده'),
+      icon: z
+        .enum(['sword', 'spell', 'key', 'retreat', 'talk', 'search', 'shield'])
+        .catch('search'),
+      condition_check: AiConditionSchema,
+    }),
+  ])
+  .transform((option) =>
+    typeof option === 'string'
+      ? {
+          text: option,
+          icon: 'search' as const,
+          condition_check: { stat: 'energy' as const, min: 0 },
+        }
+      : option,
+  );
+
 const AiResponseSchema = z.object({
   story_text: z.string().min(1),
   current_location: z.string().default('ناشناخته'),
@@ -25,14 +61,14 @@ const AiResponseSchema = z.object({
     .catch('none'),
   stats_update: z
     .object({
-      hp: z.number().optional(),
-      mana: z.number().optional(),
-      gold: z.number().optional(),
-      energy_change: z.number().optional(),
-      strength: z.number().optional(),
-      agility: z.number().optional(),
-      intellect: z.number().optional(),
-      xp: z.number().optional(),
+      hp: AiStatSchema,
+      mana: AiStatSchema,
+      gold: AiStatSchema,
+      energy_change: AiStatSchema,
+      strength: AiStatSchema,
+      agility: AiStatSchema,
+      intellect: AiStatSchema,
+      xp: AiStatSchema,
     })
     .default({}),
   needs_dice_roll: z.boolean().default(false),
@@ -41,31 +77,8 @@ const AiResponseSchema = z.object({
     .nullable()
     .optional()
     .catch(null),
-  min_roll_success: z.number().nullable().optional().catch(null),
-  options: z
-    .array(
-      z.object({
-        text: z.string(),
-        icon: z
-          .enum(['sword', 'spell', 'key', 'retreat', 'talk', 'search', 'shield'])
-          .catch('search'),
-        condition_check: z.object({
-          stat: z
-            .enum([
-              'hp',
-              'mana',
-              'gold',
-              'energy',
-              'strength',
-              'agility',
-              'intellect',
-            ])
-            .catch('energy'),
-          min: z.number().catch(0),
-        }),
-      }),
-    )
-    .default([]),
+  min_roll_success: z.coerce.number().nullable().optional().catch(null),
+  options: z.array(AiOptionSchema).default([]),
   discovered_item: z
     .object({
       id: z.string(),
@@ -460,7 +473,7 @@ export async function generateGameTurn(
   const systemPrompt = await getPromptBody('system');
   try {
     const content = await requestLiveCompletion(settings, systemPrompt, userPrompt);
-    const parsed = AiResponseSchema.parse(extractJson(content));
+    const parsed = parseAiResponse(content);
     if (parsed.needs_dice_roll) {
       parsed.options = [];
     } else if (!parsed.options.length) {
@@ -472,6 +485,10 @@ export async function generateGameTurn(
     console.error('Live AI failed (no mock fallback):', detail, err);
     throw Object.assign(new Error(detail), { status: 502, aiError: true });
   }
+}
+
+export function parseAiResponse(content: string): AiGameResponse {
+  return AiResponseSchema.parse(extractJson(content)) as AiGameResponse;
 }
 
 async function requestLiveCompletion(
