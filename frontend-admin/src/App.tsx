@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { adminApi, clearToken, getToken, setToken } from './api';
 import type { TabId } from './types';
@@ -115,6 +116,7 @@ export default function App() {
         {tab === 'prompts' && <PromptsPage />}
         {tab === 'notifications' && <NotificationsPage />}
       </main>
+      <Analytics />
       <SpeedInsights />
     </div>
   );

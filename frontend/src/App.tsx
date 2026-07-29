@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useGame } from './hooks/useGame';
 import { StatusBar } from './components/StatusBar';
@@ -191,6 +192,7 @@ export default function App() {
         onClose={() => game.setAdOpen(false)}
         onComplete={() => void game.claimAd()}
       />
+      <Analytics />
       <SpeedInsights />
     </div>
   );
