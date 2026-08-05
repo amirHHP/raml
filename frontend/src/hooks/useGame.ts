@@ -197,7 +197,18 @@ export function useGame() {
 
   const returnHome = async () => {
     const s = await run(() => api.returnHome());
-    if (s) setState(s);
+    if (s) {
+      setState(s);
+      setTab('home');
+    }
+  };
+
+  const enterCave = async () => {
+    const s = await run(() => api.enterCave());
+    if (s) {
+      setState(s);
+      setTab('story');
+    }
   };
 
   const startHomeActivity = async (
@@ -263,6 +274,7 @@ export function useGame() {
     refresh,
     refreshEnergy,
     returnHome,
+    enterCave,
     startHomeActivity,
     speedUpHomeActivity,
     cancelHomeActivity,

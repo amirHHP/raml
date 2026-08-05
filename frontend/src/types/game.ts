@@ -160,6 +160,7 @@ export interface GameState {
   playDayCount: number;
   storyTurnCount: number;
   homeUnlocked?: boolean;
+  atHome?: boolean;
   activeHomeActivity?: ActiveHomeActivity | null;
   storyHistory: Array<string | StoryHistoryEntry>;
   /** Milliseconds per word for story typewriter (lower = faster). */

@@ -275,7 +275,8 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
       if (shouldEquip) {
         for (const [stat, val] of Object.entries(effectStats)) {
           const key = stat as StatKey;
-          const aiAdded = (ai.stats_update || {})[key] || 0;
+          const statsUpdateRecord = (ai.stats_update || {}) as Record<string, number | undefined>;
+          const aiAdded = statsUpdateRecord[key] || 0;
           const neededExtra = Math.max(0, (val || 0) - aiAdded);
           if (neededExtra > 0) {
             player.stats[key] = (player.stats[key] || 0) + neededExtra;
@@ -426,6 +427,7 @@ export function toClientState(player: IPlayer) {
     toastMessage: player.toastMessage,
     purchasedSkus: player.purchasedSkus,
     homeUnlocked: Boolean(player.homeUnlocked),
+    atHome: Boolean(player.atHome),
     activeHomeActivity: player.activeHomeActivity
       ? {
           activityId: player.activeHomeActivity.activityId as any,
@@ -774,7 +776,16 @@ export async function unlockOrReturnHome(deviceId: string) {
 
   player.stats.gold -= 20;
   player.homeUnlocked = true;
+  player.atHome = true;
   player.toastMessage = 'با پرداخت ۲۰ سکه طلا به خانه بازگشتید!';
+  await persist(player);
+  return toClientState(player);
+}
+
+export async function enterCave(deviceId: string) {
+  const player = await getOrCreatePlayer(deviceId);
+  player.atHome = false;
+  player.toastMessage = 'از خانه خارج شدید و دوباره وارد غار شدید.';
   await persist(player);
   return toClientState(player);
 }

@@ -13,6 +13,7 @@ interface HomePanelProps {
   state: GameState;
   busy: boolean;
   onReturnHome: () => Promise<void>;
+  onEnterCave?: () => Promise<void>;
   onStartActivity: (
     activityId: HomeActivityId,
     durationMinutes: number,
@@ -130,6 +131,7 @@ export function HomePanel({
   state,
   busy,
   onReturnHome,
+  onEnterCave,
   onStartActivity,
   onSpeedUp,
   onCancel,
@@ -217,6 +219,16 @@ export function HomePanel({
         <p className="mt-1 text-xs text-ink-muted leading-relaxed">
           در خانه می‌توانید با تمرین و کاوش‌های زمان‌دار، قدرتمندتر شوید. هرچه زمان بیشتری اختصاص دهید، پاداش‌ها و ریسک‌ها به صورت نمایی افزایش می‌یابند.
         </p>
+        {state.homeUnlocked && onEnterCave && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onEnterCave()}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-amber/40 bg-gradient-to-r from-amber-600/90 to-amber-500/90 py-2 text-xs font-bold text-oled shadow-md hover:brightness-110 active:scale-98 transition"
+          >
+            <span>⛰️ خروج از خانه و ورود به غار</span>
+          </button>
+        )}
       </div>
 
       {/* Locked / Return state if not homeUnlocked */}

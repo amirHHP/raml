@@ -8,6 +8,7 @@ import {
   claimHomeActivity,
   clearToast,
   debugUnlock,
+  enterCave,
   getOrCreatePlayer,
   restorePlayer,
   speedUpHomeActivity,
@@ -216,6 +217,16 @@ router.post('/home/return', requireDeviceId, async (req, res) => {
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status || 500).json({ error: e.message || 'خطا در بازگشت به خانه' });
+  }
+});
+
+router.post('/cave/enter', requireDeviceId, async (req, res) => {
+  try {
+    const state = await enterCave(req.deviceId);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در ورود به غار' });
   }
 });
 

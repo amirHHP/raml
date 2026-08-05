@@ -149,6 +149,7 @@ export default function App() {
                 state={state}
                 busy={game.busy}
                 onReturnHome={() => game.returnHome()}
+                onEnterCave={() => game.enterCave()}
                 onStartActivity={(id, dur) => game.startHomeActivity(id, dur)}
                 onSpeedUp={() => game.speedUpHomeActivity()}
                 onCancel={() => game.cancelHomeActivity()}
@@ -183,6 +184,7 @@ export default function App() {
           showInventory={unlocks.inventory}
           showStats={unlocks.stats}
           showHome={unlocks.home}
+          disableStory={Boolean(state.atHome)}
         />
       )}
 

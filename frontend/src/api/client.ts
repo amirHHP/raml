@@ -109,6 +109,8 @@ export const api = {
     }),
   returnHome: () =>
     request<GameState>('/api/game/home/return', { method: 'POST', body: '{}' }),
+  enterCave: () =>
+    request<GameState>('/api/game/cave/enter', { method: 'POST', body: '{}' }),
   startHomeActivity: (activityId: string, durationMinutes: number) =>
     request<GameState>('/api/game/home/start', {
       method: 'POST',

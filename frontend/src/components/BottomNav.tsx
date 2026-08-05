@@ -7,7 +7,7 @@ const ALL_TABS: {
   Icon: typeof IconScroll;
   requires?: 'inventory' | 'stats' | 'home';
 }[] = [
-  { id: 'story', label: 'داستان', Icon: IconScroll },
+  { id: 'story', label: 'غار', Icon: IconScroll },
   { id: 'home', label: 'خانه', Icon: IconHome, requires: 'home' },
   { id: 'inventory', label: 'کوله‌پشتی', Icon: IconBag, requires: 'inventory' },
   { id: 'stats', label: 'حال من', Icon: IconUser, requires: 'stats' },
@@ -20,12 +20,14 @@ export function BottomNav({
   showInventory = true,
   showStats = true,
   showHome = true,
+  disableStory = false,
 }: {
   active: TabId;
   onChange: (t: TabId) => void;
   showInventory?: boolean;
   showStats?: boolean;
   showHome?: boolean;
+  disableStory?: boolean;
 }) {
   const tabs = ALL_TABS.filter((tab) => {
     if (tab.requires === 'inventory') return showInventory;
@@ -39,16 +41,23 @@ export function BottomNav({
       <ul className="mx-auto flex max-w-lg items-center justify-around px-2">
         {tabs.map(({ id, label, Icon }) => {
           const on = active === id;
+          const isDisabled = id === 'story' && disableStory;
           return (
             <li key={id}>
               <button
                 type="button"
-                onClick={() => onChange(id)}
+                disabled={isDisabled}
+                title={isDisabled ? 'ابتدا باید خروج از خانه را بزنید' : undefined}
+                onClick={() => !isDisabled && onChange(id)}
                 className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] transition ${
-                  on ? 'text-amber amber-text-glow' : 'text-ink-muted hover:text-ink-dim'
+                  isDisabled
+                    ? 'opacity-35 cursor-not-allowed text-ink-muted'
+                    : on
+                    ? 'text-amber amber-text-glow'
+                    : 'text-ink-muted hover:text-ink-dim'
                 }`}
               >
-                <Icon size={22} className={on ? 'drop-shadow-[0_0_6px_#f59e0b]' : ''} />
+                <Icon size={22} className={on && !isDisabled ? 'drop-shadow-[0_0_6px_#f59e0b]' : ''} />
                 {label}
               </button>
             </li>

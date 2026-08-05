@@ -195,5 +195,6 @@ export interface PlayerDocument {
   storyHistory: Array<string | StoryHistoryEntry>;
   storyTurnCount: number;
   homeUnlocked?: boolean;
+  atHome?: boolean;
   activeHomeActivity?: ActiveHomeActivity | null;
 }

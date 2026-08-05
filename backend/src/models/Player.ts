@@ -39,6 +39,7 @@ export interface IPlayer extends Document {
   lastAiSource?: 'live' | 'mock' | 'error' | null;
   lastAiError?: string | null;
   homeUnlocked?: boolean;
+  atHome?: boolean;
   activeHomeActivity?: {
     activityId: string;
     startTime: Date;
@@ -156,6 +157,7 @@ const PlayerSchema = new Schema<IPlayer>(
     lastAiSource: { type: String, default: null },
     lastAiError: { type: String, default: null },
     homeUnlocked: { type: Boolean, default: false },
+    atHome: { type: Boolean, default: false },
     activeHomeActivity: {
       type: new Schema(
         {
