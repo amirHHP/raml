@@ -35,7 +35,7 @@ describe('game settings (memory)', () => {
     const initial = await getPublicGameSettings();
     assert.equal(initial.storyMsPerWord, DEFAULT_STORY_MS_PER_WORD);
     assert.equal(getStoryMsPerWord(), DEFAULT_STORY_MS_PER_WORD);
-    assert.equal(initial.unlockInventoryAtTurn, 10);
+    assert.equal(initial.unlockInventoryAtTurn, 1);
     assert.equal(initial.unlockGoldAtTurn, 40);
 
     const updated = await updateGameSettings({
@@ -45,6 +45,6 @@ describe('game settings (memory)', () => {
     assert.equal(updated.storyMsPerWord, 250);
     assert.equal(getStoryMsPerWord(), 250);
     assert.equal(updated.unlockGoldAtTurn, 15);
-    assert.equal(updated.unlockInventoryAtTurn, 10);
+    assert.equal(updated.unlockInventoryAtTurn, 1);
   });
 });

@@ -51,6 +51,8 @@ export interface GameOption {
   icon: 'sword' | 'spell' | 'key' | 'retreat' | 'talk' | 'search' | 'shield';
   condition_check: ConditionCheck;
   energy_cost?: number;
+  item_reward?: string | null;
+  requires_item?: string | null;
 }
 
 export interface PlayerStats {
@@ -76,7 +78,18 @@ export interface InventoryItem {
   quantity: number;
   /** When set, item appears on the character silhouette for that slot. */
   equipSlot?: EquipSlot | null;
+  effect?: string | null;
 }
+
+export type StoryHistoryEntry =
+  | { kind: 'story'; text: string }
+  | {
+      kind: 'choice';
+      text: string;
+      effect?: string;
+      icon?: GameOption['icon'];
+      item_reward?: string | null;
+    };
 
 export interface PendingDiceRoll {
   requiredRollType: 'strength' | 'agility' | 'intellect' | 'luck';
@@ -106,7 +119,7 @@ export interface GameState {
   };
   playDayCount: number;
   storyTurnCount: number;
-  storyHistory: string[];
+  storyHistory: Array<string | StoryHistoryEntry>;
   /** Milliseconds per word for story typewriter (lower = faster). */
   storyMsPerWord: number;
   aiMode: 'mock' | 'live';

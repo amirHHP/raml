@@ -18,6 +18,7 @@ import type {
   GameOption,
   PlayerDocument,
   StatsUpdate,
+  StoryHistoryEntry,
 } from '../types/game';
 
 /** In-memory fallback when MongoDB is unavailable. */
@@ -93,7 +94,7 @@ function defaultPlayer(deviceId: string): Partial<IPlayer> {
     inventory: [],
     toastMessage: null,
     purchasedSkus: [],
-    storyHistory: [],
+    storyHistory: [] as Array<string | StoryHistoryEntry>,
     storyTurnCount: 0,
     lastAiSource: null,
     lastAiError: null,
@@ -162,12 +163,13 @@ function getStoryTurnCount(player: IPlayer): number {
 }
 
 function formatRecentHistory(player: IPlayer, limit = 4): string {
-  const history = player.storyHistory || [];
+  const history: Array<string | StoryHistoryEntry> = player.storyHistory || [];
   if (history.length === 0) return '—';
   const turnCount = getStoryTurnCount(player);
   return history
     .slice(-limit)
-    .map((text, i, arr) => {
+    .map((item, i, arr) => {
+      const text = typeof item === 'string' ? item : item.text;
       const n = turnCount - arr.length + i + 1;
       const clipped = text.replace(/\s+/g, ' ').trim().slice(0, 180);
       return `${n}) ${clipped}`;
@@ -220,6 +222,8 @@ function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
       icon: o.icon,
       condition_check,
       energy_cost: 1,
+      item_reward: o.item_reward ?? undefined,
+      requires_item: o.requires_item ?? undefined,
     };
   });
 }
@@ -229,16 +233,20 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   player.currentLocation = ai.current_location;
   player.enemyLineArtType = ai.enemy_line_art_type;
   player.storyTurnCount = getStoryTurnCount(player) + 1;
-  player.storyHistory = [...(player.storyHistory || []), ai.story_text].slice(-20);
+  player.storyHistory = [
+    ...(player.storyHistory || []),
+    { kind: 'story' as const, text: ai.story_text },
+  ].slice(-200);
   const unlocks = resolveFeatureUnlocks(player);
   applyStatsUpdate(player, ai.stats_update || {}, unlocks);
 
-  if (ai.discovered_item && unlocks.inventory) {
+  if (ai.discovered_item) {
     const discovered = ai.discovered_item;
     const existing = player.inventory.find((i) => i.id === discovered.id);
     if (existing) {
       existing.quantity += 1;
       if (discovered.equip_slot) existing.equipSlot = discovered.equip_slot;
+      if (discovered.effect) existing.effect = discovered.effect;
     } else {
       player.inventory.push({
         id: discovered.id,
@@ -247,13 +255,14 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
         icon: discovered.icon,
         quantity: 1,
         ...(discovered.equip_slot ? { equipSlot: discovered.equip_slot } : {}),
+        ...(discovered.effect ? { effect: discovered.effect } : {}),
       });
     }
   }
 
   player.toastMessage =
     ai.toast_message ??
-    (ai.discovered_item && unlocks.inventory ? `آیتم جدید: ${ai.discovered_item.name}` : null);
+    (ai.discovered_item ? `آیتم جدید: ${ai.discovered_item.name}` : null);
 
   if (ai.needs_dice_roll && ai.required_roll_type && ai.min_roll_success != null) {
     player.needsDiceRoll = true;
@@ -484,6 +493,18 @@ export async function chooseOption(deviceId: string, optionId: string) {
 
   player.toastMessage = null;
 
+  const choiceEntry = {
+    kind: 'choice' as const,
+    text: option.text,
+    effect:
+      option.condition_check.min > 0
+        ? `${option.condition_check.stat} ${option.condition_check.min}`
+        : `انرژی ${option.energy_cost ?? 1}`,
+    icon: option.icon,
+    item_reward: option.item_reward ?? null,
+  };
+  player.storyHistory = [...(player.storyHistory || []), choiceEntry].slice(-200);
+
   const turnNumber = getStoryTurnCount(player) + 1;
   const unlocksForTurn = resolveFeatureUnlocksAtTurn(player, turnNumber);
   const earlyResources =
@@ -525,7 +546,8 @@ export async function chooseOption(deviceId: string, optionId: string) {
     await persist(player);
     return toClientState(player);
   } catch (err) {
-    // Refund energy/mana — story did not advance
+    // Refund energy/mana and remove uncommitted choice entry — story did not advance
+    player.storyHistory = (player.storyHistory || []).slice(0, -1);
     player.stats.energy = Math.min(player.stats.maxEnergy, player.stats.energy + cost);
     if (manaSpent > 0) {
       player.stats.mana = Math.min(player.stats.maxMana, player.stats.mana + manaSpent);

@@ -18,7 +18,7 @@ export type UnlockTurnSettings = {
 };
 
 export const DEFAULT_UNLOCK_TURNS: UnlockTurnSettings = {
-  unlockInventoryAtTurn: 10,
+  unlockInventoryAtTurn: 1,
   unlockStatsAtTurn: 20,
   unlockHpAtTurn: 20,
   unlockManaAtTurn: 30,

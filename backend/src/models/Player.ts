@@ -6,6 +6,7 @@ import type {
   InventoryItem,
   PendingDiceRoll,
   PlayerStats,
+  StoryHistoryEntry,
 } from '../types/game';
 
 export type PlayerStatus = 'active' | 'banned';
@@ -31,7 +32,7 @@ export interface IPlayer extends Document {
   inventory: InventoryItem[];
   toastMessage: string | null;
   purchasedSkus: string[];
-  storyHistory: string[];
+  storyHistory: Array<string | StoryHistoryEntry>;
   /** Durable story turn counter (storyHistory is capped for context). */
   storyTurnCount: number;
   /** Last story generation source for client honesty. */
@@ -54,6 +55,8 @@ const OptionSchema = new Schema(
     icon: { type: String, required: true },
     condition_check: { type: ConditionSchema, required: true },
     energy_cost: { type: Number, default: 1 },
+    item_reward: { type: String, required: false, default: undefined },
+    requires_item: { type: String, required: false, default: undefined },
   },
   { _id: false },
 );
@@ -83,6 +86,7 @@ const InventorySchema = new Schema(
     description: { type: String, required: true },
     icon: { type: String, required: true },
     quantity: { type: Number, default: 1 },
+    effect: { type: String, required: false, default: undefined },
     equipSlot: {
       type: String,
       enum: ['head', 'chest', 'hands', 'legs', 'feet', 'weapon', 'accessory'],
@@ -139,7 +143,7 @@ const PlayerSchema = new Schema<IPlayer>(
     inventory: { type: [InventorySchema], default: [] },
     toastMessage: { type: String, default: null },
     purchasedSkus: { type: [String], default: [] },
-    storyHistory: { type: [String], default: [] },
+    storyHistory: { type: Schema.Types.Mixed, default: [] } as any,
     storyTurnCount: { type: Number, default: 0 },
     lastAiSource: { type: String, default: null },
     lastAiError: { type: String, default: null },

@@ -6,7 +6,26 @@ import {
   type RefObject,
 } from 'react';
 import { useWordTypewriter } from '../hooks/useWordTypewriter';
-import type { GameOption, GameState } from '../types/game';
+import type { GameOption, GameState, StoryHistoryEntry } from '../types/game';
+
+function parseHistoryBubbles(history: Array<string | StoryHistoryEntry>): ChatBubble[] {
+  if (!history || history.length === 0) return [];
+  return history.map((item, idx) => {
+    if (typeof item === 'string') {
+      return { id: `hist-story-${idx}`, kind: 'story', text: item };
+    }
+    if (item.kind === 'choice') {
+      return {
+        id: `hist-choice-${idx}`,
+        kind: 'choice',
+        text: item.text,
+        effect: item.effect || '',
+        icon: item.icon || 'search',
+      };
+    }
+    return { id: `hist-story-${idx}`, kind: 'story', text: item.text };
+  });
+}
 import { optionEffectLabel } from '../utils/optionEffect';
 import { ActionCards } from './ActionCards';
 import { DiceRoller } from './DiceRoller';
@@ -137,31 +156,25 @@ export function StoryChat({
   const typingDoneRef = useRef(false);
   const choicePendingRef = useRef(false);
   const turnAtChoiceRef = useRef(0);
-
   const energyEmpty = state.stats.energy < 1;
   const msPerWord = state.storyMsPerWord || DEFAULT_STORY_MS_PER_WORD;
   const latestKind = bubbles.length > 0 ? bubbles[bubbles.length - 1]?.kind : null;
   const latestIsStory = latestKind === 'story';
 
-  // Hydrate past turns, then append when a new turn arrives (even if text repeats)
+  // Hydrate past turns, then sync when a new turn arrives
   useEffect(() => {
+    const history =
+      state.storyHistory?.length > 0
+        ? state.storyHistory
+        : state.storyText
+          ? [state.storyText]
+          : [];
+
     if (!hydrated) {
-      const history =
-        state.storyHistory?.length > 0
-          ? state.storyHistory
-          : state.storyText
-            ? [state.storyText]
-            : [];
-      setBubbles(
-        history.map((text) => ({
-          id: nextId('story'),
-          kind: 'story' as const,
-          text,
-        })),
-      );
+      const initialBubbles = parseHistoryBubbles(history);
+      setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
       lastTurnRef.current = state.storyTurnCount || history.length;
-      // Fresh awaken (single beat): type it out. Returning mid-run: show history instantly.
       const animateFirst = history.length <= 1;
       setAnimateLatest(animateFirst);
       setTypingDone(!animateFirst);
@@ -180,15 +193,12 @@ export function StoryChat({
     lastStoryRef.current = state.storyText;
     lastTurnRef.current = turnAdvanced ? turn : lastTurnRef.current + 1;
 
-    setBubbles((prev) => [
-      ...prev,
-      { id: nextId('story'), kind: 'story', text: state.storyText },
-    ]);
+    setBubbles(parseHistoryBubbles(history));
     setAnimateLatest(true);
     setTypingDone(false);
     typingDoneRef.current = false;
     setStickToBottom(true);
-  }, [hydrated, state.storyText, state.storyTurnCount]);
+  }, [hydrated, state.storyHistory, state.storyText, state.storyTurnCount]);
 
   const handleTypingDone = () => {
     if (typingDoneRef.current) return;

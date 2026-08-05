@@ -29,6 +29,8 @@ export interface GameOption {
   icon: 'sword' | 'spell' | 'key' | 'retreat' | 'talk' | 'search' | 'shield';
   condition_check: ConditionCheck;
   energy_cost?: number;
+  item_reward?: string | null;
+  requires_item?: string | null;
 }
 
 export interface StatsUpdate {
@@ -74,12 +76,15 @@ export interface AiGameResponse {
     text: string;
     icon: GameOption['icon'];
     condition_check: ConditionCheck;
+    item_reward?: string | null;
+    requires_item?: string | null;
   }>;
   discovered_item?: {
     id: string;
     name: string;
     description: string;
     icon: string;
+    effect?: string | null;
     /** Wearable slot; null/omitted = not shown on body silhouette. */
     equip_slot?: EquipSlot | null;
   } | null;
@@ -109,7 +114,18 @@ export interface InventoryItem {
   quantity: number;
   /** When set, item appears on the character silhouette for that slot. */
   equipSlot?: EquipSlot | null;
+  effect?: string | null;
 }
+
+export type StoryHistoryEntry =
+  | { kind: 'story'; text: string }
+  | {
+      kind: 'choice';
+      text: string;
+      effect?: string;
+      icon?: GameOption['icon'];
+      item_reward?: string | null;
+    };
 
 export interface PendingDiceRoll {
   requiredRollType: 'strength' | 'agility' | 'intellect' | 'luck';
@@ -137,6 +153,6 @@ export interface PlayerDocument {
   inventory: InventoryItem[];
   toastMessage: string | null;
   purchasedSkus: string[];
-  storyHistory: string[];
+  storyHistory: Array<string | StoryHistoryEntry>;
   storyTurnCount: number;
 }

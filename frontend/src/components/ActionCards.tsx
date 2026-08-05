@@ -47,7 +47,15 @@ export function ActionCards({
                 : 'border-amber/40 bg-panel text-ink hover:border-amber hover:amber-glow'
             }`}
           >
-            <Icon size={20} className={disabled ? 'text-ink-muted' : 'text-amber'} />
+            <div className="flex w-full items-center justify-between gap-1">
+              <Icon size={20} className={disabled ? 'text-ink-muted' : 'text-amber'} />
+              {opt.item_reward && (
+                <span className="inline-flex items-center gap-1 rounded bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
+                  <span>🎒</span>
+                  <span>+ {opt.item_reward}</span>
+                </span>
+              )}
+            </div>
             <span className="text-sm leading-6">{opt.text}</span>
             <span className="text-[11px] text-ink-muted">{optionEffectLabel(opt)}</span>
           </button>

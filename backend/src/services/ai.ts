@@ -28,6 +28,8 @@ const AiOptionSchema = z
       text,
       icon: 'search' as const,
       condition_check: { stat: 'energy' as const, min: 0 },
+      item_reward: null,
+      requires_item: null,
     })),
     z.object({
       text: z.string().catch('ادامه بده'),
@@ -35,6 +37,8 @@ const AiOptionSchema = z
         .enum(['sword', 'spell', 'key', 'retreat', 'talk', 'search', 'shield'])
         .catch('search'),
       condition_check: AiConditionSchema,
+      item_reward: z.string().nullable().optional().catch(null),
+      requires_item: z.string().nullable().optional().catch(null),
     }),
   ])
   .transform((option) =>
@@ -43,6 +47,8 @@ const AiOptionSchema = z
           text: option,
           icon: 'search' as const,
           condition_check: { stat: 'energy' as const, min: 0 },
+          item_reward: null,
+          requires_item: null,
         }
       : option,
   );
@@ -86,6 +92,7 @@ const AiResponseSchema = z.object({
       name: z.string(),
       description: z.string(),
       icon: z.string(),
+      effect: z.string().nullable().optional().catch(null),
       equip_slot: z
         .enum(['head', 'chest', 'hands', 'legs', 'feet', 'weapon', 'accessory'])
         .nullable()
@@ -126,11 +133,15 @@ function getClient(settings: RuntimeAiSettings): OpenAI {
 function energyOption(
   text: string,
   icon: AiGameResponse['options'][number]['icon'],
+  itemReward?: string | null,
+  requiresItem?: string | null,
 ): AiGameResponse['options'][number] {
   return {
     text,
     icon,
     condition_check: { stat: 'energy', min: 0 },
+    item_reward: itemReward ?? null,
+    requires_item: requiresItem ?? null,
   };
 }
 
@@ -178,13 +189,14 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
       min_roll_success: null,
       options: [
         energyOption('با تمام توان خودت را بیرون بکش', 'sword'),
-        energyOption('دست به سوی فانوس دراز کن', 'key'),
+        energyOption('دست به سوی فانوس دراز کن', 'key', 'طلسم شن'),
         energyOption('فریاد بزن: تو کیستی؟', 'talk'),
       ],
       discovered_item: {
         id: 'sand_amulet',
         name: 'طلسم شن',
         description: 'در شن به دستت آمد؛ گرمای خفیفی دارد و به تپش قلبت پاسخ می‌دهد.',
+        effect: 'روشنایی‌بخش در تاریکی کویر و آرام‌کننده سایه‌ها',
         icon: 'amulet',
         equip_slot: 'accessory',
       },
@@ -209,7 +221,7 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
       options: success
         ? [
             energyOption('از شکاف باریک پیش برو', 'key'),
-            energyOption('غنیمت کنار فانوس را بردار', 'search'),
+            energyOption('غنیمت کنار فانوس را بردار', 'search', 'شنل خاکستر'),
             energyOption('لحظه‌ای گوش بسپار', 'talk'),
           ]
         : [
@@ -277,6 +289,7 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
             id: 'ash_cloak',
             name: 'شنل خاکستر',
             description: 'پارچه‌ای تیره با دوخت مسی؛ گرمای بدن را نگه می‌دارد.',
+            effect: 'محافظت در برابر سرمای تاریک و افزایش مقاومت',
             icon: 'cloak',
             equip_slot: 'chest' as const,
           }
