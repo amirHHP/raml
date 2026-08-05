@@ -153,7 +153,7 @@ function isStatUnlocked(stat: string, unlocks: FeatureUnlocks): boolean {
   if (stat === 'hp') return unlocks.hp;
   if (stat === 'mana') return unlocks.mana;
   if (stat === 'gold') return unlocks.gold;
-  return true;
+  return false;
 }
 
 function getStoryTurnCount(player: IPlayer): number {
@@ -481,15 +481,15 @@ export async function chooseOption(deviceId: string, optionId: string) {
   const option = player.options.find((o) => o.id === optionId);
   if (!option) throw Object.assign(new Error('گزینه نامعتبر'), { status: 400 });
 
-  const cost = option.energy_cost ?? 1;
-  if (!spendEnergy(player, cost)) {
-    throw Object.assign(new Error('انرژی کافی نیست'), { status: 402 });
-  }
-
-  // Condition re-check server-side
+  // Condition re-check server-side BEFORE spending energy or resources
   const statVal = getStatValue(player, option.condition_check.stat);
   if (statVal < option.condition_check.min) {
     throw Object.assign(new Error('شرایط لازم برآورده نشده'), { status: 400 });
+  }
+
+  const cost = option.energy_cost ?? 1;
+  if (!spendEnergy(player, cost)) {
+    throw Object.assign(new Error('انرژی کافی نیست'), { status: 402 });
   }
 
   const manaSpent =
@@ -504,14 +504,62 @@ export async function chooseOption(deviceId: string, optionId: string) {
 
   player.toastMessage = null;
 
+  const ensureStarterItem = (item: {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    equipSlot: 'weapon';
+    effect: string;
+  }) => {
+    const existing = player.inventory.find((i) => i.id === item.id || i.equipSlot === 'weapon');
+    if (!existing) {
+      player.inventory.push({ ...item, quantity: 1 });
+    } else if (!existing.equipSlot) {
+      existing.equipSlot = 'weapon';
+    }
+  };
+
   if (option.text.includes('جنگجو') || option.text.includes('شمشیر سنگین')) {
     player.classType = 'warrior';
+    ensureStarterItem({
+      id: 'heavy_sword',
+      name: 'شمشیر سنگین باستانی',
+      description: 'شمشیر سنگین فولادی که از درون صندوق باستانی به دست آوردی',
+      icon: '⚔️',
+      equipSlot: 'weapon',
+      effect: 'قدرت +۵، آسیب سنگین',
+    });
   } else if (option.text.includes('جادوگر') || option.text.includes('عصای کریستالی')) {
     player.classType = 'mage';
+    ensureStarterItem({
+      id: 'crystal_staff',
+      name: 'عصای کریستالی باستانی',
+      description: 'عصای جادویی آراسته به کریستال مانا که از درون صندوق به دست آوردی',
+      icon: '🪄',
+      equipSlot: 'weapon',
+      effect: 'خرد +۵، مانا +۳۰',
+    });
   } else if (option.text.includes('راهزن') || option.text.includes('خنجرهای سایه')) {
     player.classType = 'rogue';
+    ensureStarterItem({
+      id: 'shadow_daggers',
+      name: 'خنجرهای سایه',
+      description: 'جفت خنجر فولادی سایه که از درون صندوق باستانی به دست آوردی',
+      icon: '🗡️',
+      equipSlot: 'weapon',
+      effect: 'چابکی +۵، طلا +۵۰',
+    });
   } else if (option.text.includes('شکارچی') || option.text.includes('کمان شاهین')) {
     player.classType = 'ranger';
+    ensureStarterItem({
+      id: 'falcon_bow',
+      name: 'کمان شاهین',
+      description: 'کمان انعطاف‌پذیر با ره‌های سریع و پر شاهین که از صندوق به دست آوردی',
+      icon: '🏹',
+      equipSlot: 'weapon',
+      effect: 'چابکی +۳، خرد +۲',
+    });
   }
 
   const choiceEntry = {

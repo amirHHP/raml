@@ -3,9 +3,20 @@ import {
   EQUIP_SLOT_LABELS,
   type ClassType,
   type InventoryItem,
+  type EquipSlot,
 } from '../types/game';
 import { getEquippedBySlot } from '../utils/equipment';
 import { toFaDigits } from '../utils/formatCountdown';
+
+const SLOT_ICONS: Record<EquipSlot, string> = {
+  weapon: '⚔️',
+  head: '🪖',
+  chest: '🛡️',
+  hands: '🥊',
+  legs: '👖',
+  feet: '🥾',
+  accessory: '📿',
+};
 
 /** Stone when the slot is empty, gilded when something is worn there. */
 function gear(worn: boolean, activeColor = '#c9a227') {
@@ -13,8 +24,8 @@ function gear(worn: boolean, activeColor = '#c9a227') {
     ? {
         fill: 'url(#gearWorn)',
         stroke: activeColor,
-        strokeWidth: 0.9,
-        strokeOpacity: 0.7,
+        strokeWidth: 1.2,
+        strokeOpacity: 0.9,
       }
     : {
         fill: '#0d0c0a',
@@ -33,34 +44,45 @@ export function CharacterSilhouette({
 }) {
   const equipped = getEquippedBySlot(inventory);
   const wornCount = Object.keys(equipped).length;
+  const hasWeapon = Boolean(equipped.weapon);
 
   return (
     <div className="w-full">
-      <div className="mx-auto w-full max-w-[210px]">
-        <svg viewBox="0 0 130 200" className="h-auto w-full" aria-hidden>
+      <div className="relative mx-auto w-full max-w-[220px]">
+        <svg viewBox="0 0 130 200" className="h-auto w-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]" aria-hidden>
           <defs>
             <linearGradient id="gearWorn" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6d5720" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#20190d" stopOpacity="0.6" />
+              <stop offset="0%" stopColor="#85631b" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="#251d0e" stopOpacity="0.85" />
             </linearGradient>
 
             {/* Class Aura Gradients */}
             <radialGradient id="haloWarrior" cx="50%" cy="42%" r="52%">
-              <stop offset="0%" stopColor="#8a7038" stopOpacity="0.25" />
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.30" />
+              <stop offset="60%" stopColor="#78350f" stopOpacity="0.10" />
               <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
             <radialGradient id="haloMage" cx="50%" cy="42%" r="52%">
-              <stop offset="0%" stopColor="#0284c7" stopOpacity="0.30" />
+              <stop offset="0%" stopColor="#0284c7" stopOpacity="0.35" />
+              <stop offset="60%" stopColor="#0369a1" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
             <radialGradient id="haloRogue" cx="50%" cy="42%" r="52%">
-              <stop offset="0%" stopColor="#059669" stopOpacity="0.30" />
+              <stop offset="0%" stopColor="#059669" stopOpacity="0.35" />
+              <stop offset="60%" stopColor="#047857" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
             <radialGradient id="haloRanger" cx="50%" cy="42%" r="52%">
-              <stop offset="0%" stopColor="#65a30d" stopOpacity="0.30" />
+              <stop offset="0%" stopColor="#65a30d" stopOpacity="0.35" />
+              <stop offset="60%" stopColor="#4d7c0f" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
+
+            {/* Weapon Glow Filters */}
+            <filter id="weaponGlow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
 
           {/* Background Class Ember Halo */}
@@ -109,13 +131,29 @@ export function CharacterSilhouette({
               <path d="M51 21 Q62 8, 73 21 L74 37 Q62 48, 50 37 Z" {...gear(Boolean(equipped.head))} />
               <path d="M53 29 H71" stroke="#c9a227" strokeWidth="2" opacity="0.45" />
               <path d="M62 21 V37" stroke="#000" strokeWidth="1.25" opacity="0.55" />
-              {/* Sword */}
-              {equipped.weapon ? (
-                <g stroke="#c9a227" strokeOpacity="0.8" fill="#c9a227" fillOpacity="0.22">
-                  <path d="M96 112 L101 112 L99 178 L98 178 Z" strokeWidth="0.7" />
-                  <path d="M92 106 L105 106 L105 111 L92 111 Z" strokeWidth="0.7" />
-                  <path d="M96 94 L100 94 L100 106 L96 106 Z" strokeWidth="0.7" />
-                  <circle cx="98" cy="91" r="2.4" strokeWidth="0.7" />
+
+              {/* HEAVY SWORD IN HAND */}
+              {hasWeapon ? (
+                <g id="warrior-heavy-sword" filter="url(#weaponGlow)">
+                  {/* Glowing Blade Body */}
+                  <path
+                    d="M95 106 L102 106 L100 178 L97 178 Z"
+                    fill="url(#gearWorn)"
+                    stroke="#f59e0b"
+                    strokeWidth="1.2"
+                  />
+                  {/* Inner Steel Fuller */}
+                  <line x1="98.5" y1="108" x2="98.5" y2="174" stroke="#fef3c7" strokeWidth="0.7" opacity="0.9" />
+                  {/* Ornate Crossguard */}
+                  <path d="M90 105 L107 105 L105 111 L92 111 Z" fill="#b45309" stroke="#f59e0b" strokeWidth="0.9" />
+                  {/* Leather Wrapped Grip in Hand */}
+                  <path d="M96 93 L101 93 L101 105 L96 105 Z" fill="#451a03" stroke="#d97706" strokeWidth="0.7" />
+                  {/* Golden Runic Pommel */}
+                  <circle cx="98.5" cy="90" r="3.2" fill="#f59e0b" stroke="#fef3c7" strokeWidth="0.8" />
+                  {/* Ember Spark Effects */}
+                  <circle cx="102" cy="120" r="1" fill="#fbbf24" opacity="0.8" />
+                  <circle cx="96" cy="145" r="0.8" fill="#f59e0b" />
+                  <circle cx="100" cy="165" r="1.1" fill="#fef3c7" />
                 </g>
               ) : (
                 <g stroke="#3a3428" strokeOpacity="0.6" fill="#100e0b">
@@ -160,15 +198,19 @@ export function CharacterSilhouette({
               <circle cx="62" cy="28" r="2.5" fill="#38bdf8" opacity="0.85" />
               <path d="M62 23 V33 M57 28 H67" stroke="#38bdf8" strokeWidth="0.6" opacity="0.7" />
 
-              {/* Arcane Staff in Right Hand */}
-              <g id="wizard-staff">
+              {/* CRYSTAL STAFF IN HAND */}
+              <g id="wizard-staff" filter={hasWeapon ? 'url(#weaponGlow)' : undefined}>
                 {/* Staff Pole */}
-                <line x1="98" y1="35" x2="98" y2="182" stroke="#382414" strokeWidth="2.2" />
-                <line x1="98" y1="35" x2="98" y2="182" stroke="#38bdf8" strokeWidth="0.6" opacity="0.6" />
-                {/* Floating Orb at Top */}
-                <circle cx="98" cy="26" r="6" fill="#0284c7" stroke="#38bdf8" strokeWidth="1.2" />
-                <circle cx="98" cy="26" r="3.5" fill="#7dd3fc" />
-                <ellipse cx="98" cy="26" rx="9" ry="3" fill="none" stroke="#38bdf8" strokeWidth="0.6" opacity="0.8" transform="rotate(-20 98 26)" />
+                <line x1="98" y1="35" x2="98" y2="182" stroke="#382414" strokeWidth="2.8" />
+                <line x1="98" y1="35" x2="98" y2="182" stroke={hasWeapon ? '#38bdf8' : '#1e3a8a'} strokeWidth="1" opacity="0.9" />
+                {/* Ornate Staff Headholder */}
+                <path d="M93 36 L103 36 L98 46 Z" fill="#1e293b" stroke="#38bdf8" strokeWidth="0.8" />
+                {/* Floating Arcane Orb Crystal at Top */}
+                <circle cx="98" cy="24" r="7" fill={hasWeapon ? '#0284c7' : '#0f172a'} stroke="#38bdf8" strokeWidth="1.5" />
+                <circle cx="98" cy="24" r="4" fill={hasWeapon ? '#7dd3fc' : '#334155'} />
+                {/* Rotating Arcane Energy Rings */}
+                <ellipse cx="98" cy="24" rx="10" ry="3.5" fill="none" stroke="#38bdf8" strokeWidth="0.8" opacity="0.9" transform="rotate(-25 98 24)" />
+                <ellipse cx="98" cy="24" rx="3.5" ry="10" fill="none" stroke="#7dd3fc" strokeWidth="0.6" opacity="0.7" transform="rotate(35 98 24)" />
               </g>
             </g>
           )}
@@ -179,7 +221,7 @@ export function CharacterSilhouette({
           {classType === 'rogue' && (
             <g id="rogue-silhouette">
               {/* Shadow Fog at base */}
-              <ellipse cx="62" cy="178" rx="42" ry="12" fill="#059669" opacity="0.12" />
+              <ellipse cx="62" cy="178" rx="42" ry="12" fill="#059669" opacity="0.18" />
 
               {/* Cloak / Scarf */}
               <path
@@ -210,17 +252,30 @@ export function CharacterSilhouette({
                 {...gear(Boolean(equipped.head), '#34d399')}
               />
               {/* Glowing Eyes */}
-              <circle cx="56" cy="30" r="1.4" fill="#34d399" />
-              <circle cx="68" cy="30" r="1.4" fill="#34d399" />
+              <circle cx="56" cy="30" r="1.5" fill="#34d399" />
+              <circle cx="68" cy="30" r="1.5" fill="#34d399" />
 
-              {/* Dual Shadow Daggers */}
-              <g id="dual-daggers">
+              {/* DUAL SHADOW DAGGERS IN HANDS */}
+              <g id="dual-daggers" filter={hasWeapon ? 'url(#weaponGlow)' : undefined}>
                 {/* Left Dagger */}
-                <path d="M28 92 L31 92 L29 135 L26 130 Z" fill="#10b981" fillOpacity="0.3" stroke="#34d399" strokeWidth="0.7" />
-                <line x1="25" y1="92" x2="34" y2="92" stroke="#34d399" strokeWidth="0.9" />
+                <path
+                  d="M27 90 L32 90 L30 138 L25 132 Z"
+                  fill={hasWeapon ? 'url(#gearWorn)' : '#064e3b'}
+                  stroke="#34d399"
+                  strokeWidth="1"
+                />
+                <line x1="24" y1="90" x2="35" y2="90" stroke="#34d399" strokeWidth="1.2" />
+                <line x1="28.5" y1="92" x2="28.5" y2="134" stroke="#6ee7b7" strokeWidth="0.6" />
+
                 {/* Right Dagger */}
-                <path d="M93 92 L96 92 L98 135 L95 130 Z" fill="#10b981" fillOpacity="0.3" stroke="#34d399" strokeWidth="0.7" />
-                <line x1="90" y1="92" x2="99" y2="92" stroke="#34d399" strokeWidth="0.9" />
+                <path
+                  d="M93 90 L98 90 L100 138 L95 132 Z"
+                  fill={hasWeapon ? 'url(#gearWorn)' : '#064e3b'}
+                  stroke="#34d399"
+                  strokeWidth="1"
+                />
+                <line x1="90" y1="90" x2="101" y2="90" stroke="#34d399" strokeWidth="1.2" />
+                <line x1="96.5" y1="92" x2="96.5" y2="134" stroke="#6ee7b7" strokeWidth="0.6" />
               </g>
             </g>
           )}
@@ -232,11 +287,11 @@ export function CharacterSilhouette({
             <g id="ranger-silhouette">
               {/* Quiver of Arrows on Back */}
               <g id="quiver" transform="translate(10, 0)">
-                <rect x="74" y="42" width="7" height="40" rx="2" fill="#2d1c0b" stroke="#a3e635" strokeWidth="0.6" />
+                <rect x="74" y="42" width="8" height="42" rx="2" fill="#2d1c0b" stroke="#a3e635" strokeWidth="0.8" />
                 {/* Arrow Feathers */}
-                <line x1="75" y1="32" x2="75" y2="42" stroke="#a3e635" strokeWidth="1" />
-                <line x1="78" y1="28" x2="78" y2="42" stroke="#a3e635" strokeWidth="1" />
-                <line x1="80" y1="34" x2="80" y2="42" stroke="#a3e635" strokeWidth="1" />
+                <line x1="75" y1="30" x2="75" y2="42" stroke="#a3e635" strokeWidth="1.2" />
+                <line x1="78" y1="26" x2="78" y2="42" stroke="#bef264" strokeWidth="1.2" />
+                <line x1="81" y1="32" x2="81" y2="42" stroke="#a3e635" strokeWidth="1.2" />
               </g>
 
               {/* Leggings & Boots */}
@@ -257,34 +312,45 @@ export function CharacterSilhouette({
                 {...gear(Boolean(equipped.head), '#a3e635')}
               />
               {/* Feather Accent */}
-              <path d="M74 20 Q82 12, 85 8 Q80 18, 74 24 Z" fill="#a3e635" opacity="0.85" />
+              <path d="M74 20 Q82 12, 85 8 Q80 18, 74 24 Z" fill="#a3e635" opacity="0.9" />
 
-              {/* Longbow in Left Hand */}
-              <g id="longbow">
+              {/* FALCON LONGBOW IN HAND */}
+              <g id="longbow" filter={hasWeapon ? 'url(#weaponGlow)' : undefined}>
                 {/* Curved Bow Wood */}
-                <path d="M25 35 Q14 100, 25 165" fill="none" stroke="#543818" strokeWidth="2.2" />
-                <path d="M25 35 Q14 100, 25 165" fill="none" stroke="#a3e635" strokeWidth="0.6" opacity="0.7" />
-                {/* Bowstring */}
-                <line x1="25" y1="36" x2="25" y2="164" stroke="#e2e8f0" strokeWidth="0.6" opacity="0.75" />
+                <path d="M25 32 Q13 100, 25 168" fill="none" stroke="#543818" strokeWidth="3" />
+                <path d="M25 32 Q13 100, 25 168" fill="none" stroke={hasWeapon ? '#a3e635' : '#365314'} strokeWidth="1" opacity="0.9" />
+                {/* Falcon Carved Wing Tips */}
+                <path d="M25 32 L20 27 L26 35 Z" fill="#a3e635" />
+                <path d="M25 168 L20 173 L26 165 Z" fill="#a3e635" />
+                {/* Taut Bowstring */}
+                <line x1="25" y1="33" x2="25" y2="167" stroke="#fef08a" strokeWidth="0.8" opacity="0.9" />
+                {/* Notched Arrow in Hand */}
+                {hasWeapon && (
+                  <g id="notched-arrow">
+                    <line x1="25" y1="100" x2="52" y2="100" stroke="#bef264" strokeWidth="1.2" />
+                    <polygon points="25,98 20,100 25,102" fill="#ecfccb" />
+                  </g>
+                )}
               </g>
             </g>
           )}
 
           {/* ========================================================
-              COMMON ACCESSSORIES (Amulet & Ground)
+              COMMON ACCESSORIES (Amulet & Ground)
              ======================================================== */}
           {/* Amulet chain across chest */}
           {equipped.accessory && (
-            <>
+            <g id="equipped-accessory">
               <path
                 d="M52 53 Q62 68, 72 53"
                 fill="none"
-                stroke="#c9a227"
-                strokeWidth="1.1"
-                opacity="0.85"
+                stroke="#f59e0b"
+                strokeWidth="1.4"
+                opacity="0.9"
               />
-              <path d="M62 66 L65 70 L62 74 L59 70 Z" fill="#c9a227" opacity="0.9" />
-            </>
+              <path d="M62 65 L66 70 L62 75 L58 70 Z" fill="#fbbf24" stroke="#f59e0b" strokeWidth="0.6" />
+              <circle cx="62" cy="70" r="1.5" fill="#ffffff" />
+            </g>
           )}
 
           {/* Ground pedestal */}
@@ -297,42 +363,54 @@ export function CharacterSilhouette({
             fill="none"
             stroke={
               classType === 'warrior'
-                ? '#c9a227'
+                ? '#f59e0b'
                 : classType === 'mage'
                   ? '#38bdf8'
                   : classType === 'rogue'
                     ? '#34d399'
                     : '#a3e635'
             }
-            strokeWidth="0.6"
-            opacity="0.25"
+            strokeWidth="0.8"
+            opacity="0.4"
           />
         </svg>
       </div>
 
-      <dl className="mt-5 border-t border-bone/10 pt-4">
-        {EQUIP_SLOTS.map((slot) => {
-          const item = equipped[slot];
-          return (
-            <div
-              key={slot}
-              className="flex items-baseline gap-2 border-b border-bone/5 py-2 text-xs last:border-0"
-            >
-              <dt className="shrink-0 text-bone-dim">{EQUIP_SLOT_LABELS[slot]}</dt>
-              <span className="souls-leader" aria-hidden />
-              <dd className={item ? 'truncate text-gold' : 'text-bone-muted'}>
-                {item ? item.name : 'تهی'}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
-
-      <p className="mt-4 text-center text-[10px] tracking-widest text-bone-muted">
-        {wornCount > 0
-          ? `${toFaDigits(wornCount)} پوشیدنی بر پیکر`
-          : 'پیکری بی‌جامه در تاریکی'}
-      </p>
+      {/* Gamified Equipment Slots Grid */}
+      <div className="mt-5 border-t border-bone/10 pt-4">
+        <h4 className="mb-2.5 text-[11px] font-medium tracking-wider text-bone-dim">
+          پوشیدنی‌ها و تجهیزات فعال ({toFaDigits(wornCount)}/۷)
+        </h4>
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {EQUIP_SLOTS.map((slot) => {
+            const item = equipped[slot];
+            const icon = SLOT_ICONS[slot];
+            return (
+              <div
+                key={slot}
+                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition ${
+                  item
+                    ? 'border-amber/40 bg-amber/10 text-amber shadow-[0_0_8px_rgba(245,158,11,0.15)]'
+                    : 'border-bone/10 bg-oled/60 text-bone-muted'
+                }`}
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="text-sm">{item?.icon || icon}</span>
+                  <span className="font-medium">{EQUIP_SLOT_LABELS[slot]}:</span>
+                  <span className={`truncate ${item ? 'text-bone font-semibold' : 'text-bone-muted opacity-70'}`}>
+                    {item ? item.name : 'تهی'}
+                  </span>
+                </div>
+                {item && (
+                  <span className="shrink-0 rounded bg-amber/20 px-1.5 py-0.5 text-[10px] font-bold text-amber">
+                    تجهیزشده
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

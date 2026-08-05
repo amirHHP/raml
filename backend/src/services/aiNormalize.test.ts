@@ -79,4 +79,19 @@ describe('parseAiResponse live-model quirks', () => {
     assert.equal(parsed.options.length, 2);
     assert.equal(parsed.options[0]?.text, 'جلو برو');
   });
+
+  it('normalizes Farsi and English stat aliases in condition checks', () => {
+    const normalized = normalizeAiPayload({
+      story_text: 'آزمایش',
+      options: [
+        { text: 'ضربه بزن', condition_check: { stat: 'قدرت', min: 4 } },
+        { text: 'جادو بخوان', condition_check: { stat: 'str', min: 3 } },
+        { text: 'فرار کن', condition_check: { stat: 'چابکی', min: 2 } },
+      ],
+    }) as Record<string, any>;
+
+    assert.equal(normalized.options[0].condition_check.stat, 'strength');
+    assert.equal(normalized.options[1].condition_check.stat, 'strength');
+    assert.equal(normalized.options[2].condition_check.stat, 'agility');
+  });
 });

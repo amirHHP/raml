@@ -10,7 +10,7 @@ const ALL_TABS: {
   { id: 'story', label: 'داستان', Icon: IconScroll },
   { id: 'home', label: 'خانه', Icon: IconHome, requires: 'home' },
   { id: 'inventory', label: 'کوله‌پشتی', Icon: IconBag, requires: 'inventory' },
-  { id: 'stats', label: 'آمار', Icon: IconUser, requires: 'stats' },
+  { id: 'stats', label: 'حال من', Icon: IconUser, requires: 'stats' },
   { id: 'shop', label: 'فروشگاه', Icon: IconCart },
 ];
 

@@ -48,18 +48,67 @@ function normalizeOptions(raw: unknown): unknown[] {
     .map((key) => record[key]);
 }
 
-function normalizeCondition(raw: unknown): { stat: string; min: number } {
+import type { StatKey } from '../types/game';
+
+const STAT_MAP: Record<string, StatKey> = {
+  hp: 'hp',
+  health: 'hp',
+  life: 'hp',
+  stamina: 'hp',
+  'جان': 'hp',
+  'سلامت': 'hp',
+  'خون': 'hp',
+  mana: 'mana',
+  mp: 'mana',
+  magic: 'mana',
+  'مانا': 'mana',
+  'جادو': 'mana',
+  gold: 'gold',
+  coin: 'gold',
+  coins: 'gold',
+  money: 'gold',
+  'طلا': 'gold',
+  'سکه': 'gold',
+  'پول': 'gold',
+  energy: 'energy',
+  en: 'energy',
+  'انرژی': 'energy',
+  strength: 'strength',
+  str: 'strength',
+  power: 'strength',
+  'قدرت': 'strength',
+  'زور': 'strength',
+  agility: 'agility',
+  agi: 'agility',
+  dex: 'agility',
+  speed: 'agility',
+  'چابکی': 'agility',
+  'سرعت': 'agility',
+  intellect: 'intellect',
+  int: 'intellect',
+  intelligence: 'intellect',
+  wis: 'intellect',
+  wisdom: 'intellect',
+  'خرد': 'intellect',
+  'هوش': 'intellect',
+  'علم': 'intellect',
+};
+
+export function normalizeStatKey(raw: unknown): StatKey {
+  if (typeof raw !== 'string') return 'energy';
+  const key = raw.trim().toLowerCase();
+  return STAT_MAP[key] || 'energy';
+}
+
+function normalizeCondition(raw: unknown): { stat: StatKey; min: number } {
   if (typeof raw === 'string') {
-    return { stat: raw.trim() || 'energy', min: 0 };
+    return { stat: normalizeStatKey(raw), min: 0 };
   }
   const record = asRecord(raw);
   if (!record) return { stat: 'energy', min: 0 };
-  const stat =
-    typeof record.stat === 'string' && record.stat.trim()
-      ? record.stat.trim()
-      : 'energy';
+  const stat = normalizeStatKey(record.stat);
   const min = Number(record.min);
-  return { stat, min: Number.isFinite(min) ? min : 0 };
+  return { stat, min: Number.isFinite(min) && min >= 0 ? min : 0 };
 }
 
 function normalizeOption(raw: unknown): Record<string, unknown> | null {

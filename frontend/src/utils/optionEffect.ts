@@ -16,7 +16,8 @@ export function optionEffectLabel(opt: GameOption): string {
   let baseStr = '';
   const need = opt.condition_check.min;
   if (need > 0) {
-    baseStr = `${STAT_LABEL[opt.condition_check.stat]} ${toFaDigits(need)}`;
+    const label = STAT_LABEL[opt.condition_check.stat] || 'انرژی';
+    baseStr = `${label} ${toFaDigits(need)}`;
   } else {
     const energy = opt.energy_cost ?? 1;
     baseStr = `انرژی ${toFaDigits(energy)}`;

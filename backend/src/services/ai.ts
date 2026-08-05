@@ -327,8 +327,15 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
           energyOption('سپر را بالا بیاور و آماده باش', 'shield'),
           energyOption('محیط را تحلیل کن', 'search'),
         ],
-        discovered_item: null,
-        toast_message: 'کلاس تعیین شد: جنگجو (قدرت +۵، جان +۲۰)',
+        discovered_item: {
+          id: 'heavy_sword',
+          name: 'شمشیر سنگین باستانی',
+          description: 'شمشیر سنگین فولادی که از درون صندوق باستانی به دست آوردی',
+          icon: '⚔️',
+          equip_slot: 'weapon',
+          effect: 'قدرت +۵، آسیب سنگین',
+        },
+        toast_message: 'کلاس تعیین شد: جنگجو (شمشیر سنگین تجهیز شد)',
       };
     }
     if (isMage) {
@@ -346,8 +353,15 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
           energyOption('سپر جادویی دور خود بکش', 'shield'),
           energyOption('کتیبه‌های کهن روی محراب را بخوان', 'talk'),
         ],
-        discovered_item: null,
-        toast_message: 'کلاس تعیین شد: جادوگر (خرد +۵، مانا +۳۰)',
+        discovered_item: {
+          id: 'crystal_staff',
+          name: 'عصای کریستالی باستانی',
+          description: 'عصای جادویی آراسته به کریستال مانا که از درون صندوق به دست آوردی',
+          icon: '🪄',
+          equip_slot: 'weapon',
+          effect: 'خرد +۵، مانا +۳۰',
+        },
+        toast_message: 'کلاس تعیین شد: جادوگر (عصای کریستالی تجهیز شد)',
       };
     }
     if (isRogue) {
@@ -365,8 +379,15 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
           energyOption('جیب‌های طلایی را غارت کن', 'search'),
           energyOption('سریعاً عقب‌نشینی کن', 'retreat'),
         ],
-        discovered_item: null,
-        toast_message: 'کلاس تعیین شد: راهزن (چابکی +۵، طلا +۵۰)',
+        discovered_item: {
+          id: 'shadow_daggers',
+          name: 'خنجرهای سایه',
+          description: 'جفت خنجر فولادی سایه که از درون صندوق باستانی به دست آوردی',
+          icon: '🗡️',
+          equip_slot: 'weapon',
+          effect: 'چابکی +۵، طلا +۵۰',
+        },
+        toast_message: 'کلاس تعیین شد: راهزن (خنجرهای سایه تجهیز شد)',
       };
     }
     return {
@@ -383,8 +404,15 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
         energyOption('محیط را برای تله‌گذاری بررسی کن', 'search'),
         energyOption('به آرامی قدم بردار', 'shield'),
       ],
-      discovered_item: null,
-      toast_message: 'کلاس تعیین شد: شکارچی (چابکی +۳، خرد +۲)',
+      discovered_item: {
+        id: 'falcon_bow',
+        name: 'کمان شاهین',
+        description: 'کمان انعطاف‌پذیر با ره‌های سریع و پر شاهین که از صندوق به دست آوردی',
+        icon: '🏹',
+        equip_slot: 'weapon',
+        effect: 'چابکی +۳، خرد +۲',
+      },
+      toast_message: 'کلاس تعیین شد: شکارچی (کمان شاهین تجهیز شد)',
     };
   }
 

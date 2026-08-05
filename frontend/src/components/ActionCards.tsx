@@ -5,7 +5,7 @@ import { optionEffectLabel } from '../utils/optionEffect';
 import { tapFeedback } from '../utils/haptics';
 
 function readStat(stats: PlayerStats, key: StatKey): number {
-  return stats[key];
+  return stats[key] ?? 0;
 }
 
 export function ActionCards({
