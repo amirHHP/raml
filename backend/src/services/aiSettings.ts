@@ -81,14 +81,17 @@ function toPublic(settings: RuntimeAiSettings, updatedAt: Date | null): PublicAi
 }
 
 function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
-  let openaiBaseUrl = settings.openaiBaseUrl.replace(/\/$/, '') || 'https://api.openai.com/v1';
+  let openaiBaseUrl = settings.openaiBaseUrl.trim() || 'https://api.openai.com/v1';
   const openaiApiKey = settings.openaiApiKey;
   // Gemini keys work via Google's OpenAI-compatible endpoint
   if (
     looksLikeGeminiApiKey(openaiApiKey) &&
     (/api\.openai\.com/i.test(openaiBaseUrl) || !openaiBaseUrl)
   ) {
-    openaiBaseUrl = GEMINI_OPENAI_BASE_URL.replace(/\/$/, '');
+    openaiBaseUrl = GEMINI_OPENAI_BASE_URL;
+  }
+  if (isGeminiBaseUrl(openaiBaseUrl) && !openaiBaseUrl.endsWith('/')) {
+    openaiBaseUrl = `${openaiBaseUrl}/`;
   }
   const openaiModel =
     settings.openaiModel.trim() ||

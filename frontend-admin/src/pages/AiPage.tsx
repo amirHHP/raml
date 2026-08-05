@@ -6,7 +6,7 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai/';
 
 function looksLikeApiKey(value: string): boolean {
   const v = value.trim();
-  return v.startsWith('AIza') || v.startsWith('sk-');
+  return v.startsWith('AIza') || v.startsWith('AQ.') || v.startsWith('sk-');
 }
 
 export function AiPage() {
