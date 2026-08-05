@@ -195,6 +195,40 @@ export function useGame() {
     return false;
   };
 
+  const returnHome = async () => {
+    const s = await run(() => api.returnHome());
+    if (s) setState(s);
+  };
+
+  const startHomeActivity = async (
+    activityId: string,
+    durationMinutes: number,
+  ) => {
+    const s = await run(() =>
+      api.startHomeActivity(activityId, durationMinutes),
+    );
+    if (s) setState(s);
+  };
+
+  const speedUpHomeActivity = async () => {
+    const s = await run(() => api.speedUpHomeActivity());
+    if (s) setState(s);
+  };
+
+  const cancelHomeActivity = async () => {
+    const s = await run(() => api.cancelHomeActivity());
+    if (s) setState(s);
+  };
+
+  const claimHomeActivity = async () => {
+    const res = await run(() => api.claimHomeActivity());
+    if (res && res.state) {
+      setState(res.state);
+      return res;
+    }
+    return null;
+  };
+
   return {
     state,
     loading,
@@ -223,5 +257,10 @@ export function useGame() {
     restoreSave,
     refresh,
     refreshEnergy,
+    returnHome,
+    startHomeActivity,
+    speedUpHomeActivity,
+    cancelHomeActivity,
+    claimHomeActivity,
   };
 }

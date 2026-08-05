@@ -14,6 +14,7 @@ import { withMilestonePrompt } from './milestonePromptService';
 import type {
   AiGameResponse,
   ClassType,
+  EquipSlot,
   FeatureUnlocks,
   GameOption,
   PlayerDocument,
@@ -114,7 +115,7 @@ function computeForceFullUi(player: IPlayer): boolean {
 
 export function resolveFeatureUnlocksAtTurn(player: IPlayer, turn: number): FeatureUnlocks {
   if (computeForceFullUi(player)) {
-    return { inventory: true, stats: true, hp: true, mana: true, gold: true };
+    return { inventory: true, stats: true, hp: true, mana: true, gold: true, home: true };
   }
   const t = getUnlockTurnSettings();
   return {
@@ -123,6 +124,7 @@ export function resolveFeatureUnlocksAtTurn(player: IPlayer, turn: number): Feat
     hp: turn >= t.unlockHpAtTurn,
     mana: turn >= t.unlockManaAtTurn,
     gold: turn >= t.unlockGoldAtTurn,
+    home: turn >= 10,
   };
 }
 
@@ -400,6 +402,15 @@ export function toClientState(player: IPlayer) {
     inventory: player.inventory,
     toastMessage: player.toastMessage,
     purchasedSkus: player.purchasedSkus,
+    homeUnlocked: Boolean(player.homeUnlocked),
+    activeHomeActivity: player.activeHomeActivity
+      ? {
+          activityId: player.activeHomeActivity.activityId as any,
+          startTime: new Date(player.activeHomeActivity.startTime).toISOString(),
+          durationMinutes: player.activeHomeActivity.durationMinutes,
+          costCoins: player.activeHomeActivity.costCoins || 0,
+        }
+      : null,
     msUntilNextEnergy: msUntilNextEnergy(player),
     energyRegenMinutes: config.energyRegenMinutes,
   };
@@ -676,6 +687,278 @@ export async function debugUnlock(deviceId: string) {
   }
   await persist(player);
   return toClientState(player);
+}
+
+export async function unlockOrReturnHome(deviceId: string) {
+  const player = await getOrCreatePlayer(deviceId);
+  const turnCount = getStoryTurnCount(player);
+  const unlocks = resolveFeatureUnlocks(player);
+  if (turnCount < 10 && !unlocks.home) {
+    throw Object.assign(new Error('دسترسی به خانه از مرحله ۱۰ به بعد امکان‌پذیر است'), { status: 400 });
+  }
+
+  if (player.stats.gold < 20) {
+    throw Object.assign(new Error('برای بازگشت به خانه حداقل ۲۰ سکه طلا لازم است'), { status: 400 });
+  }
+
+  player.stats.gold -= 20;
+  player.homeUnlocked = true;
+  player.toastMessage = 'با پرداخت ۲۰ سکه طلا به خانه بازگشتید!';
+  await persist(player);
+  return toClientState(player);
+}
+
+export async function startHomeActivity(
+  deviceId: string,
+  activityId: 'sword_training' | 'obstacle_jump' | 'meditation' | 'excavation' | 'hunting',
+  durationMinutes: number,
+) {
+  const player = await getOrCreatePlayer(deviceId);
+  if (!player.homeUnlocked) {
+    throw Object.assign(new Error('ابتدا باید با پرداخت سکه به خانه بازگردید'), { status: 400 });
+  }
+  if (player.activeHomeActivity) {
+    throw Object.assign(new Error('شما یک فعالیت فعال در خانه دارید'), { status: 400 });
+  }
+
+  const validDurations = [15, 60, 240, 600];
+  if (!validDurations.includes(durationMinutes)) {
+    throw Object.assign(new Error('مدت زمان نامعتبر است'), { status: 400 });
+  }
+
+  player.activeHomeActivity = {
+    activityId,
+    startTime: new Date(),
+    durationMinutes,
+    costCoins: 0,
+  };
+
+  const activityNames: Record<string, string> = {
+    sword_training: 'تمرین شمشیرزنی',
+    obstacle_jump: 'تمرین پرش از موانع',
+    meditation: 'مدیتیشن',
+    excavation: 'حفاری',
+    hunting: 'شکار',
+  };
+
+  player.toastMessage = `فعالیت «${activityNames[activityId] || activityId}» به مدت ${durationMinutes} دقیقه آغاز شد.`;
+  await persist(player);
+  return toClientState(player);
+}
+
+export async function speedUpHomeActivity(deviceId: string) {
+  const player = await getOrCreatePlayer(deviceId);
+  if (!player.activeHomeActivity) {
+    throw Object.assign(new Error('فعالیتی در حال اجرا نیست'), { status: 400 });
+  }
+
+  const elapsedMs = Date.now() - new Date(player.activeHomeActivity.startTime).getTime();
+  const durationMs = player.activeHomeActivity.durationMinutes * 60 * 1000;
+  const remainingMs = Math.max(0, durationMs - elapsedMs);
+  const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
+
+  if (remainingMinutes <= 0) {
+    throw Object.assign(new Error('فعالیت قبلاً به اتمام رسیده است'), { status: 400 });
+  }
+
+  // Cost: 2 coins per 15 min remaining (min 2 coins)
+  const speedUpCost = Math.max(2, Math.ceil(remainingMinutes / 15) * 2);
+
+  if (player.stats.gold < speedUpCost) {
+    throw Object.assign(
+      new Error(`برای تسریع این فعالیت به ${speedUpCost} سکه نیاز دارید`),
+      { status: 400 },
+    );
+  }
+
+  player.stats.gold -= speedUpCost;
+  // Instantly finish activity by moving startTime into past
+  player.activeHomeActivity.startTime = new Date(
+    Date.now() - durationMs - 1000,
+  );
+  player.toastMessage = `با پرداخت ${speedUpCost} سکه، فعالیت بلافاصله تسریع شد!`;
+  await persist(player);
+  return toClientState(player);
+}
+
+export async function cancelHomeActivity(deviceId: string) {
+  const player = await getOrCreatePlayer(deviceId);
+  if (!player.activeHomeActivity) {
+    throw Object.assign(new Error('فعالیتی در حال اجرا نیست'), { status: 400 });
+  }
+  player.activeHomeActivity = null;
+  player.toastMessage = 'فعالیت لغو شد.';
+  await persist(player);
+  return toClientState(player);
+}
+
+export async function claimHomeActivity(deviceId: string) {
+  const player = await getOrCreatePlayer(deviceId);
+  if (!player.activeHomeActivity) {
+    throw Object.assign(new Error('هیچ فعالیتی برای تحویل وجود ندارد'), { status: 400 });
+  }
+
+  const act = player.activeHomeActivity;
+  const elapsedMs = Date.now() - new Date(act.startTime).getTime();
+  const durationMs = act.durationMinutes * 60 * 1000;
+
+  if (elapsedMs < durationMs) {
+    throw Object.assign(new Error('فعالیت هنوز به پایان نرسیده است'), { status: 400 });
+  }
+
+  const T = act.durationMinutes / 15; // Duration ratio (1, 4, 16, 40)
+  const activityId = act.activityId as
+    | 'sword_training'
+    | 'obstacle_jump'
+    | 'meditation'
+    | 'excavation'
+    | 'hunting';
+
+  const rewards: {
+    strengthGained?: number;
+    agilityGained?: number;
+    intellectGained?: number;
+    goldGained?: number;
+    hpGained?: number;
+    maxHpGained?: number;
+    itemsGained?: any[];
+  } = {};
+
+  const risksEncountered: {
+    hpLost?: number;
+    goldLost?: number;
+    itemsLostCount?: number;
+    logText: string;
+  } = { logText: '' };
+
+  // Calculate exponential reward scaling: Reward = Base * (1 + (T - 1)^1.2)
+  const statGain = Math.round(1 + 0.35 * Math.pow(T, 1.25));
+
+  // Risk Probability increases with duration: 5% at 15m, up to 60% at 10h
+  const riskChance = Math.min(0.65, 0.05 + 0.15 * Math.log(T + 1));
+  const hasRisk = Math.random() < riskChance;
+
+  if (activityId === 'sword_training') {
+    rewards.strengthGained = statGain;
+    player.stats.strength += statGain;
+    if (hasRisk) {
+      const damage = Math.min(player.stats.hp - 5, Math.round(3 * Math.pow(T, 0.9)));
+      if (damage > 0) {
+        risksEncountered.hpLost = damage;
+        player.stats.hp -= damage;
+        risksEncountered.logText = 'در اثر فشار شدید تمرین شمشیرزنی دستانت تاول زد و جراحت برداشتی.';
+      }
+    }
+  } else if (activityId === 'obstacle_jump') {
+    rewards.agilityGained = statGain;
+    player.stats.agility += statGain;
+    if (hasRisk) {
+      const damage = Math.min(player.stats.hp - 5, Math.round(3 * Math.pow(T, 0.9)));
+      if (damage > 0) {
+        risksEncountered.hpLost = damage;
+        player.stats.hp -= damage;
+        risksEncountered.logText = 'از ارتفاع صخره‌ها سقوط کردی و مچ پایت آسیب دید.';
+      }
+    }
+  } else if (activityId === 'meditation') {
+    rewards.intellectGained = statGain;
+    player.stats.intellect += statGain;
+    if (hasRisk) {
+      const damage = Math.min(player.stats.hp - 5, Math.round(2 * Math.pow(T, 0.8)));
+      if (damage > 0) {
+        risksEncountered.hpLost = damage;
+        player.stats.hp -= damage;
+        risksEncountered.logText = 'کابوس‌های کهن به ذهنت هجوم آوردند و توازن روحی‌ات به هم خورد.';
+      }
+    }
+  } else if (activityId === 'excavation') {
+    const goldFound = Math.round(20 * Math.pow(T, 1.3));
+    rewards.goldGained = goldFound;
+    player.stats.gold += goldFound;
+
+    rewards.itemsGained = [];
+    if (T >= 1) {
+      // Item drops based on duration
+      const possibleItems: Array<{
+        id: string;
+        name: string;
+        description: string;
+        icon: string;
+        equipSlot?: EquipSlot;
+        effect?: string;
+      }> = [
+        { id: 'ancient_coin', name: 'سکه کهن', description: 'سکه‌ای طلایی باقی‌مانده از دوران قدیم.', icon: '🪙' },
+        { id: 'ruby_gem', name: 'یاقوت سرخ', description: 'جواهری درخشان و گران‌بها.', icon: '💎' },
+        { id: 'ancient_ring', name: 'انگشتر باستانی', description: 'انگشتری با نشان مفقود شده.', icon: '💍', equipSlot: 'accessory', effect: '+۳ خرد' },
+        { id: 'mithril_ore', name: 'سنگ میثریل', description: 'فلزی کمیاب و بسیار مستحکم.', icon: '⛰️' },
+      ];
+      const itemCount = T >= 16 ? 2 : 1;
+      for (let i = 0; i < itemCount; i++) {
+        const item = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+        rewards.itemsGained.push(item);
+        const existing = player.inventory.find((inv) => inv.id === item.id);
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          player.inventory.push({ ...item, quantity: 1 });
+        }
+      }
+    }
+
+    if (hasRisk) {
+      const goldLost = Math.min(player.stats.gold, Math.round(5 * Math.pow(T, 1.1)));
+      if (goldLost > 0) {
+        risksEncountered.goldLost = goldLost;
+        player.stats.gold -= goldLost;
+        risksEncountered.logText = 'تله کهن زیرزمین فعال شد و بخشی از سکه‌هایت در شکاف فرو ریخت.';
+      }
+    }
+  } else if (activityId === 'hunting') {
+    const hpHeal = Math.round(15 * Math.pow(T, 1.1));
+    const maxHpBonus = Math.floor(T / 4);
+
+    if (maxHpBonus > 0) {
+      player.stats.maxHp += maxHpBonus;
+      rewards.maxHpGained = maxHpBonus;
+    }
+    player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + hpHeal);
+    rewards.hpGained = hpHeal;
+
+    if (hasRisk) {
+      const damage = Math.min(player.stats.hp - 5, Math.round(4 * Math.pow(T, 0.95)));
+      if (damage > 0) {
+        risksEncountered.hpLost = damage;
+        player.stats.hp -= damage;
+        risksEncountered.logText = 'در حین شکار، گرگ‌های وحشی نبرد سختی به راه انداختند و جراحت برداشتی.';
+      }
+    }
+  }
+
+  // Clear activity
+  player.activeHomeActivity = null;
+
+  let summary = 'فعالیت با موفقیت پایان یافت!';
+  if (rewards.strengthGained) summary += ` +${rewards.strengthGained} قدرت`;
+  if (rewards.agilityGained) summary += ` +${rewards.agilityGained} چابکی`;
+  if (rewards.intellectGained) summary += ` +${rewards.intellectGained} خرد`;
+  if (rewards.goldGained) summary += ` +${rewards.goldGained} طلا`;
+  if (rewards.hpGained) summary += ` +${rewards.hpGained} جان`;
+  if (rewards.maxHpGained) summary += ` +${rewards.maxHpGained} حداکثر جان`;
+
+  player.toastMessage = summary;
+  await persist(player);
+
+  return {
+    state: toClientState(player),
+    result: {
+      success: true,
+      activityId,
+      durationMinutes: act.durationMinutes,
+      rewards,
+      risksEncountered,
+      summaryMessage: summary,
+    },
+  };
 }
 
 export type { PlayerDocument };

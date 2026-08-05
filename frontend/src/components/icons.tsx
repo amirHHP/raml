@@ -204,6 +204,54 @@ export function IconChevronDown(p: IconProps) {
   );
 }
 
+export function IconHome(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+export function IconPickaxe(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="m14 3 7 7" />
+      <path d="m4 20 10-10" />
+      <path d="M15 4c3 0 5 2 5 5" />
+    </svg>
+  );
+}
+
+export function IconTarget(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+export function IconZap(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+export function IconHourglass(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+    </svg>
+  );
+}
+
 export const ACTION_ICONS = {
   sword: IconSword,
   spell: IconSpell,

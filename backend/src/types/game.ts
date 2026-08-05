@@ -1,5 +1,41 @@
 export type ClassType = 'warrior' | 'mage' | 'rogue' | 'ranger';
-export type PanelTab = 'story' | 'inventory' | 'stats' | 'shop';
+export type PanelTab = 'story' | 'inventory' | 'stats' | 'shop' | 'home';
+export type HomeActivityId =
+  | 'sword_training'
+  | 'obstacle_jump'
+  | 'meditation'
+  | 'excavation'
+  | 'hunting';
+
+export interface ActiveHomeActivity {
+  activityId: HomeActivityId;
+  startTime: string; // ISO timestamp
+  durationMinutes: number;
+  costCoins: number;
+}
+
+export interface HomeActionResult {
+  success: boolean;
+  activityId: HomeActivityId;
+  durationMinutes: number;
+  rewards: {
+    strengthGained?: number;
+    agilityGained?: number;
+    intellectGained?: number;
+    goldGained?: number;
+    hpGained?: number;
+    maxHpGained?: number;
+    itemsGained?: InventoryItem[];
+  };
+  risksEncountered: {
+    hpLost?: number;
+    goldLost?: number;
+    itemsLostCount?: number;
+    logText: string;
+  };
+  summaryMessage: string;
+}
+
 export type EnemyLineArtType =
   | 'none'
   | 'orc_guardian'
@@ -16,6 +52,7 @@ export type FeatureUnlocks = {
   hp: boolean;
   mana: boolean;
   gold: boolean;
+  home: boolean;
 };
 
 export interface ConditionCheck {
@@ -155,4 +192,6 @@ export interface PlayerDocument {
   purchasedSkus: string[];
   storyHistory: Array<string | StoryHistoryEntry>;
   storyTurnCount: number;
+  homeUnlocked?: boolean;
+  activeHomeActivity?: ActiveHomeActivity | null;
 }

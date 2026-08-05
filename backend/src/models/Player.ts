@@ -38,6 +38,13 @@ export interface IPlayer extends Document {
   /** Last story generation source for client honesty. */
   lastAiSource?: 'live' | 'mock' | 'error' | null;
   lastAiError?: string | null;
+  homeUnlocked?: boolean;
+  activeHomeActivity?: {
+    activityId: string;
+    startTime: Date;
+    durationMinutes: number;
+    costCoins: number;
+  } | null;
 }
 
 const ConditionSchema = new Schema(
@@ -147,6 +154,19 @@ const PlayerSchema = new Schema<IPlayer>(
     storyTurnCount: { type: Number, default: 0 },
     lastAiSource: { type: String, default: null },
     lastAiError: { type: String, default: null },
+    homeUnlocked: { type: Boolean, default: false },
+    activeHomeActivity: {
+      type: new Schema(
+        {
+          activityId: { type: String, required: true },
+          startTime: { type: Date, required: true },
+          durationMinutes: { type: Number, required: true },
+          costCoins: { type: Number, default: 0 },
+        },
+        { _id: false },
+      ),
+      default: null,
+    },
   },
   { timestamps: true },
 );

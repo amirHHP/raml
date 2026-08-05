@@ -3,13 +3,18 @@ import { z } from 'zod';
 import { requireDeviceId } from '../middleware/deviceId';
 import {
   awakenPlayer,
+  cancelHomeActivity,
   chooseOption,
+  claimHomeActivity,
   clearToast,
   debugUnlock,
   getOrCreatePlayer,
   restorePlayer,
+  speedUpHomeActivity,
+  startHomeActivity,
   submitDiceRoll,
   toClientState,
+  unlockOrReturnHome,
 } from '../services/gameState';
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
 import { recordEvents } from '../services/funnel';
@@ -183,6 +188,78 @@ router.post('/inbox/:id/read', requireDeviceId, async (req, res) => {
     const e = err as Error & { status?: number };
     console.error(err);
     res.status(e.status || 500).json({ error: e.message || 'خطا در خواندن پیام' });
+  }
+});
+
+/* Home endpoints */
+router.post('/home/return', requireDeviceId, async (req, res) => {
+  try {
+    const state = await unlockOrReturnHome(req.deviceId);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در بازگشت به خانه' });
+  }
+});
+
+router.post('/home/start', requireDeviceId, async (req, res) => {
+  try {
+    const body = z
+      .object({
+        activityId: z.enum([
+          'sword_training',
+          'obstacle_jump',
+          'meditation',
+          'excavation',
+          'hunting',
+        ]),
+        durationMinutes: z.number().int().positive(),
+      })
+      .parse(req.body);
+
+    const state = await startHomeActivity(
+      req.deviceId,
+      body.activityId,
+      body.durationMinutes,
+    );
+    res.json(state);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'پارامترهای فعالیت نامعتبر است' });
+      return;
+    }
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در شروع فعالیت' });
+  }
+});
+
+router.post('/home/speedup', requireDeviceId, async (req, res) => {
+  try {
+    const state = await speedUpHomeActivity(req.deviceId);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در تسریع فعالیت' });
+  }
+});
+
+router.post('/home/cancel', requireDeviceId, async (req, res) => {
+  try {
+    const state = await cancelHomeActivity(req.deviceId);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در لغو فعالیت' });
+  }
+});
+
+router.post('/home/claim', requireDeviceId, async (req, res) => {
+  try {
+    const result = await claimHomeActivity(req.deviceId);
+    res.json(result);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    res.status(e.status || 500).json({ error: e.message || 'خطا در دریافت پاداش فعالیت' });
   }
 });
 

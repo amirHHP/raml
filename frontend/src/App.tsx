@@ -11,6 +11,7 @@ import { EyesOpenOverlay } from './components/EyesOpenOverlay';
 import { InventoryPanel } from './components/panels/InventoryPanel';
 import { StatsPanel } from './components/panels/StatsPanel';
 import { ShopPanel } from './components/panels/ShopPanel';
+import { HomePanel } from './components/panels/HomePanel';
 import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
@@ -143,6 +144,17 @@ export default function App() {
                 }}
               />
             )}
+            {game.tab === 'home' && unlocks.home && (
+              <HomePanel
+                state={state}
+                busy={game.busy}
+                onReturnHome={() => game.returnHome()}
+                onStartActivity={(id, dur) => game.startHomeActivity(id, dur)}
+                onSpeedUp={() => game.speedUpHomeActivity()}
+                onCancel={() => game.cancelHomeActivity()}
+                onClaim={() => game.claimHomeActivity() as any}
+              />
+            )}
             {game.tab === 'inventory' && unlocks.inventory && (
               <InventoryPanel items={state.inventory} />
             )}
@@ -167,6 +179,7 @@ export default function App() {
           onChange={game.setTab}
           showInventory={unlocks.inventory}
           showStats={unlocks.stats}
+          showHome={unlocks.home}
         />
       )}
 

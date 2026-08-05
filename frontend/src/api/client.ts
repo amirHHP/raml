@@ -107,4 +107,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ sku, purchaseToken }),
     }),
+  returnHome: () =>
+    request<GameState>('/api/game/home/return', { method: 'POST', body: '{}' }),
+  startHomeActivity: (activityId: string, durationMinutes: number) =>
+    request<GameState>('/api/game/home/start', {
+      method: 'POST',
+      body: JSON.stringify({ activityId, durationMinutes }),
+    }),
+  speedUpHomeActivity: () =>
+    request<GameState>('/api/game/home/speedup', { method: 'POST', body: '{}' }),
+  cancelHomeActivity: () =>
+    request<GameState>('/api/game/home/cancel', { method: 'POST', body: '{}' }),
+  claimHomeActivity: () =>
+    request<{ state: GameState; result: any }>('/api/game/home/claim', {
+      method: 'POST',
+      body: '{}',
+    }),
 };

@@ -1,13 +1,14 @@
-import { IconBag, IconCart, IconScroll, IconUser } from './icons';
+import { IconBag, IconCart, IconHome, IconScroll, IconUser } from './icons';
 import type { TabId } from '../types/game';
 
 const ALL_TABS: {
   id: TabId;
   label: string;
   Icon: typeof IconScroll;
-  requires?: 'inventory' | 'stats';
+  requires?: 'inventory' | 'stats' | 'home';
 }[] = [
   { id: 'story', label: 'داستان', Icon: IconScroll },
+  { id: 'home', label: 'خانه', Icon: IconHome, requires: 'home' },
   { id: 'inventory', label: 'کوله‌پشتی', Icon: IconBag, requires: 'inventory' },
   { id: 'stats', label: 'آمار', Icon: IconUser, requires: 'stats' },
   { id: 'shop', label: 'فروشگاه', Icon: IconCart },
@@ -18,15 +19,18 @@ export function BottomNav({
   onChange,
   showInventory = true,
   showStats = true,
+  showHome = true,
 }: {
   active: TabId;
   onChange: (t: TabId) => void;
   showInventory?: boolean;
   showStats?: boolean;
+  showHome?: boolean;
 }) {
   const tabs = ALL_TABS.filter((tab) => {
     if (tab.requires === 'inventory') return showInventory;
     if (tab.requires === 'stats') return showStats;
+    if (tab.requires === 'home') return showHome;
     return true;
   });
 
