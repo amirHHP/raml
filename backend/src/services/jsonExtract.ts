@@ -57,7 +57,9 @@ export function sliceFirstJsonObject(text: string): string | null {
 
 /** Parse the first JSON object from a model completion, tolerating prose and fences. */
 export function extractJson(raw: string): unknown {
-  const text = unwrapMarkdownFence(raw.trim());
+  // Strip reasoning blocks like <thought>...</thought> or <think>...</think> from models like Gemma
+  const noThought = raw.replace(/<(thought|think)>[\s\S]*?<\/\1>/gi, '').trim();
+  const text = unwrapMarkdownFence(noThought);
   const candidate = sliceFirstJsonObject(text) ?? text;
 
   try {

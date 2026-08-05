@@ -102,7 +102,8 @@ export function isGeminiBaseUrl(baseUrl: string): boolean {
 }
 
 export function looksLikeGeminiApiKey(key: string): boolean {
-  return key.trim().startsWith('AIza');
+  const k = key.trim();
+  return k.startsWith('AIza') || k.startsWith('AQ.');
 }
 
 function isGenerativeModel(model: GoogleModel): boolean {

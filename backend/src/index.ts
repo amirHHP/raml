@@ -1,3 +1,10 @@
+import dns from 'dns';
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1', '1.0.0.1']);
+} catch {
+  // Ignore DNS set failures if restricted by environment
+}
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
