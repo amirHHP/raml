@@ -493,6 +493,16 @@ export async function chooseOption(deviceId: string, optionId: string) {
 
   player.toastMessage = null;
 
+  if (option.text.includes('جنگجو') || option.text.includes('شمشیر سنگین')) {
+    player.classType = 'warrior';
+  } else if (option.text.includes('جادوگر') || option.text.includes('عصای کریستالی')) {
+    player.classType = 'mage';
+  } else if (option.text.includes('راهزن') || option.text.includes('خنجرهای سایه')) {
+    player.classType = 'rogue';
+  } else if (option.text.includes('شکارچی') || option.text.includes('کمان شاهین')) {
+    player.classType = 'ranger';
+  }
+
   const choiceEntry = {
     kind: 'choice' as const,
     text: option.text,

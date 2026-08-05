@@ -119,7 +119,7 @@ export function StatsPanel({ state }: { state: GameState }) {
         className="souls-panel souls-corners px-4 py-6"
         aria-label="پیکر و پوشیدنی‌ها"
       >
-        <CharacterSilhouette inventory={inventory} />
+        <CharacterSilhouette inventory={inventory} classType={classType} />
       </section>
 
       <section aria-label="توان">

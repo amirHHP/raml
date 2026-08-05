@@ -76,36 +76,29 @@ describe('mockAi early energy-only story', () => {
     assert.ok(res.options.some((o) => o.text.includes('شکاف')));
   });
 
-  it('turn 4 after combat advances instead of looping another dice roll', () => {
+  it('turn 4 presents ancient chest with 4 character class choices', () => {
     const res = mockAi(
       'مکان: غار اژدهای تاریکی - تالار ورودی\nبازیکن این گزینه را انتخاب کرد: «با تمام توان حمله کن»',
+      4,
     );
     assert.equal(res.needs_dice_roll, false);
+    assert.equal(res.options.length, 4);
     assertEnergyOnlyOptions(res.options);
-    assert.match(res.current_location, /دالان/);
+    assert.match(res.story_text, /صندوق/);
+    assert.ok(res.options.some((o) => o.text.includes('جنگجو')));
+    assert.ok(res.options.some((o) => o.text.includes('جادوگر')));
+    assert.ok(res.options.some((o) => o.text.includes('راهزن')));
+    assert.ok(res.options.some((o) => o.text.includes('شکارچی')));
   });
 
-  it('turn 4 retreat path also advances with energy options', () => {
+  it('turn 5 choice sets class type and applies stats bonuses', () => {
     const res = mockAi(
-      'مکان: غار اژدهای تاریکی\nبازیکن این گزینه را انتخاب کرد: «عقب‌نشینی به سایه»',
-    );
-    assert.equal(res.needs_dice_roll, false);
-    assertEnergyOnlyOptions(res.options);
-    assert.match(res.story_text, /سایه/);
-  });
-
-  it('turn 5+ mock beats change text instead of looping the desert fallback', () => {
-    const a = mockAi(
-      'بازیکن این گزینه را انتخاب کرد: «ردیابی ردپاها»',
+      'بازیکن این گزینه را انتخاب کرد: «برداشتن شمشیر سنگین (مسیر جنگجو — قدرت بالا & جان افزون)»',
       5,
     );
-    const b = mockAi(
-      'بازیکن این گزینه را انتخاب کرد: «از طناب پوسیده پایین برو»',
-      6,
-    );
-    assert.notEqual(a.story_text, b.story_text);
-    assert.match(a.story_text, /نوبت 5/);
-    assertEnergyOnlyOptions(a.options);
-    assertEnergyOnlyOptions(b.options);
+    assert.equal(res.needs_dice_roll, false);
+    assert.match(res.story_text, /جنگجو/);
+    assert.equal(res.stats_update?.strength, 5);
+    assert.equal(res.stats_update?.hp, 20);
   });
 });

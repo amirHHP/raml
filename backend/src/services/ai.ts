@@ -171,8 +171,24 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
   const success = userPrompt.includes('نتیجه: موفقیت');
   const chosen = chosenOptionFromPrompt(userPrompt);
 
-  // Past the scripted prologue: keep advancing with fresh beats (avoids keyword loops).
-  if (turnNumber != null && turnNumber >= AI_LIVE_FROM_TURN && !isAwaken && !isDice) {
+  const isClassChoice =
+    chosen.includes('جنگجو') ||
+    chosen.includes('شمشیر') ||
+    chosen.includes('جادوگر') ||
+    chosen.includes('عصا') ||
+    chosen.includes('راهزن') ||
+    chosen.includes('خنجر') ||
+    chosen.includes('شکارچی') ||
+    chosen.includes('کمان');
+
+  // Past the scripted prologue & class selection (turn 6+): keep advancing with fresh beats.
+  if (
+    turnNumber != null &&
+    turnNumber > AI_LIVE_FROM_TURN &&
+    !isAwaken &&
+    !isDice &&
+    !isClassChoice
+  ) {
     return lateMockBeat(chosen || userPrompt.slice(0, 40), turnNumber);
   }
 
@@ -251,8 +267,9 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     };
   }
 
-  // Turn 4 — بعد از درگیری / انتخاب‌های مرحله ۳ → پیشروی منطقی به‌سوی مرحله ۵ (AI زنده)
+  // Turn 4 — مواجهه با صندوق باستانی و ۴ انتخاب تعیین کلاس کاراکتر
   if (
+    turnNumber === 4 ||
     chosen.includes('حمله') ||
     chosen.includes('طلسم شن') ||
     chosen.includes('عقب‌نشینی') ||
@@ -260,45 +277,114 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     chosen.includes('غنیمت') ||
     chosen.includes('گوش بسپار')
   ) {
-    const fled = chosen.includes('عقب‌نشینی');
-    const usedAmulet = chosen.includes('طلسم شن');
-    const tookLoot = chosen.includes('غنیمت');
     return {
-      story_text: fled
-        ? 'به سایه می‌خزی. نفس آن چیز سنگین‌تر می‌شود، اما تو را از دست می‌دهد. دالانی خنک به عمق غار باز است — و بوی گوگرد قوی‌تر می‌شود.'
-        : usedAmulet
-          ? 'طلسم شن در مشتت گرم می‌شود. گردی زرین‌رنگ روی گودال می‌پاشد و پنجه رهایت می‌کند. از دهانهٔ غار می‌گذری و به دالانی تاریک می‌رسی.'
-          : tookLoot
-            ? 'کنار فانوس، شنلی تیره با دوخت مسی پیدا می‌کنی. روی شانه‌ات می‌اندازی — گرم و سنگین است. راه دالان بعدی باز است.'
-            : 'آنچه زیر شن بود عقب می‌کشد و در گودی محو می‌شود. راه دالان بعدی باز است؛ از اعماق، پژواک بال‌هایی سنگین به گوش می‌رسد.',
-      current_location: fled
-        ? 'غار اژدهای تاریکی - دالان سایه'
-        : 'غار اژدهای تاریکی - دالان ژرف',
+      story_text:
+        'به تالاری کهن و شگفت‌انگیز می‌رسی. در مرکز تالار، **صندوقی باستانی و درخشان** فراروی توست.\nروی صندوق چهار نماد حکاکی شده و با نزدیک شدن تو، درِ آن با طنینی خوش‌آهنگ گشوده می‌شود.\nدرون صندوق، چهار یادگار مقدس می‌درخشند. با انتخاب یکی از آن‌ها، ذات، مهارت‌ها و **کلاس کاراکتر** تو آشکار می‌گردد:',
+      current_location: 'غار اژدهای تاریکی — تالار صندوق باستانی',
       enemy_line_art_type: 'none',
-      stats_update: { xp: 10, gold: fled ? 5 : 15 },
+      stats_update: { xp: 15 },
       needs_dice_roll: false,
       required_roll_type: null,
       min_roll_success: null,
       options: [
-        energyOption('عمیق‌تر پیش برو', 'search'),
-        energyOption('نشانه‌های روی دیوار را بخوان', 'talk'),
-        energyOption('کمی استراحت کن و نیرو بگیر', 'shield'),
+        energyOption('برداشتن شمشیر سنگین (مسیر جنگجو — قدرت بالا & جان افزون)', 'sword'),
+        energyOption('برداشتن عصای کریستالی (مسیر جادوگر — خرد بالا & مانا افزون)', 'spell'),
+        energyOption('برداشتن خنجرهای سایه (مسیر راهزن — چابکی بالا & طلای افزون)', 'key'),
+        energyOption('برداشتن کمان شاهین (مسیر شکارچی — تعادل چابکی و خرد)', 'shield'),
       ],
-      discovered_item: tookLoot
-        ? {
-            id: 'ash_cloak',
-            name: 'شنل خاکستر',
-            description: 'پارچه‌ای تیره با دوخت مسی؛ گرمای بدن را نگه می‌دارد.',
-            effect: 'محافظت در برابر سرمای تاریک و افزایش مقاومت',
-            icon: 'cloak',
-            equip_slot: 'chest' as const,
-          }
-        : null,
-      toast_message: tookLoot
-        ? 'پوشیدنی جدید: شنل خاکستر'
-        : fled
-          ? 'از چشم نگهبان دور شدی'
-          : 'راه ادامه دارد',
+      discovered_item: null,
+      toast_message: 'صندوق باستانی گشوده شد — کلاس خود را انتخاب کنید',
+    };
+  }
+
+  // Turn 5 — انتخاب کلاس کاراکتر از صندوق باستانی
+  if (
+    chosen.includes('جنگجو') ||
+    chosen.includes('شمشیر') ||
+    chosen.includes('جادوگر') ||
+    chosen.includes('عصا') ||
+    chosen.includes('راهزن') ||
+    chosen.includes('خنجر') ||
+    chosen.includes('شکارچی') ||
+    chosen.includes('کمان')
+  ) {
+    const isWarrior = chosen.includes('جنگجو') || chosen.includes('شمشیر');
+    const isMage = chosen.includes('جادوگر') || chosen.includes('عصا');
+    const isRogue = chosen.includes('راهزن') || chosen.includes('خنجر');
+
+    if (isWarrior) {
+      return {
+        story_text:
+          'قدرت سنگین فولاد در وجودت طنین‌انداز می‌شود. نور شمشیر، تاریکی تالار را می‌شکافد. تو نبرد را با قدرت یک **جنگجو** آغاز می‌کنی...',
+        current_location: 'غار اژدهای تاریکی — دالان دلاوران',
+        enemy_line_art_type: 'orc_guardian',
+        stats_update: { strength: 5, hp: 20, xp: 25 },
+        needs_dice_roll: false,
+        required_roll_type: null,
+        min_roll_success: null,
+        options: [
+          energyOption('با شمشیر به ضربهٔ اول امان نده', 'sword'),
+          energyOption('سپر را بالا بیاور و آماده باش', 'shield'),
+          energyOption('محیط را تحلیل کن', 'search'),
+        ],
+        discovered_item: null,
+        toast_message: 'کلاس تعیین شد: جنگجو (قدرت +۵، جان +۲۰)',
+      };
+    }
+    if (isMage) {
+      return {
+        story_text:
+          'نوای جادویی عصای کریستالی در ذهن و روحت طنین می‌افکند. مانا در رگ‌هایت می‌جوشد. تو دالان‌ها را با دانش یک **جادوگر** طی می‌کنی...',
+        current_location: 'غار اژدهای تاریکی — برج مانا',
+        enemy_line_art_type: 'desert_spirit',
+        stats_update: { intellect: 5, mana: 30, xp: 25 },
+        needs_dice_roll: false,
+        required_roll_type: null,
+        min_roll_success: null,
+        options: [
+          energyOption('گلولهٔ آتشین به سوی سایه پرتاب کن', 'spell'),
+          energyOption('سپر جادویی دور خود بکش', 'shield'),
+          energyOption('کتیبه‌های کهن روی محراب را بخوان', 'talk'),
+        ],
+        discovered_item: null,
+        toast_message: 'کلاس تعیین شد: جادوگر (خرد +۵، مانا +۳۰)',
+      };
+    }
+    if (isRogue) {
+      return {
+        story_text:
+          'خنجرهای سایه به نرمی در دستانت جای می‌گیرند و قدم‌هایت بی‌صدا می‌شوند. تو با چابکی یک **راهزن** پیش می‌روی...',
+        current_location: 'غار اژدهای تاریکی — دهلیز سایه‌ها',
+        enemy_line_art_type: 'shadow',
+        stats_update: { agility: 5, gold: 50, xp: 25 },
+        needs_dice_roll: false,
+        required_roll_type: null,
+        min_roll_success: null,
+        options: [
+          energyOption('در تاریکی مخفی شو و شبیخون بزن', 'key'),
+          energyOption('جیب‌های طلایی را غارت کن', 'search'),
+          energyOption('سریعاً عقب‌نشینی کن', 'retreat'),
+        ],
+        discovered_item: null,
+        toast_message: 'کلاس تعیین شد: راهزن (چابکی +۵، طلا +۵۰)',
+      };
+    }
+    return {
+      story_text:
+        'کمان شاهین به آرامی بر دوشت قرار می‌گیرد و چشمانت در تاریکی به دقت شاهین تیزبین می‌شوند. تو به عنوان یک **شکارچی** ماهر راهی می‌شوی...',
+      current_location: 'غار اژدهای تاریکی — کمین‌گاه شکارچی',
+      enemy_line_art_type: 'skeleton',
+      stats_update: { agility: 3, intellect: 2, hp: 10, xp: 25 },
+      needs_dice_roll: false,
+      required_roll_type: null,
+      min_roll_success: null,
+      options: [
+        energyOption('تیری تیز به سوی هدف رها کن', 'sword'),
+        energyOption('محیط را برای تله‌گذاری بررسی کن', 'search'),
+        energyOption('به آرامی قدم بردار', 'shield'),
+      ],
+      discovered_item: null,
+      toast_message: 'کلاس تعیین شد: شکارچی (چابکی +۳، خرد +۲)',
     };
   }
 
