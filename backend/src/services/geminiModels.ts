@@ -153,17 +153,55 @@ export async function listGeminiModels(apiKey: string): Promise<GeminiModelInfo[
       };
     })
     .sort((a, b) => {
-      // Known limits first, then gemma/gemini flash family, then alpha
-      const rank = (m: GeminiModelInfo) => {
-        let r = 0;
-        if (m.rateLimit.rpm != null) r -= 100;
-        if (m.id.startsWith('gemma')) r -= 40;
-        if (m.id.includes('flash') && !m.id.includes('preview')) r -= 20;
-        return r;
-      };
-      const d = rank(a) - rank(b);
+      const d = rankGeminiModelForGame(a) - rankGeminiModelForGame(b);
       return d !== 0 ? d : a.id.localeCompare(b.id);
     });
 
   return models;
+}
+
+/**
+ * Lower = better for Raml game turns (structured Persian JSON + options).
+ * Prefer Gemini Flash; demote Gemma (low TPM, flaky JSON via OpenAI-compat).
+ */
+export function rankGeminiModelForGame(m: GeminiModelInfo): number {
+  const id = m.id.toLowerCase();
+  let r = 0;
+  if (m.rateLimit.rpm != null) r -= 100;
+  if (id.startsWith('gemini') && id.includes('flash') && !id.includes('preview')) {
+    r -= 80;
+    if (id.includes('2.0-flash') && !id.includes('lite')) r -= 20;
+    if (id.includes('2.5-flash') && !id.includes('lite')) r -= 15;
+  } else if (id.startsWith('gemini') && !id.includes('preview')) {
+    r -= 30;
+  }
+  // Gemma is available from Google's list API but is a poor default for this game.
+  if (id.startsWith('gemma')) r += 50;
+  if (id.includes('preview') || id.includes('exp')) r += 20;
+  return r;
+}
+
+/** Best default for the admin picker after loading Google's model list. */
+export function pickDefaultGeminiModel(
+  models: GeminiModelInfo[],
+  currentId?: string,
+): string | null {
+  if (currentId && models.some((m) => m.id === currentId)) return currentId;
+  const preferred = [
+    'gemini-2.0-flash',
+    'gemini-2.5-flash',
+    'gemini-1.5-flash',
+  ];
+  for (const id of preferred) {
+    if (models.some((m) => m.id === id)) return id;
+  }
+  const flash = models.find(
+    (m) =>
+      m.id.startsWith('gemini') &&
+      m.id.includes('flash') &&
+      !m.id.includes('preview'),
+  );
+  if (flash) return flash.id;
+  const gemini = models.find((m) => m.id.startsWith('gemini'));
+  return gemini?.id ?? models[0]?.id ?? null;
 }

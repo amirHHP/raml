@@ -4,6 +4,9 @@ import {
   isGeminiBaseUrl,
   looksLikeGeminiApiKey,
   lookupGeminiRateLimit,
+  pickDefaultGeminiModel,
+  rankGeminiModelForGame,
+  type GeminiModelInfo,
 } from '../services/geminiModels';
 import { shouldUseMockAi } from '../services/ai';
 import type { RuntimeAiSettings } from '../services/aiSettings';
@@ -41,6 +44,28 @@ describe('gemini model helpers', () => {
     const unknown = lookupGeminiRateLimit('totally-unknown-model-xyz');
     assert.equal(unknown.rpm, null);
     assert.match(unknown.label, /نامشخص/);
+  });
+
+  it('ranks Gemini Flash above Gemma for game defaults', () => {
+    const flash: GeminiModelInfo = {
+      id: 'gemini-2.0-flash',
+      displayName: 'Gemini 2.0 Flash',
+      description: '',
+      inputTokenLimit: null,
+      outputTokenLimit: null,
+      rateLimit: lookupGeminiRateLimit('gemini-2.0-flash'),
+    };
+    const gemma: GeminiModelInfo = {
+      id: 'gemma-4-31b-it',
+      displayName: 'Gemma 4 31B',
+      description: '',
+      inputTokenLimit: null,
+      outputTokenLimit: null,
+      rateLimit: lookupGeminiRateLimit('gemma-4-31b-it'),
+    };
+    assert.ok(rankGeminiModelForGame(flash) < rankGeminiModelForGame(gemma));
+    assert.equal(pickDefaultGeminiModel([gemma, flash]), 'gemini-2.0-flash');
+    assert.equal(pickDefaultGeminiModel([gemma, flash], 'gemma-4-31b-it'), 'gemma-4-31b-it');
   });
 });
 

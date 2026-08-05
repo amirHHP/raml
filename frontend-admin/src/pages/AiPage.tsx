@@ -65,12 +65,25 @@ export function AiPage() {
         setMessage('مدلی یافت نشد');
       } else {
         const gemmaCount = result.models.filter((m) => m.id.startsWith('gemma')).length;
-        setMessage(
-          `${result.models.length} مدل (شامل ${gemmaCount} مدل Gemma) بارگذاری شد`,
+        const flash = result.models.find(
+          (m) =>
+            m.id.startsWith('gemini') &&
+            m.id.includes('flash') &&
+            !m.id.includes('preview'),
         );
-        if (!result.models.some((m) => m.id === model) && result.models[0]) {
-          setModel(result.models[0].id);
+        // Prefer a Gemini Flash default — Gemma ranks high in Google's list but
+        // is a poor fit for structured game JSON (low TPM / flaky options).
+        if (!result.models.some((m) => m.id === model)) {
+          const preferred =
+            flash?.id ||
+            result.models.find((m) => m.id.startsWith('gemini'))?.id ||
+            result.models[0]?.id;
+          if (preferred) setModel(preferred);
         }
+        setMessage(
+          `${result.models.length} مدل از Google دریافت شد` +
+            (gemmaCount ? ` (شامل ${gemmaCount} مدل Gemma — برای بازی Gemini Flash بهتر است)` : ''),
+        );
       }
     } catch (err) {
       setError((err as Error).message);
@@ -156,6 +169,7 @@ export function AiPage() {
 
   const selected = models.find((m) => m.id === model);
   const liveFrom = settings?.aiLiveFromTurn ?? 5;
+  const modelLooksGemma = model.trim().toLowerCase().startsWith('gemma');
 
   return (
     <form onSubmit={(e) => void save(e)} className="max-w-xl space-y-4 rounded-xl border border-line bg-sand/70 p-5">
@@ -282,6 +296,14 @@ export function AiPage() {
             placeholder="gemini-2.0-flash"
           />
         </label>
+      )}
+
+      {modelLooksGemma && (
+        <p className="rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-xs leading-6 text-amber">
+          مدل‌های Gemma از لیست Google می‌آیند ولی برای رمل مناسب نیستند: TPM پایین و JSON
+          گزینه‌ها اغلب ناقص می‌شود. برای استاد بازی،{' '}
+          <span className="font-medium">gemini-2.0-flash</span> را انتخاب کنید.
+        </p>
       )}
 
       <label className="flex items-center gap-2 text-sm">
