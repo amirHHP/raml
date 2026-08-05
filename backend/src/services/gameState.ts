@@ -11,13 +11,16 @@ import {
   buildDicePrompt,
 } from './promptService';
 import { withMilestonePrompt } from './milestonePromptService';
+import { parseItemStatEffect } from './itemEffects';
 import type {
   AiGameResponse,
   ClassType,
   EquipSlot,
   FeatureUnlocks,
   GameOption,
+  InventoryItem,
   PlayerDocument,
+  StatKey,
   StatsUpdate,
   StoryHistoryEntry,
 } from '../types/game';
@@ -245,12 +248,19 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   if (ai.discovered_item) {
     const discovered = ai.discovered_item;
     const existing = player.inventory.find((i) => i.id === discovered.id);
+    const effectStats = parseItemStatEffect(discovered.effect);
+
     if (existing) {
       existing.quantity += 1;
       if (discovered.equip_slot) existing.equipSlot = discovered.equip_slot;
       if (discovered.effect) existing.effect = discovered.effect;
     } else {
-      player.inventory.push({
+      const isSlotOccupied = discovered.equip_slot
+        ? player.inventory.some((i) => i.equipSlot === discovered.equip_slot && i.isEquipped)
+        : false;
+      const shouldEquip = Boolean(discovered.equip_slot && !isSlotOccupied);
+
+      const newItem: InventoryItem = {
         id: discovered.id,
         name: discovered.name,
         description: discovered.description,
@@ -258,7 +268,20 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
         quantity: 1,
         ...(discovered.equip_slot ? { equipSlot: discovered.equip_slot } : {}),
         ...(discovered.effect ? { effect: discovered.effect } : {}),
-      });
+        isEquipped: shouldEquip,
+      };
+      player.inventory.push(newItem);
+
+      if (shouldEquip) {
+        for (const [stat, val] of Object.entries(effectStats)) {
+          const key = stat as StatKey;
+          const aiAdded = (ai.stats_update || {})[key] || 0;
+          const neededExtra = Math.max(0, (val || 0) - aiAdded);
+          if (neededExtra > 0) {
+            player.stats[key] = (player.stats[key] || 0) + neededExtra;
+          }
+        }
+      }
     }
   }
 
@@ -948,7 +971,24 @@ export async function claimHomeActivity(deviceId: string) {
         if (existing) {
           existing.quantity += 1;
         } else {
-          player.inventory.push({ ...item, quantity: 1 });
+          const isSlotOccupied = item.equipSlot
+            ? player.inventory.some((inv) => inv.equipSlot === item.equipSlot && inv.isEquipped)
+            : false;
+          const shouldEquip = Boolean(item.equipSlot && !isSlotOccupied);
+          const newItem: InventoryItem = {
+            ...item,
+            quantity: 1,
+            isEquipped: shouldEquip,
+          };
+          player.inventory.push(newItem);
+
+          if (shouldEquip) {
+            const effectStats = parseItemStatEffect(item.effect);
+            for (const [stat, val] of Object.entries(effectStats)) {
+              const key = stat as StatKey;
+              if (val) player.stats[key] = (player.stats[key] || 0) + val;
+            }
+          }
         }
       }
     }
@@ -1007,6 +1047,57 @@ export async function claimHomeActivity(deviceId: string) {
       summaryMessage: summary,
     },
   };
+}
+
+export async function toggleEquipItem(
+  deviceId: string,
+  itemId: string,
+): Promise<ReturnType<typeof toClientState>> {
+  const player = await getOrCreatePlayer(deviceId);
+  assertNotBanned(player);
+
+  const item = player.inventory.find((i) => i.id === itemId);
+  if (!item) {
+    throw Object.assign(new Error('آیتم در کوله‌پشتی یافت نشد'), { status: 404 });
+  }
+
+  if (!item.equipSlot) {
+    throw Object.assign(new Error('این آیتم قابل پوشیدن نیست'), { status: 400 });
+  }
+
+  const effectStats = parseItemStatEffect(item.effect);
+
+  if (!item.isEquipped) {
+    // Unequip currently equipped item in the same slot if any
+    const currentlyEquipped = player.inventory.find(
+      (i) => i.equipSlot === item.equipSlot && i.isEquipped && i.id !== item.id,
+    );
+    if (currentlyEquipped) {
+      currentlyEquipped.isEquipped = false;
+      const prevEffect = parseItemStatEffect(currentlyEquipped.effect);
+      for (const [stat, val] of Object.entries(prevEffect)) {
+        const key = stat as StatKey;
+        if (val) player.stats[key] = Math.max(0, (player.stats[key] || 0) - val);
+      }
+    }
+
+    item.isEquipped = true;
+    for (const [stat, val] of Object.entries(effectStats)) {
+      const key = stat as StatKey;
+      if (val) player.stats[key] = (player.stats[key] || 0) + val;
+    }
+    player.toastMessage = `تجهیز شد: ${item.name}`;
+  } else {
+    item.isEquipped = false;
+    for (const [stat, val] of Object.entries(effectStats)) {
+      const key = stat as StatKey;
+      if (val) player.stats[key] = Math.max(0, (player.stats[key] || 0) - val);
+    }
+    player.toastMessage = `از تن درآمد: ${item.name}`;
+  }
+
+  await persist(player);
+  return toClientState(player);
 }
 
 export type { PlayerDocument };

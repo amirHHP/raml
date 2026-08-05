@@ -152,6 +152,8 @@ export interface InventoryItem {
   /** When set, item appears on the character silhouette for that slot. */
   equipSlot?: EquipSlot | null;
   effect?: string | null;
+  /** True when item is actively worn/equipped by the character. */
+  isEquipped?: boolean;
 }
 
 export type StoryHistoryEntry =

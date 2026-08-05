@@ -4,7 +4,7 @@ import {
   type InventoryItem,
 } from '../types/game';
 
-/** Latest wearable item per slot (later inventory entries win). */
+/** Get worn/equipped item per slot (respecting item.isEquipped status). */
 export function getEquippedBySlot(
   inventory: InventoryItem[],
 ): Partial<Record<EquipSlot, InventoryItem>> {
@@ -12,7 +12,11 @@ export function getEquippedBySlot(
   for (const item of inventory) {
     const slot = item.equipSlot;
     if (!slot || !EQUIP_SLOTS.includes(slot)) continue;
-    equipped[slot] = item;
+    if (item.isEquipped === true) {
+      equipped[slot] = item;
+    } else if (!equipped[slot] && item.isEquipped !== false) {
+      equipped[slot] = item;
+    }
   }
   return equipped;
 }

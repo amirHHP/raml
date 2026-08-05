@@ -156,7 +156,10 @@ export default function App() {
               />
             )}
             {game.tab === 'inventory' && unlocks.inventory && (
-              <InventoryPanel items={state.inventory} />
+              <InventoryPanel
+                items={state.inventory}
+                onToggleEquip={(id) => void game.toggleEquip(id)}
+              />
             )}
             {game.tab === 'stats' && unlocks.stats && <StatsPanel state={state} />}
             {game.tab === 'shop' && (

@@ -14,6 +14,7 @@ import {
   startHomeActivity,
   submitDiceRoll,
   toClientState,
+  toggleEquipItem,
   unlockOrReturnHome,
 } from '../services/gameState';
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
@@ -153,6 +154,22 @@ router.post('/toast/clear', requireDeviceId, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'خطا' });
+  }
+});
+
+router.post('/inventory/equip', requireDeviceId, async (req, res) => {
+  try {
+    const body = z.object({ itemId: z.string().min(1) }).parse(req.body);
+    const state = await toggleEquipItem(req.deviceId, body.itemId);
+    res.json(state);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'آیتم نامعتبر است' });
+      return;
+    }
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در تجهیز آیتم' });
   }
 });
 

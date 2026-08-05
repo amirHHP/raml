@@ -229,6 +229,11 @@ export function useGame() {
     return null;
   };
 
+  const toggleEquip = async (itemId: string) => {
+    const s = await run(() => api.toggleEquip(itemId));
+    if (s) setState(s);
+  };
+
   return {
     state,
     loading,
@@ -262,5 +267,6 @@ export function useGame() {
     speedUpHomeActivity,
     cancelHomeActivity,
     claimHomeActivity,
+    toggleEquip,
   };
 }

@@ -3,7 +3,13 @@ import {
   type InventoryItem,
 } from '../../types/game';
 
-export function InventoryPanel({ items }: { items: InventoryItem[] }) {
+export function InventoryPanel({
+  items,
+  onToggleEquip,
+}: {
+  items: InventoryItem[];
+  onToggleEquip?: (itemId: string) => void;
+}) {
   if (!items.length) {
     return (
       <div className="px-4 py-12 text-center">
@@ -20,22 +26,33 @@ export function InventoryPanel({ items }: { items: InventoryItem[] }) {
       {items.map((item) => (
         <li
           key={item.id}
-          className="rounded-xl border border-amber/30 bg-panel px-4 py-3.5 space-y-1.5"
+          className={`rounded-xl border px-4 py-3.5 space-y-1.5 transition ${
+            item.isEquipped
+              ? 'border-amber/60 bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]'
+              : 'border-amber/30 bg-panel'
+          }`}
         >
           <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-base">🎒</span>
+              <span className="text-base">{item.icon || '🎒'}</span>
               <h3 className="font-semibold text-sm text-ink">{item.name}</h3>
             </div>
-            <span className="rounded-full bg-amber/20 px-2 py-0.5 text-xs font-bold text-amber">
-              ×{item.quantity}
-            </span>
+            <div className="flex items-center gap-2">
+              {item.isEquipped && (
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40">
+                  🛡️ تجهیزشده
+                </span>
+              )}
+              <span className="rounded-full bg-amber/20 px-2 py-0.5 text-xs font-bold text-amber">
+                ×{item.quantity}
+              </span>
+            </div>
           </div>
-          
+
           {item.description ? (
             <p className="text-xs leading-6 text-ink-muted pt-0.5">{item.description}</p>
           ) : null}
-          
+
           {item.effect ? (
             <div className="flex items-start gap-1.5 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-2 mt-1">
               <span className="shrink-0 font-bold">✨ کاربرد:</span>
@@ -44,9 +61,22 @@ export function InventoryPanel({ items }: { items: InventoryItem[] }) {
           ) : null}
 
           {item.equipSlot ? (
-            <p className="text-[11px] text-amber/80 font-medium pt-1">
-              🛡️ پوشیدنی — {EQUIP_SLOT_LABELS[item.equipSlot]}
-            </p>
+            <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line/30 pt-2">
+              <span className="text-[11px] text-amber/80 font-medium">
+                🛡️ پوشیدنی — {EQUIP_SLOT_LABELS[item.equipSlot]}
+              </span>
+              <button
+                type="button"
+                onClick={() => onToggleEquip?.(item.id)}
+                className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition shadow-sm cursor-pointer ${
+                  item.isEquipped
+                    ? 'border border-rose-500/40 bg-rose-950/50 text-rose-300 hover:bg-rose-900/70 active:scale-95'
+                    : 'border border-amber-500/50 bg-amber-950/60 text-amber-300 hover:bg-amber-900/80 active:scale-95'
+                }`}
+              >
+                {item.isEquipped ? '✖️ درآوردن' : '🛡️ پوشیدن'}
+              </button>
+            </div>
           ) : null}
         </li>
       ))}

@@ -100,6 +100,7 @@ const InventorySchema = new Schema(
       required: false,
       default: undefined,
     },
+    isEquipped: { type: Boolean, default: false },
   },
   { _id: false },
 );

@@ -123,4 +123,9 @@ export const api = {
       method: 'POST',
       body: '{}',
     }),
+  toggleEquip: (itemId: string) =>
+    request<GameState>('/api/game/inventory/equip', {
+      method: 'POST',
+      body: JSON.stringify({ itemId }),
+    }),
 };
