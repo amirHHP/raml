@@ -19,7 +19,7 @@ export const config = {
   openaiApiKey: process.env.OPENAI_API_KEY || '',
   openaiBaseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
   openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-  useMockAi: process.env.USE_MOCK_AI === 'true' || !process.env.OPENAI_API_KEY,
+  useMockAi: process.env.USE_MOCK_AI === 'true',
   corsOrigin: parseCorsOrigins(process.env.CORS_ORIGIN),
   adminToken: process.env.ADMIN_TOKEN || '',
   energyRegenMinutes: Number(process.env.ENERGY_REGEN_MINUTES) || 20,

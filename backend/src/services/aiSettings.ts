@@ -152,11 +152,19 @@ export async function updateAiSettings(input: {
     openaiApiKey = input.openaiApiKey;
   }
 
+  // When admin sets a new key without explicitly toggling mock, auto-disable mock
+  const useMockAi =
+    input.useMockAi !== undefined
+      ? input.useMockAi
+      : input.openaiApiKey && input.openaiApiKey.trim()
+        ? false
+        : current.useMockAi;
+
   const next = finalize({
     openaiApiKey,
     openaiBaseUrl: input.openaiBaseUrl ?? current.openaiBaseUrl,
     openaiModel: input.openaiModel ?? current.openaiModel,
-    useMockAi: input.useMockAi ?? current.useMockAi,
+    useMockAi,
   });
 
   if (useMemory) {
