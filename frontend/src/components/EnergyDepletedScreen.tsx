@@ -71,7 +71,7 @@ export function EnergyDepletedScreen({
             onClick={onWatchAd}
             className="w-full border border-amber/50 py-3.5 text-sm text-amber transition enabled:active:opacity-70 disabled:opacity-40"
           >
-            تماشای تبلیغ — +۵ انرژی
+            تماشای تبلیغ ادیوری — +۵ انرژی
           </button>
           <button
             type="button"

@@ -111,8 +111,8 @@ export function ShopPanel({
         onClick={onWatchAd}
         className="w-full rounded-xl border border-amber/50 bg-panel px-4 py-3 text-right transition hover:amber-glow disabled:opacity-40"
       >
-        <p className="text-sm text-amber">تماشای تبلیغ ویدیویی</p>
-        <p className="mt-1 text-xs text-ink-muted">+۵ انرژی (ماک تپسل/یکتانت)</p>
+        <p className="text-sm text-amber">تماشای تبلیغ ویدیویی ادیوری</p>
+        <p className="mt-1 text-xs text-ink-muted">+۵ انرژی (شبکه تبلیغاتی Adivery)</p>
       </button>
 
       {items.map((item) => {
