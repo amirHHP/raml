@@ -42,7 +42,11 @@ export type EnemyLineArtType =
   | 'dragon'
   | 'skeleton'
   | 'shadow'
-  | 'desert_spirit';
+  | 'desert_spirit'
+  | 'chest'
+  | 'castle'
+  | 'boss_demon'
+  | 'magic_portal';
 
 export type StatKey = 'hp' | 'mana' | 'gold' | 'energy' | 'strength' | 'agility' | 'intellect';
 
@@ -105,6 +109,7 @@ export interface AiGameResponse {
   story_text: string;
   current_location: string;
   enemy_line_art_type: EnemyLineArtType;
+  ascii_art?: string | null;
   stats_update: StatsUpdate;
   needs_dice_roll: boolean;
   required_roll_type: 'strength' | 'agility' | 'intellect' | 'luck' | null;
@@ -157,7 +162,7 @@ export interface InventoryItem {
 }
 
 export type StoryHistoryEntry =
-  | { kind: 'story'; text: string }
+  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null }
   | {
       kind: 'choice';
       text: string;
@@ -185,6 +190,7 @@ export interface PlayerDocument {
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
+  asciiArt?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];

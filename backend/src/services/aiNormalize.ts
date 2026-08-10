@@ -206,6 +206,16 @@ export function normalizeAiPayload(raw: unknown): unknown {
       'ناشناخته',
     enemy_line_art_type:
       pickString(record, 'enemy_line_art_type', 'enemyLineArtType') ?? 'none',
+    ascii_art:
+      pickString(
+        record,
+        'ascii_art',
+        'asciiArt',
+        'line_art',
+        'character_art',
+        'text_art',
+        'ascii',
+      ) ?? null,
     stats_update: asRecord(record.stats_update ?? record.statsUpdate) ?? {},
     needs_dice_roll: coerceBool(record.needs_dice_roll ?? record.needsDiceRoll),
     required_roll_type:

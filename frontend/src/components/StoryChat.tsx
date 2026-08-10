@@ -6,13 +6,23 @@ import {
   type RefObject,
 } from 'react';
 import { useWordTypewriter } from '../hooks/useWordTypewriter';
-import type { GameOption, GameState, StoryHistoryEntry } from '../types/game';
+import type { EnemyLineArtType, GameOption, GameState, StoryHistoryEntry } from '../types/game';
 
-function parseHistoryBubbles(history: Array<string | StoryHistoryEntry>): ChatBubble[] {
+function parseHistoryBubbles(
+  history: Array<string | StoryHistoryEntry>,
+  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null },
+): ChatBubble[] {
   if (!history || history.length === 0) return [];
   return history.map((item, idx) => {
     if (typeof item === 'string') {
-      return { id: `hist-story-${idx}`, kind: 'story', text: item };
+      const isLast = idx === history.length - 1;
+      return {
+        id: `hist-story-${idx}`,
+        kind: 'story',
+        text: item,
+        enemyLineArtType: isLast ? currentState?.enemyLineArtType : 'none',
+        asciiArt: isLast ? currentState?.asciiArt : null,
+      };
     }
     if (item.kind === 'choice') {
       return {
@@ -23,7 +33,14 @@ function parseHistoryBubbles(history: Array<string | StoryHistoryEntry>): ChatBu
         icon: item.icon || 'search',
       };
     }
-    return { id: `hist-story-${idx}`, kind: 'story', text: item.text };
+    const isLast = idx === history.length - 1;
+    return {
+      id: `hist-story-${idx}`,
+      kind: 'story',
+      text: item.text,
+      enemyLineArtType: item.enemyLineArtType || (isLast ? currentState?.enemyLineArtType : 'none'),
+      asciiArt: item.asciiArt !== undefined ? item.asciiArt : (isLast ? currentState?.asciiArt : null),
+    };
   });
 }
 import { optionEffectLabel } from '../utils/optionEffect';
@@ -41,6 +58,8 @@ type StoryBubble = {
   id: string;
   kind: 'story';
   text: string;
+  enemyLineArtType?: EnemyLineArtType;
+  asciiArt?: string | null;
 };
 
 type ChoiceBubble = {
@@ -171,7 +190,10 @@ export function StoryChat({
           : [];
 
     if (!hydrated) {
-      const initialBubbles = parseHistoryBubbles(history);
+      const initialBubbles = parseHistoryBubbles(history, {
+        enemyLineArtType: state.enemyLineArtType,
+        asciiArt: state.asciiArt,
+      });
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
       lastTurnRef.current = state.storyTurnCount || history.length;
@@ -193,7 +215,12 @@ export function StoryChat({
     lastStoryRef.current = state.storyText;
     lastTurnRef.current = turnAdvanced ? turn : lastTurnRef.current + 1;
 
-    setBubbles(parseHistoryBubbles(history));
+    setBubbles(
+      parseHistoryBubbles(history, {
+        enemyLineArtType: state.enemyLineArtType,
+        asciiArt: state.asciiArt,
+      }),
+    );
     setAnimateLatest(true);
     setTypingDone(false);
     typingDoneRef.current = false;
@@ -297,9 +324,13 @@ export function StoryChat({
         if (bubble.kind === 'choice') {
           return <ChoiceBubbleView key={bubble.id} bubble={bubble} />;
         }
+
+        const lineArtType = isLatest ? state.enemyLineArtType : (bubble.enemyLineArtType || 'none');
+        const asciiArt = isLatest ? state.asciiArt : bubble.asciiArt;
+
         return (
           <div key={bubble.id} className="flex flex-col gap-3">
-            {isLatest && <EnemyLineArt type={state.enemyLineArtType} />}
+            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} />
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}

@@ -43,7 +43,11 @@ export type EnemyLineArtType =
   | 'dragon'
   | 'skeleton'
   | 'shadow'
-  | 'desert_spirit';
+  | 'desert_spirit'
+  | 'chest'
+  | 'castle'
+  | 'boss_demon'
+  | 'magic_portal';
 
 export type StatKey = 'hp' | 'mana' | 'gold' | 'energy' | 'strength' | 'agility' | 'intellect';
 
@@ -121,7 +125,7 @@ export interface InventoryItem {
 }
 
 export type StoryHistoryEntry =
-  | { kind: 'story'; text: string }
+  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null }
   | {
       kind: 'choice';
       text: string;
@@ -172,6 +176,7 @@ export interface GameState {
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
+  asciiArt?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];

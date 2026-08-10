@@ -64,8 +64,13 @@ const AiResponseSchema = z.object({
       'skeleton',
       'shadow',
       'desert_spirit',
+      'chest',
+      'castle',
+      'boss_demon',
+      'magic_portal',
     ])
     .catch('none'),
+  ascii_art: z.string().nullable().optional().catch(null),
   stats_update: z
     .object({
       hp: AiStatSchema,
@@ -199,6 +204,8 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
         'چشم باز می‌کنی و شن تا گلویت بالا آمده است. چیزی زیر خاک، مچ پایت را گرفته و آرام به پایین می‌کشد.\n\nچند قدم آن‌طرف‌تر فانوسی روی شن افتاده، و صدایی خش‌دار نامت را می‌خواند: «تو زودتر از موعد بیدار شدی.»',
       current_location: 'کویر رمل — گودِ شن',
       enemy_line_art_type: 'shadow',
+      ascii_art:
+        '   ┌─────────────┐\n   │  .---.   ⚡ │\n   │ /     \\     │\n   │ | (o) |     │\n   │ \\  -  /     │\n   │  `---`      │\n   │ ~~~~~~~~~~~ │\n   └─────────────┘',
       stats_update: { xp: 5 },
       needs_dice_roll: false,
       required_roll_type: null,
@@ -250,13 +257,14 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     };
   }
 
-  // Turn 2 — هر انتخابِ نوبت اول به تاس می‌رسد: زودترین لحظهٔ «بازی‌وار» بازی.
-  // آستانهٔ ۸ عمداً پایین است تا اولین تاس بازیکن معمولاً برد باشد.
+  // Turn 2 — هر انتخابِ نوبت اول به تاس می‌رسد
   if (turnNumber === 2 || (turnNumber == null && PROLOGUE_FIRST_CHOICES.test(chosen))) {
     return {
       story_text: `${prologueDiceSetup(chosen)}\n\nاین لحظه به بخت تو بند است.`,
       current_location: 'کویر رمل — گودِ شن',
       enemy_line_art_type: 'shadow',
+      ascii_art:
+        '   .───────.\n  /   o   /|\n /_______/ |\n |  o o  | |\n |   o   |/\n \'───────\'',
       stats_update: { energy_change: 0 },
       needs_dice_roll: true,
       required_roll_type: 'luck',
@@ -267,7 +275,7 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
     };
   }
 
-  // Turn 4 — مواجهه با صندوق باستانی و ۴ انتخاب تعیین کلاس کاراکتر
+  // Turn 4 — مواجهه با صندوق باستانی
   if (
     turnNumber === 4 ||
     chosen.includes('حمله') ||
@@ -281,7 +289,9 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
       story_text:
         'به تالاری کهن و شگفت‌انگیز می‌رسی. در مرکز تالار، **صندوقی باستانی و درخشان** فراروی توست.\nروی صندوق چهار نماد حکاکی شده و با نزدیک شدن تو، درِ آن با طنینی خوش‌آهنگ گشوده می‌شود.\nدرون صندوق، چهار یادگار مقدس می‌درخشند. با انتخاب یکی از آن‌ها، ذات، مهارت‌ها و **کلاس کاراکتر** تو آشکار می‌گردد:',
       current_location: 'غار اژدهای تاریکی — تالار صندوق باستانی',
-      enemy_line_art_type: 'none',
+      enemy_line_art_type: 'chest',
+      ascii_art:
+        '  .-----------------------.\n  |  ╔═════════════════╗  |\n  |  ║  [ 🗝️ ] ✨   ║  |\n  |  ╚═════════════════╝  |\n  \'-----------------------\'',
       stats_update: { xp: 15 },
       needs_dice_roll: false,
       required_roll_type: null,
@@ -318,6 +328,8 @@ export function mockAi(userPrompt: string, turnNumber?: number): AiGameResponse 
           'قدرت سنگین فولاد در وجودت طنین‌انداز می‌شود. نور شمشیر، تاریکی تالار را می‌شکافد. تو نبرد را با قدرت یک **جنگجو** آغاز می‌کنی...',
         current_location: 'غار اژدهای تاریکی — دالان دلاوران',
         enemy_line_art_type: 'orc_guardian',
+        ascii_art:
+          '        / \\\n       /   \\\n      |     |\n      |  |  |\n     [=======]\n        ||\n        ()',
         stats_update: { strength: 5, hp: 20, xp: 25 },
         needs_dice_roll: false,
         required_roll_type: null,

@@ -20,12 +20,14 @@ export const SYSTEM_PROMPT = `تو «رمل» هستی؛ یک استاد باز�
 8) اگر در پرامپت early_resources=energy_only بود، همهٔ گزینه‌ها فقط condition_check با stat=energy و min=0 داشته باشند (هزینه از energy_cost است). مانا، قدرت، چابکی یا خرد را شرط قفل گزینه نکن.
 8b) فقط منابع فهرست‌شده در unlocked_resources را در stats_update تغییر بده یا به‌عنوان شرط گزینه استفاده کن؛ بقیه را ۰ بگذار.
 9) صحنه‌های قبلی را تکرار نکن؛ هر پاسخ باید داستان را یک گام تازه جلو ببرد (مکان تازه، رویداد تازه، یا کشف تازه).
+10) تصویرسازی خطی با کاراکترها (ascii_art): برای هر صحنه، هیولا، شیء باستانی، قلعه، دروازه، صندوق یا رویداد مهم، حتماً یک تصویر خطی زیباتر با کاراکترهای متنی (ASCII/Unicode character art) بین ۴ تا ۱۰ سطر در کلید ascii_art ترسیم کن. از کاراکترهای خطی مانند: ┌ ┐ └ ┘ ├ ┤ ─ │ ╱ ╲ / \ ( ) < > [ ] { } | _ * # + ~ ⚡ ✨ استفاده کن تا شکلک‌ها و تصاویر با خط و کاراکتر به زیبایی خلق شوند.
 
 ساختار دقیق JSON:
 {
   "story_text": "متن داستان فارسی",
   "current_location": "نام مکان فارسی",
-  "enemy_line_art_type": "none|orc_guardian|dragon|skeleton|shadow|desert_spirit",
+  "enemy_line_art_type": "none|orc_guardian|dragon|skeleton|shadow|desert_spirit|chest|castle|boss_demon|magic_portal",
+  "ascii_art": "تصویر خطی کاراکتری multi-line یا null",
   "stats_update": { "hp": 0, "mana": 0, "gold": 0, "energy_change": 0, "xp": 0 },
   "needs_dice_roll": false,
   "required_roll_type": null,

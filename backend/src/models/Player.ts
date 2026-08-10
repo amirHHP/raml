@@ -25,6 +25,7 @@ export interface IPlayer extends Document {
   currentLocation: string;
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
+  asciiArt?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];
@@ -145,6 +146,7 @@ const PlayerSchema = new Schema<IPlayer>(
       default: 'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...',
     },
     enemyLineArtType: { type: String, default: 'none' },
+    asciiArt: { type: String, default: null },
     needsDiceRoll: { type: Boolean, default: false },
     pendingDiceRoll: { type: PendingDiceSchema, default: null },
     options: { type: [OptionSchema], default: [] },
