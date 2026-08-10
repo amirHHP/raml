@@ -10,6 +10,7 @@ import { AiPage } from './pages/AiPage';
 import { GamePage } from './pages/GamePage';
 import { PromptsPage } from './pages/PromptsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { ChangelogsPage } from './pages/ChangelogsPage';
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'dashboard', label: 'داشبورد' },
@@ -18,6 +19,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'ai', label: 'هوش مصنوعی' },
   { id: 'prompts', label: 'پرامپت‌ها' },
   { id: 'notifications', label: 'اعلان‌ها' },
+  { id: 'changelogs', label: 'تغییرات' },
 ];
 
 export default function App() {
@@ -115,6 +117,7 @@ export default function App() {
         {tab === 'ai' && <AiPage />}
         {tab === 'prompts' && <PromptsPage />}
         {tab === 'notifications' && <NotificationsPage />}
+        {tab === 'changelogs' && <ChangelogsPage />}
       </main>
       <Analytics />
       <SpeedInsights />

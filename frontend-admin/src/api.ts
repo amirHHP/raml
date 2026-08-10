@@ -3,12 +3,14 @@ import type {
   AdminPlayerSummary,
   AdminStats,
   AiSettings,
+  ChangelogItem,
   FunnelReport,
   GameSettings,
   GeminiModelInfo,
   PromptItem,
   PromptKey,
   MilestonePromptItem,
+  ReferralAdminStats,
 } from './types';
 
 const TOKEN_KEY = 'raml_admin_token';
@@ -100,11 +102,14 @@ export const adminApi = {
     unlockHpAtTurn?: number;
     unlockManaAtTurn?: number;
     unlockGoldAtTurn?: number;
+    referralRewardReferrerGold?: number;
+    referralRewardRefereeGold?: number;
   }) =>
     request<GameSettings>('/api/admin/game', {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  getReferralStats: () => request<ReferralAdminStats>('/api/admin/referral/stats'),
   listGeminiModels: (apiKey?: string) =>
     request<{ models: GeminiModelInfo[]; baseUrlHint: string }>(
       '/api/admin/ai/gemini-models',
@@ -149,4 +154,21 @@ export const adminApi = {
       '/api/admin/notifications',
       { method: 'POST', body: JSON.stringify(body) },
     ),
+  listChangelogs: () =>
+    request<{ items: ChangelogItem[] }>('/api/admin/changelogs'),
+  createChangelog: (body: {
+    version: string;
+    title: string;
+    titleEn?: string;
+    items: string[];
+    itemsEn?: string[];
+  }) =>
+    request<ChangelogItem>('/api/admin/changelogs', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  deleteChangelog: (id: string) =>
+    request<{ ok: boolean }>(`/api/admin/changelogs/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
 };

@@ -75,7 +75,23 @@ export type GameSettings = {
   unlockHpAtTurn: number;
   unlockManaAtTurn: number;
   unlockGoldAtTurn: number;
+  referralRewardReferrerGold: number;
+  referralRewardRefereeGold: number;
   updatedAt: string | null;
+};
+
+export type ReferralAdminStats = {
+  totalReferredPlayers: number;
+  totalReferralsCompleted: number;
+  totalReferrerGoldGranted: number;
+  totalRefereeGoldGranted: number;
+  referrerGoldReward: number;
+  refereeGoldReward: number;
+  topReferrers: Array<{
+    deviceId: string;
+    characterName: string;
+    referralCount: number;
+  }>;
 };
 
 export type GeminiRateLimit = {

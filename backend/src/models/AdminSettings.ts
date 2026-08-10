@@ -18,6 +18,10 @@ export interface IAdminSettings extends Document {
   unlockManaAtTurn: number;
   /** Story turn when gold is shown and may change. */
   unlockGoldAtTurn: number;
+  /** Gold reward granted to referrer when referee awakens. */
+  referralRewardReferrerGold: number;
+  /** Gold reward granted to referee when awakening with referral code. */
+  referralRewardRefereeGold: number;
   updatedAt: Date;
 }
 
@@ -34,6 +38,8 @@ const AdminSettingsSchema = new Schema<IAdminSettings>(
     unlockHpAtTurn: { type: Number, default: 20 },
     unlockManaAtTurn: { type: Number, default: 30 },
     unlockGoldAtTurn: { type: Number, default: 40 },
+    referralRewardReferrerGold: { type: Number, default: 50 },
+    referralRewardRefereeGold: { type: Number, default: 25 },
   },
   { timestamps: true },
 );

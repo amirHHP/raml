@@ -25,13 +25,20 @@ export const DEFAULT_UNLOCK_TURNS: UnlockTurnSettings = {
   unlockGoldAtTurn: 40,
 };
 
+export const DEFAULT_REFERRAL_REWARD_REFERRER_GOLD = 50;
+export const DEFAULT_REFERRAL_REWARD_REFEREE_GOLD = 25;
+
 export type PublicGameSettings = {
   storyMsPerWord: number;
+  referralRewardReferrerGold: number;
+  referralRewardRefereeGold: number;
   updatedAt: string | null;
 } & UnlockTurnSettings;
 
 type CachedGameSettings = {
   storyMsPerWord: number;
+  referralRewardReferrerGold: number;
+  referralRewardRefereeGold: number;
 } & UnlockTurnSettings;
 
 let useMemory = false;
@@ -66,6 +73,8 @@ function fromEnvOrDefaultMs(): number {
 function defaults(): CachedGameSettings {
   return {
     storyMsPerWord: fromEnvOrDefaultMs(),
+    referralRewardReferrerGold: DEFAULT_REFERRAL_REWARD_REFERRER_GOLD,
+    referralRewardRefereeGold: DEFAULT_REFERRAL_REWARD_REFEREE_GOLD,
     ...DEFAULT_UNLOCK_TURNS,
   };
 }
@@ -102,6 +111,14 @@ function fromDoc(doc: IAdminSettings | null): CachedGameSettings {
     storyMsPerWord: clampStoryMsPerWord(
       typeof doc.storyMsPerWord === 'number' ? doc.storyMsPerWord : base.storyMsPerWord,
     ),
+    referralRewardReferrerGold:
+      typeof doc.referralRewardReferrerGold === 'number' && doc.referralRewardReferrerGold >= 0
+        ? doc.referralRewardReferrerGold
+        : DEFAULT_REFERRAL_REWARD_REFERRER_GOLD,
+    referralRewardRefereeGold:
+      typeof doc.referralRewardRefereeGold === 'number' && doc.referralRewardRefereeGold >= 0
+        ? doc.referralRewardRefereeGold
+        : DEFAULT_REFERRAL_REWARD_REFEREE_GOLD,
     ...normalizeUnlocks(doc),
   };
 }
@@ -109,6 +126,14 @@ function fromDoc(doc: IAdminSettings | null): CachedGameSettings {
 /** Sync read for embedding in client game state. */
 export function getStoryMsPerWord(): number {
   return cached?.storyMsPerWord ?? fromEnvOrDefaultMs();
+}
+
+/** Sync read for referral reward values. */
+export function getReferralRewards(): { referrerGold: number; refereeGold: number } {
+  return {
+    referrerGold: cached?.referralRewardReferrerGold ?? DEFAULT_REFERRAL_REWARD_REFERRER_GOLD,
+    refereeGold: cached?.referralRewardRefereeGold ?? DEFAULT_REFERRAL_REWARD_REFEREE_GOLD,
+  };
 }
 
 /** Sync read of unlock thresholds (falls back to defaults). */
@@ -149,6 +174,8 @@ export async function updateGameSettings(input: {
   unlockHpAtTurn?: number;
   unlockManaAtTurn?: number;
   unlockGoldAtTurn?: number;
+  referralRewardReferrerGold?: number;
+  referralRewardRefereeGold?: number;
 }): Promise<PublicGameSettings> {
   const current = await ensureGameSettingsLoaded();
   const next: CachedGameSettings = {
@@ -156,6 +183,14 @@ export async function updateGameSettings(input: {
       input.storyMsPerWord != null
         ? clampStoryMsPerWord(input.storyMsPerWord)
         : current.storyMsPerWord,
+    referralRewardReferrerGold:
+      input.referralRewardReferrerGold != null && input.referralRewardReferrerGold >= 0
+        ? Math.round(input.referralRewardReferrerGold)
+        : current.referralRewardReferrerGold,
+    referralRewardRefereeGold:
+      input.referralRewardRefereeGold != null && input.referralRewardRefereeGold >= 0
+        ? Math.round(input.referralRewardRefereeGold)
+        : current.referralRewardRefereeGold,
     ...normalizeUnlocks({
       unlockInventoryAtTurn: input.unlockInventoryAtTurn ?? current.unlockInventoryAtTurn,
       unlockStatsAtTurn: input.unlockStatsAtTurn ?? current.unlockStatsAtTurn,
@@ -181,6 +216,8 @@ export async function updateGameSettings(input: {
         unlockHpAtTurn: next.unlockHpAtTurn,
         unlockManaAtTurn: next.unlockManaAtTurn,
         unlockGoldAtTurn: next.unlockGoldAtTurn,
+        referralRewardReferrerGold: next.referralRewardReferrerGold,
+        referralRewardRefereeGold: next.referralRewardRefereeGold,
       },
       $setOnInsert: {
         singletonKey: 'default',

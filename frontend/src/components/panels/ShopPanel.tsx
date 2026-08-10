@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState, ShopSku } from '../../types/game';
 import { t } from '../../utils/i18n';
+import { ReferralPanel } from './ReferralPanel';
 
 export function ShopPanel({
   items,
@@ -106,6 +107,8 @@ export function ShopPanel({
           </div>
         )}
       </section>
+
+      <ReferralPanel language={lang} referralCode={state.referralCode || ''} />
 
       <button
         type="button"

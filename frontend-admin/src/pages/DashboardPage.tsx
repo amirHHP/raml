@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../api';
-import type { AdminStats, FunnelReport } from '../types';
+import type { AdminStats, FunnelReport, ReferralAdminStats } from '../types';
 import { CLASS_LABELS, FUNNEL_LABELS } from '../types';
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
@@ -86,18 +86,74 @@ function FunnelSection({ report }: { report: FunnelReport }) {
   );
 }
 
+function ReferralSection({ stats }: { stats: ReferralAdminStats }) {
+  return (
+    <section className="space-y-4 rounded-xl border border-line bg-sand/70 p-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-medium text-ink-dim">آمار سیستم دعوت از دوستان (ریفرال)</h2>
+        <span className="text-xs text-amber">
+          پاداش: {stats.referrerGoldReward} طلا (دعوت‌کننده) / {stats.refereeGoldReward} طلا (دعوت‌شده)
+        </span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg bg-sand-2 p-3">
+          <p className="text-xs text-ink-muted">بازیکنان واردشده با کد</p>
+          <p className="mt-1 text-xl font-semibold text-amber">{stats.totalReferredPlayers}</p>
+        </div>
+        <div className="rounded-lg bg-sand-2 p-3">
+          <p className="text-xs text-ink-muted">دعوت‌های موفق تکمیل‌شده</p>
+          <p className="mt-1 text-xl font-semibold text-amber">{stats.totalReferralsCompleted}</p>
+        </div>
+        <div className="rounded-lg bg-sand-2 p-3">
+          <p className="text-xs text-ink-muted">طلا اعطا شده به دعوت‌کنندگان</p>
+          <p className="mt-1 text-xl font-semibold text-amber">{stats.totalReferrerGoldGranted.toLocaleString('fa-IR')}</p>
+        </div>
+        <div className="rounded-lg bg-sand-2 p-3">
+          <p className="text-xs text-ink-muted">طلا اعطا شده به دعوت‌شدگان</p>
+          <p className="mt-1 text-xl font-semibold text-amber">{stats.totalRefereeGoldGranted.toLocaleString('fa-IR')}</p>
+        </div>
+      </div>
+
+      {stats.topReferrers.length > 0 && (
+        <div className="mt-4 border-t border-line pt-3">
+          <h3 className="text-xs font-medium text-ink-dim mb-2">برترین دعوت‌کنندگان</h3>
+          <div className="space-y-1.5">
+            {stats.topReferrers.map((r, i) => (
+              <div key={r.deviceId} className="flex items-center justify-between rounded-md bg-sand-2 px-3 py-1.5 text-xs">
+                <span className="font-medium text-ink">
+                  {i + 1}. {r.characterName}
+                </span>
+                <span className="font-mono text-amber">
+                  {r.referralCount} دعوت موفق
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [funnel, setFunnel] = useState<FunnelReport | null>(null);
+  const [referralStats, setReferralStats] = useState<ReferralAdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([adminApi.getStats(), adminApi.getFunnel()])
-      .then(([s, f]) => {
+    Promise.all([
+      adminApi.getStats(),
+      adminApi.getFunnel(),
+      adminApi.getReferralStats().catch(() => null),
+    ])
+      .then(([s, f, r]) => {
         if (cancelled) return;
         setStats(s);
         setFunnel(f);
+        setReferralStats(r);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -122,6 +178,8 @@ export function DashboardPage() {
         <StatCard label="دارای خرید" value={stats.withPurchases} />
         <StatCard label="حالت حافظه" value={stats.memoryStore ? 'بله' : 'خیر'} />
       </div>
+
+      {referralStats && <ReferralSection stats={referralStats} />}
 
       {funnel && <FunnelSection report={funnel} />}
 

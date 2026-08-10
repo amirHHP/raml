@@ -48,7 +48,7 @@ export async function listChangelogs() {
   }
 
   const docs = await Changelog.find().sort({ createdAt: -1 }).lean();
-  return (docs as IChangelog[]).map(toPublic);
+  return (docs as unknown as IChangelog[]).map(toPublic);
 }
 
 // ── Create ─────────────────────────────────────────────────────

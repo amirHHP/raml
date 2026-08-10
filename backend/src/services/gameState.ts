@@ -20,6 +20,7 @@ import type {
   FeatureUnlocks,
   GameOption,
   InventoryItem,
+  Language,
   PlayerDocument,
   StatKey,
   StatsUpdate,

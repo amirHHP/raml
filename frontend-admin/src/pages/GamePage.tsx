@@ -47,6 +47,8 @@ export function GamePage() {
     unlockManaAtTurn: 30,
     unlockGoldAtTurn: 40,
   });
+  const [referrerGold, setReferrerGold] = useState(50);
+  const [refereeGold, setRefereeGold] = useState(25);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,6 +68,8 @@ export function GamePage() {
           unlockManaAtTurn: s.unlockManaAtTurn,
           unlockGoldAtTurn: s.unlockGoldAtTurn,
         });
+        setReferrerGold(s.referralRewardReferrerGold ?? 50);
+        setRefereeGold(s.referralRewardRefereeGold ?? 25);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -81,7 +85,12 @@ export function GamePage() {
     setError(null);
     setMessage(null);
     try {
-      const s = await adminApi.putGame({ storyMsPerWord, ...unlocks });
+      const s = await adminApi.putGame({
+        storyMsPerWord,
+        ...unlocks,
+        referralRewardReferrerGold: referrerGold,
+        referralRewardRefereeGold: refereeGold,
+      });
       setSettings(s);
       setStoryMsPerWord(s.storyMsPerWord);
       setUnlocks({
@@ -91,6 +100,8 @@ export function GamePage() {
         unlockManaAtTurn: s.unlockManaAtTurn,
         unlockGoldAtTurn: s.unlockGoldAtTurn,
       });
+      setReferrerGold(s.referralRewardReferrerGold ?? 50);
+      setRefereeGold(s.referralRewardRefereeGold ?? 25);
       setMessage('تنظیمات بازی ذخیره شد');
     } catch (err) {
       setError((err as Error).message);
@@ -127,7 +138,7 @@ export function GamePage() {
         </p>
 
         <label className="block text-sm text-ink-dim">
-          میلی‌ثانیه برای هر کلمه: {storyMsPerWord}
+          میلی‌ثانیه‌ برای هر کلمه: {storyMsPerWord}
           <span className="mr-2 text-amber">({speedLabel})</span>
           <div dir="ltr" className="mt-3">
             <input
@@ -158,6 +169,39 @@ export function GamePage() {
             className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
           />
         </label>
+      </div>
+
+      <div className="space-y-4 border-t border-line pt-5">
+        <h3 className="text-base font-medium text-ink">پاداش‌های ریفرال و دعوت از دوستان</h3>
+        <p className="text-xs leading-5 text-ink-muted">
+          مقدار پاداش سکه طلا که هنگام بیداری دوست جدید به هر دو طرف اعطا می‌شود.
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block text-sm text-ink-dim">
+            پاداش دعوت‌کننده (سکه)
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              value={referrerGold}
+              onChange={(e) => setReferrerGold(Number(e.target.value) || 0)}
+              className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+            />
+            <span className="mt-1 block text-[11px] text-ink-muted">طلا برای کسی که دوستش رو دعوت کرده</span>
+          </label>
+          <label className="block text-sm text-ink-dim">
+            پاداش دعوت‌شده (سکه)
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              value={refereeGold}
+              onChange={(e) => setRefereeGold(Number(e.target.value) || 0)}
+              className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+            />
+            <span className="mt-1 block text-[11px] text-ink-muted">طلا برای دوست جدید موقع شروع بازی</span>
+          </label>
+        </div>
       </div>
 
       <div className="space-y-3 border-t border-line pt-5">

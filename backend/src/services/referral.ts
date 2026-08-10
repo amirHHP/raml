@@ -1,9 +1,8 @@
 import { Player, type IPlayer } from '../models/Player';
 import { persistPlayer, getOrCreatePlayer, isUsingMemory, getMemoryPlayers } from './gameState';
+import { getReferralRewards } from './gameSettings';
 
 const MAX_REFERRALS = 20;
-const REFERRER_REWARD_GOLD = 50;
-const REFEREE_REWARD_GOLD = 25;
 
 /**
  * Generate a unique 6-character alphanumeric referral code (uppercase + digits).
@@ -152,12 +151,95 @@ export async function grantReferralRewards(newPlayer: IPlayer): Promise<void> {
   if (!referrer) return;
   if ((referrer.referralCount || 0) >= MAX_REFERRALS) return;
 
+  const rewards = getReferralRewards();
+
   // Grant rewards
   referrer.referralCount = (referrer.referralCount || 0) + 1;
-  referrer.stats.gold += REFERRER_REWARD_GOLD;
-  referrer.toastMessage = `🎉 دوست جدیدت ${newPlayer.characterName} بازی را شروع کرد! +${REFERRER_REWARD_GOLD} طلا`;
+  referrer.stats.gold += rewards.referrerGold;
+  referrer.toastMessage = `🎉 دوست جدیدت ${newPlayer.characterName} بازی را شروع کرد! +${rewards.referrerGold} طلا`;
   await persistPlayer(referrer);
 
   // Grant referee reward
-  newPlayer.stats.gold += REFEREE_REWARD_GOLD;
+  newPlayer.stats.gold += rewards.refereeGold;
+}
+
+export interface AdminReferralStats {
+  totalReferredPlayers: number;
+  totalReferralsCompleted: number;
+  totalReferrerGoldGranted: number;
+  totalRefereeGoldGranted: number;
+  referrerGoldReward: number;
+  refereeGoldReward: number;
+  topReferrers: Array<{
+    deviceId: string;
+    characterName: string;
+    referralCount: number;
+  }>;
+}
+
+/**
+ * Get aggregated referral statistics for the admin dashboard.
+ */
+export async function getAdminReferralStats(): Promise<AdminReferralStats> {
+  const rewards = getReferralRewards();
+
+  if (isUsingMemory()) {
+    const players = Array.from(getMemoryPlayers().values());
+    const referredPlayers = players.filter((p) => Boolean(p.referredBy));
+    const totalReferredPlayers = referredPlayers.length;
+    let totalReferralsCompleted = 0;
+
+    const topReferrers = players
+      .filter((p) => (p.referralCount || 0) > 0)
+      .map((p) => {
+        totalReferralsCompleted += p.referralCount || 0;
+        return {
+          deviceId: p.deviceId,
+          characterName: p.characterName || 'نامشخص',
+          referralCount: p.referralCount || 0,
+        };
+      })
+      .sort((a, b) => b.referralCount - a.referralCount)
+      .slice(0, 10);
+
+    return {
+      totalReferredPlayers,
+      totalReferralsCompleted,
+      totalReferrerGoldGranted: totalReferralsCompleted * rewards.referrerGold,
+      totalRefereeGoldGranted: totalReferredPlayers * rewards.refereeGold,
+      referrerGoldReward: rewards.referrerGold,
+      refereeGoldReward: rewards.refereeGold,
+      topReferrers,
+    };
+  }
+
+  const [totalReferredPlayers, topReferrersDocs] = await Promise.all([
+    Player.countDocuments({ referredBy: { $ne: null } }),
+    Player.find({ referralCount: { $gt: 0 } })
+      .select('deviceId characterName referralCount')
+      .sort({ referralCount: -1 })
+      .limit(10)
+      .lean(),
+  ]);
+
+  const aggregateSum = await Player.aggregate([
+    { $group: { _id: null, total: { $sum: '$referralCount' } } },
+  ]);
+  const totalReferralsCompleted = aggregateSum[0]?.total || 0;
+
+  const topReferrers = topReferrersDocs.map((p: any) => ({
+    deviceId: p.deviceId,
+    characterName: p.characterName || 'نامشخص',
+    referralCount: p.referralCount || 0,
+  }));
+
+  return {
+    totalReferredPlayers,
+    totalReferralsCompleted,
+    totalReferrerGoldGranted: totalReferralsCompleted * rewards.referrerGold,
+    totalRefereeGoldGranted: totalReferredPlayers * rewards.refereeGold,
+    referrerGoldReward: rewards.referrerGold,
+    refereeGoldReward: rewards.refereeGold,
+    topReferrers,
+  };
 }

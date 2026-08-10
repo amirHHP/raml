@@ -32,6 +32,7 @@ import {
   sendNotification,
 } from '../services/notifications';
 import { getFunnelReport } from '../services/funnel';
+import { getAdminReferralStats } from '../services/referral';
 
 const router = Router();
 
@@ -161,6 +162,8 @@ router.put('/game', async (req, res) => {
         unlockHpAtTurn: unlockTurn.optional(),
         unlockManaAtTurn: unlockTurn.optional(),
         unlockGoldAtTurn: unlockTurn.optional(),
+        referralRewardReferrerGold: z.number().int().min(0).max(10000).optional(),
+        referralRewardRefereeGold: z.number().int().min(0).max(10000).optional(),
       })
       .parse(req.body);
 
@@ -168,6 +171,15 @@ router.put('/game', async (req, res) => {
     res.json(settings);
   } catch (err) {
     sendError(res, err, 'خطا در ذخیره تنظیمات بازی');
+  }
+});
+
+router.get('/referral/stats', async (_req, res) => {
+  try {
+    const stats = await getAdminReferralStats();
+    res.json(stats);
+  } catch (err) {
+    sendError(res, err, 'خطا در آمار ریفرال');
   }
 });
 
