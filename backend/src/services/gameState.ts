@@ -108,6 +108,9 @@ function defaultPlayer(deviceId: string, language: Language = 'fa'): Partial<IPl
     storyTurnCount: 0,
     lastAiSource: null,
     lastAiError: null,
+    referralCode: null,
+    referredBy: null,
+    referralCount: 0,
   };
 }
 

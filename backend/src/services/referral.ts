@@ -20,7 +20,9 @@ function generateCode(): string {
  * Ensure a player has a referral code; generate one if missing.
  */
 export async function ensureReferralCode(player: IPlayer): Promise<string> {
-  if (player.referralCode) return player.referralCode;
+  if (player.referralCode && player.referralCode.trim().length > 0) {
+    return player.referralCode;
+  }
 
   let attempts = 0;
   while (attempts < 10) {
@@ -242,4 +244,24 @@ export async function getAdminReferralStats(): Promise<AdminReferralStats> {
     refereeGoldReward: rewards.refereeGold,
     topReferrers,
   };
+}
+
+/**
+ * Cleanup migration for MongoDB: updates any empty string referralCodes to null
+ * and rebuilds the sparse unique index to prevent E11000 duplicate key errors.
+ */
+export async function fixReferralCodeDuplicates(): Promise<void> {
+  if (isUsingMemory()) return;
+  try {
+    await Player.updateMany({ referralCode: '' }, { $set: { referralCode: null } });
+    const collection = Player.collection;
+    const indexes = await collection.indexes().catch(() => []);
+    const hasReferralIndex = indexes.some((idx: any) => idx.name === 'referralCode_1');
+    if (hasReferralIndex) {
+      await collection.dropIndex('referralCode_1').catch(() => undefined);
+    }
+    await Player.createIndexes().catch(() => undefined);
+  } catch (err) {
+    console.warn('Referral index migration warning:', err);
+  }
 }

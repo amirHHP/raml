@@ -27,6 +27,7 @@ import {
 } from './services/gameSettings';
 import { setFunnelMemory } from './services/funnel';
 import { setChangelogMemory } from './services/changelog';
+import { fixReferralCodeDuplicates } from './services/referral';
 
 const app = express();
 
@@ -57,6 +58,7 @@ const mongoReady = mongoose
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
+    await fixReferralCodeDuplicates();
   })
   .catch(async (err) => {
     mongoError = err instanceof Error ? err.message : String(err);
