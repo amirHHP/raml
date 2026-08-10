@@ -30,6 +30,7 @@ export type AdResult = {
   watched: boolean;
   network: 'adivery' | 'mock';
   error?: string;
+  canSimulate?: boolean;
 };
 
 /**
@@ -41,8 +42,7 @@ export async function showRewardedVideo(
 ): Promise<AdResult> {
   try {
     initAdivery();
-    // Give a short 250ms breathing room for installation request if just configured
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 200));
 
     const ad = await requestRewardedAd(placementId);
     const isRewarded = await ad.show();
@@ -57,22 +57,31 @@ export async function showRewardedVideo(
     };
   } catch (err: any) {
     console.error('Adivery ad playback error:', err);
-    
+
     let userMsg = 'دریافت تبلیغ با خطا مواجه شد. لطفاً اتصال اینترنت را بررسی کنید.';
     const rawErrorStr = String(err?.message || err);
 
     if (rawErrorStr.includes('No fill')) {
       userMsg =
-        'در حال حاضر تبلیغی برای نمایش موجود نیست (No Fill) یا افزونه مسدودکننده تبلیغات (AdBlocker) فعال است. لطفاً AdBlocker را غیرفعال کرده یا بعداً تلاش کنید.';
+        'در حال حاضر تبلیغ ویدیویی فعال برای وب/این جایگاه وجود ندارد (No Fill) یا AdBlocker فعال است.';
     } else if (rawErrorStr.includes('400') || rawErrorStr.includes('Bad Request')) {
       userMsg =
-        'خطا در برقراری ارتباط با سرور ادیوری (400 Bad Request). لطفاً فیلترشکن/AdBlocker خود را بررسی کرده و مجدداً تلاش کنید.';
+        'خطا در شناسه جایگاه ادیوری (400 Bad Request). لطفاً App ID و Placement ID اختصاصی وب خود را در پنل Adivery بررسی کنید.';
     }
 
     return {
       watched: false,
       network: 'adivery',
       error: userMsg,
+      canSimulate: true,
     };
   }
+}
+
+/**
+ * Fallback simulator for development/testing when no ad fill is returned by network.
+ */
+export async function simulateAdReward(): Promise<AdResult> {
+  await new Promise((r) => setTimeout(r, 1200));
+  return { watched: true, network: 'mock' };
 }

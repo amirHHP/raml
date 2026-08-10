@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { showRewardedVideo } from '../../monetization/ads';
+import { showRewardedVideo, simulateAdReward } from '../../monetization/ads';
 
 export function RewardedAdModal({
   open,
@@ -14,10 +14,12 @@ export function RewardedAdModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canSimulate, setCanSimulate] = useState(false);
 
   const startAd = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCanSimulate(false);
 
     const result = await showRewardedVideo();
     setLoading(false);
@@ -28,8 +30,21 @@ export function RewardedAdModal({
       setError(
         result.error || 'پخش تبلیغ به اتمام نرسید. برای دریافت انرژی باید تبلیغ تا انتها دیده شود.'
       );
+      if (result.canSimulate) {
+        setCanSimulate(true);
+      }
     }
   }, [onComplete]);
+
+  const handleSimulate = async () => {
+    setLoading(true);
+    setError(null);
+    const res = await simulateAdReward();
+    setLoading(false);
+    if (res.watched) {
+      onComplete();
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -37,6 +52,7 @@ export function RewardedAdModal({
     } else {
       setLoading(false);
       setError(null);
+      setCanSimulate(false);
     }
   }, [open, startAd]);
 
@@ -60,24 +76,37 @@ export function RewardedAdModal({
           </div>
         )}
 
-        <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            disabled={busy || loading}
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-line py-2.5 text-xs text-ink-dim transition active:opacity-70 disabled:opacity-40"
-          >
-            بستن
-          </button>
-
-          {error && (
+        <div className="mt-6 flex flex-col gap-2.5">
+          <div className="flex gap-2.5">
             <button
               type="button"
               disabled={busy || loading}
-              onClick={() => void startAd()}
-              className="flex-1 rounded-xl border border-amber bg-amber/10 py-2.5 text-xs text-amber transition active:opacity-70 disabled:opacity-40"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-line py-2.5 text-xs text-ink-dim transition active:opacity-70 disabled:opacity-40"
             >
-              تلاش مجدد
+              بستن
+            </button>
+
+            {error && (
+              <button
+                type="button"
+                disabled={busy || loading}
+                onClick={() => void startAd()}
+                className="flex-1 rounded-xl border border-amber/50 py-2.5 text-xs text-amber transition active:opacity-70 disabled:opacity-40"
+              >
+                تلاش مجدد
+              </button>
+            )}
+          </div>
+
+          {canSimulate && (
+            <button
+              type="button"
+              disabled={busy || loading}
+              onClick={() => void handleSimulate()}
+              className="w-full rounded-xl border border-amber/30 bg-amber/10 py-2.5 text-xs text-amber transition active:opacity-70 disabled:opacity-40"
+            >
+              دریافت +۵ انرژی (شبیه‌سازی حالت تست)
             </button>
           )}
         </div>
