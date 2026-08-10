@@ -437,6 +437,7 @@ const LATE_BEATS: Array<{
   story: (chosen: string, turn: number) => string;
   location: string;
   enemy: AiGameResponse['enemy_line_art_type'];
+  asciiArt: string;
   options: AiGameResponse['options'];
   toast?: string | null;
 }> = [
@@ -446,6 +447,8 @@ const LATE_BEATS: Array<{
       `نوبت ${turn}: ردپاها را دنبال می‌کنی. شن نرم زیر پا فرومی‌رود و ناگهان به لبه‌ی یک گودال می‌رسی که از آن بوی گوگرد برمی‌خیزد.`,
     location: 'لبهٔ گودال گوگردی',
     enemy: 'shadow',
+    asciiArt:
+      '   ┌─────────────┐\n   │   .-----..  │\n   │  /  o o  \\  │\n   │ |   ___   | │\n   │  \\  \\_/  /  │\n   │   \'-----\'   │\n   └─────────────┘',
     options: [
       energyOption('از طناب پوسیده پایین برو', 'key'),
       energyOption('با سنگ کوچک صدا کن', 'talk'),
@@ -457,7 +460,9 @@ const LATE_BEATS: Array<{
     story: (_chosen, turn) =>
       `نوبت ${turn}: پای ستون‌های شکسته می‌ایستی. نقش‌های کهنه روی سنگ نامت را تکرار می‌کنند — انگار معبد تو را می‌شناسد.`,
     location: 'معبد نیمه‌فرو‌رفته',
-    enemy: 'desert_spirit',
+    enemy: 'castle',
+    asciiArt:
+      '   ┌─────────────┐\n   │  /\\  /\\  /\\ │\n   │ |  ||  ||  |│\n   │ |__||__||__|│\n   │ |   ||   |  │\n   │ |___||___|__|│\n   └─────────────┘',
     options: [
       energyOption('نیایش کوتاهی بخوان', 'spell'),
       energyOption('محراب را بگرد', 'search'),
@@ -469,7 +474,9 @@ const LATE_BEATS: Array<{
     story: (_chosen, turn) =>
       `نوبت ${turn}: در سایه می‌نشینی. نفس‌ات آرام می‌گیرد، اما از دور زوزه‌ای خشک می‌آید — چیزی در دشت بیدار شده است.`,
     location: 'سایهٔ تپه‌های شنی',
-    enemy: 'none',
+    enemy: 'boss_demon',
+    asciiArt:
+      '   ┌─────────────┐\n   │  /\\     /\\  │\n   │ (  o.o  )   │\n   │  > ^ <      │\n   │  /  |  \\    │\n   └─────────────┘',
     options: [
       energyOption('به سمت زوزه برو', 'search'),
       energyOption('آتش کوچکی روشن کن', 'spell'),
@@ -482,7 +489,9 @@ const LATE_BEATS: Array<{
     story: (_chosen, turn) =>
       `نوبت ${turn}: طناب در دستت می‌لرزد. در تاریکی گودال، نقطه‌ای سبز می‌درخشد — مثل چشمی که پلک نمی‌زند.`,
     location: 'ژرفای گودال',
-    enemy: 'shadow',
+    enemy: 'magic_portal',
+    asciiArt:
+      '   ┌─────────────┐\n   │   .---.     │\n   │  /  ✦  \\    │\n   │ |  (O)  |   │\n   │  \\  ✦  /    │\n   │   \'---\'     │\n   └─────────────┘',
     options: [
       energyOption('به سوی نور سبز برو', 'search'),
       energyOption('با شمشیر چوبی‌ات آماده باش', 'sword'),
@@ -495,6 +504,8 @@ const LATE_BEATS: Array<{
       `نوبت ${turn}: هوا سنگین می‌شود. شن‌ها دور پاهایت می‌چرخند و شبحی از پارچه‌های پاره شکل می‌گیرد.`,
     location: 'محراب شن',
     enemy: 'desert_spirit',
+    asciiArt:
+      '   ┌─────────────┐\n   │   (~~~~~)   │\n   │  /  o o  \\  │\n   │ (   .-.   ) │\n   │  \\  `-\'  /  │\n   │   `~~~~~\'   │\n   └─────────────┘',
     options: [
       energyOption('با شبح سخن بگو', 'talk'),
       energyOption('ضربه‌ای آزمایشی بزن', 'sword'),
@@ -506,7 +517,9 @@ const LATE_BEATS: Array<{
     story: (_chosen, turn) =>
       `نوبت ${turn}: مسیر باریک‌تری باز می‌شود. از شکاف سنگ، نوری ناپایدار می‌گذرد و صدای نفس‌کشی سنگین به گوش می‌رسد — انگار داستان تازه دارد شروع می‌شود.`,
     location: 'شکاف بادگیر',
-    enemy: 'none',
+    enemy: 'chest',
+    asciiArt:
+      '   ┌─────────────┐\n   │ ╔═════════╗ │\n   │ ║ [ 🗝️ ]  ║ │\n   │ ╚═════════╝ │\n   └─────────────┘',
     options: [
       energyOption('از شکاف عبور کن', 'key'),
       energyOption('صدا را دنبال کن', 'search'),
@@ -525,6 +538,7 @@ function lateMockBeat(chosen: string, turnNumber?: number): AiGameResponse {
     story_text: beat.story(chosen || 'گام در ناشناخته', turn),
     current_location: beat.location,
     enemy_line_art_type: beat.enemy,
+    ascii_art: beat.asciiArt,
     stats_update: {
       xp: 6 + (turn % 5),
       gold: turn % 2 === 0 ? 8 : 4,

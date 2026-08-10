@@ -55,6 +55,54 @@ export function sliceFirstJsonObject(text: string): string | null {
   return null;
 }
 
+/** Escape literal raw newlines/tabs inside double-quoted JSON string values. */
+export function sanitizeJsonStringNewlines(json: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < json.length; i += 1) {
+    const ch = json[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        result += ch;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        result += ch;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+        result += ch;
+        continue;
+      }
+      if (ch === '\n') {
+        result += '\\n';
+        continue;
+      }
+      if (ch === '\r') {
+        result += '\\r';
+        continue;
+      }
+      if (ch === '\t') {
+        result += '\\t';
+        continue;
+      }
+      result += ch;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    }
+    result += ch;
+  }
+  return result;
+}
+
 /** Parse the first JSON object from a model completion, tolerating prose and fences. */
 export function extractJson(raw: string): unknown {
   // Strip reasoning blocks like <thought>...</thought> or <think>...</think> from models like Gemma
@@ -63,12 +111,12 @@ export function extractJson(raw: string): unknown {
   const candidate = sliceFirstJsonObject(text) ?? text;
 
   try {
-    return JSON.parse(candidate);
+    return JSON.parse(sanitizeJsonStringNewlines(candidate));
   } catch (firstErr) {
     // Whole string may be `{...} trailing commentary` — slice again if needed.
     const sliced = sliceFirstJsonObject(text);
     if (sliced && sliced !== candidate) {
-      return JSON.parse(sliced);
+      return JSON.parse(sanitizeJsonStringNewlines(sliced));
     }
     throw firstErr instanceof Error ? firstErr : new Error('AI response is not valid JSON');
   }

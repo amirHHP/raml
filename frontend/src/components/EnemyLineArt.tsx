@@ -1,4 +1,101 @@
+import { useState } from 'react';
 import type { EnemyLineArtType } from '../types/game';
+
+/** Pre-rendered character line art (ASCII/Unicode) for all preset types */
+const DEFAULT_PRESET_ASCII: Record<EnemyLineArtType, string> = {
+  orc_guardian: `
+       / \\__/__\\
+      (  o   o  )
+      |   ---   |
+     /|  / | \\  |\\
+    / |  |_|_|  | \\
+   (  (_)     (_)  )
+  `,
+  dragon: `
+         /\\_/\\
+        ( o.o )
+         > ^ <   ~~\\
+        /     \\    ||
+       (  |||  )  //
+        \\_|||_/  //
+  `,
+  skeleton: `
+        .-----.
+       /  o o  \\
+      |   ___   |
+       \\  \\_/  /
+        '-----'
+          | |
+        --|-|--
+          | |
+  `,
+  shadow: `
+       ┌─────────────┐
+       │   .-----..  │
+       │  /  o o  \\  │
+       │ |   ___   | │
+       │  \\  \\_/  /  │
+       │   '-----'   │
+       └─────────────┘
+  `,
+  desert_spirit: `
+       ┌─────────────┐
+       │   (~~~~~)   │
+       │  /  o o  \\  │
+       │ (   .-.   ) │
+       │  \\  \`-'  /  │
+       │   \`~~~~~\'   │
+       └─────────────┘
+  `,
+  chest: `
+      .-----------------------.
+      |  ╔═════════════════╗  |
+      |  ║  [ 🗝️ ] ✨   ║  |
+      |  ╚═════════════════╝  |
+      '-----------------------'
+  `,
+  castle: `
+       ┌─────────────┐
+       │  /\\  /\\  /\\ │
+       │ |  ||  ||  |│
+       │ |__||__||__|│
+       │ |   ||   |  │
+       │ |___||___|__|│
+       └─────────────┘
+  `,
+  boss_demon: `
+       ┌─────────────┐
+       │  /\\     /\\  │
+       │ (  o.o  )   │
+       │  > ^ <      │
+       │  /  |  \\    │
+       └─────────────┘
+  `,
+  magic_portal: `
+       ┌─────────────┐
+       │   .---.     │
+       │  /  ✦  \\    │
+       │ |  (O)  |   │
+       │  \\  ✦  /    │
+       │   '---'     │
+       └─────────────┘
+  `,
+  none: '',
+};
+
+/** Color themes for SVG fallback renderings based on monster/scene type */
+const TYPE_COLOR_MAP: Record<EnemyLineArtType, { stroke: string; glow: string }> = {
+  orc_guardian: { stroke: 'text-amber-400/90', glow: 'rgba(245,158,11,0.25)' },
+  dragon: { stroke: 'text-rose-400/90', glow: 'rgba(244,63,94,0.25)' },
+  skeleton: { stroke: 'text-emerald-300/90', glow: 'rgba(52,211,153,0.25)' },
+  shadow: { stroke: 'text-purple-400/90', glow: 'rgba(168,85,247,0.25)' },
+  desert_spirit: { stroke: 'text-yellow-300/90', glow: 'rgba(253,224,71,0.25)' },
+  chest: { stroke: 'text-amber-300/90', glow: 'rgba(252,211,77,0.25)' },
+  castle: { stroke: 'text-sky-300/90', glow: 'rgba(125,211,252,0.25)' },
+  boss_demon: { stroke: 'text-red-500/90', glow: 'rgba(239,68,68,0.35)' },
+  magic_portal: { stroke: 'text-cyan-300/90', glow: 'rgba(103,232,249,0.3)' },
+  none: { stroke: 'text-amber-300/80', glow: 'rgba(245,158,11,0.2)' },
+};
 
 /**
  * Renders dynamic AI character line art (`asciiArt`) or complex SVG line drawings
@@ -13,26 +110,54 @@ export function EnemyLineArt({
   asciiArt?: string | null;
   className?: string;
 }) {
-  const hasAscii = Boolean(asciiArt && asciiArt.trim());
-  if (!hasAscii && (!type || type === 'none')) return null;
+  const [viewMode, setViewMode] = useState<'ascii' | 'svg'>('ascii');
+
+  // Determine active character line art string
+  const customAscii = asciiArt?.trim();
+  const presetAscii = (type && DEFAULT_PRESET_ASCII[type]) ? DEFAULT_PRESET_ASCII[type].trim() : '';
+  const displayAscii = customAscii || presetAscii;
+
+  const effectiveType: EnemyLineArtType = type && type !== 'none' ? type : 'shadow';
+  const theme = TYPE_COLOR_MAP[effectiveType] || TYPE_COLOR_MAP.none;
+
+  if (!displayAscii && (!type || type === 'none')) return null;
 
   return (
     <div className={`flex justify-center py-3 ${className}`} aria-hidden>
-      {hasAscii ? (
-        <div className="w-full max-w-sm overflow-x-auto rounded-xl border border-amber/30 bg-zinc-950/80 p-3.5 shadow-md shadow-amber/5 backdrop-blur-sm">
+      {viewMode === 'ascii' && displayAscii ? (
+        <div className="w-full max-w-sm overflow-x-auto rounded-xl border border-amber/30 bg-zinc-950/90 p-3.5 shadow-md shadow-amber/5 backdrop-blur-sm transition-all duration-300">
           <div className="flex justify-between items-center pb-2 mb-2 border-b border-amber/15 text-[10px] text-amber/60 font-mono tracking-wider">
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
-              تصویرگری AI (خطوط کاراکتر)
+              تصویرگری کاراکتری AI (خطوط متنی)
             </span>
-            <span>Raml Line-Art</span>
+            <button
+              type="button"
+              onClick={() => setViewMode('svg')}
+              className="text-[10px] text-amber/50 hover:text-amber underline transition-colors"
+              aria-label="سوئیچ به نمای برداری"
+            >
+              نمای برداری SVG
+            </button>
           </div>
-          <pre className="font-mono text-[12px] leading-[1.3] text-amber text-center whitespace-pre overflow-x-auto selection:bg-amber/20 select-none">
-            {asciiArt?.trim()}
+          <pre className="font-mono text-[12px] leading-[1.3] text-amber text-center whitespace-pre overflow-x-auto selection:bg-amber/20 select-none py-1">
+            {displayAscii}
           </pre>
         </div>
       ) : (
-        <div className="relative flex items-center justify-center rounded-xl border border-white/5 bg-zinc-950/40 p-2 shadow-inner">
+        <div className="relative flex flex-col items-center rounded-xl border border-white/10 bg-zinc-950/60 p-3 shadow-inner transition-all duration-300">
+          {displayAscii && (
+            <div className="w-full flex justify-end mb-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('ascii')}
+                className="text-[10px] text-amber/50 hover:text-amber underline font-mono"
+                aria-label="سوئیچ به نمای کاراکتری"
+              >
+                نمای کاراکتری ASCII
+              </button>
+            </div>
+          )}
           <svg
             width="150"
             height="120"
@@ -42,17 +167,18 @@ export function EnemyLineArt({
             strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-amber-300/80 drop-shadow-[0_0_8px_rgba(245,158,11,0.25)]"
+            className={`${theme.stroke} transition-colors duration-300`}
+            style={{ filter: `drop-shadow(0 0 8px ${theme.glow})` }}
           >
-            {type === 'orc_guardian' && <OrcGuardian />}
-            {type === 'dragon' && <Dragon />}
-            {type === 'skeleton' && <Skeleton />}
-            {type === 'shadow' && <Shadow />}
-            {type === 'desert_spirit' && <DesertSpirit />}
-            {type === 'chest' && <Chest />}
-            {type === 'castle' && <Castle />}
-            {type === 'boss_demon' && <BossDemon />}
-            {type === 'magic_portal' && <MagicPortal />}
+            {effectiveType === 'orc_guardian' && <OrcGuardian />}
+            {effectiveType === 'dragon' && <Dragon />}
+            {effectiveType === 'skeleton' && <Skeleton />}
+            {effectiveType === 'shadow' && <Shadow />}
+            {effectiveType === 'desert_spirit' && <DesertSpirit />}
+            {effectiveType === 'chest' && <Chest />}
+            {effectiveType === 'castle' && <Castle />}
+            {effectiveType === 'boss_demon' && <BossDemon />}
+            {effectiveType === 'magic_portal' && <MagicPortal />}
           </svg>
         </div>
       )}
