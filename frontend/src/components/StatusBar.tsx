@@ -6,8 +6,9 @@ import {
   IconHeart,
   IconSettings,
 } from './icons';
-import { CLASS_LABELS, type GameState } from '../types/game';
+import { type GameState } from '../types/game';
 import { toFaDigits } from '../utils/formatCountdown';
+import { getClassLabel, t } from '../utils/i18n';
 
 const DEFAULT_UNLOCKS = {
   inventory: false,
@@ -28,9 +29,11 @@ export function StatusBar({
   onInbox?: () => void;
   unreadCount?: number;
 }) {
-  const { stats, characterName, classType, storyTurnCount } = state;
+  const { stats, characterName, classType, storyTurnCount, language = 'fa' } = state;
   const unlocks = state.featureUnlocks || DEFAULT_UNLOCKS;
-  const stepLabel = `مرحله ${toFaDigits(storyTurnCount || 0)}`;
+  const isEn = language === 'en';
+  const stepNum = storyTurnCount || 0;
+  const stepLabel = isEn ? `Stage ${stepNum}` : `مرحله ${toFaDigits(stepNum)}`;
   const showResources = unlocks.hp || unlocks.mana || unlocks.gold;
   const showIdentity = unlocks.stats || showResources || unlocks.inventory;
 
@@ -40,7 +43,7 @@ export function StatusBar({
         <div className="grid grid-cols-3 items-center gap-2">
           <span className="inline-flex items-center gap-1.5 justify-self-start text-xs text-ink-dim">
             <IconBolt size={14} className="text-ink-muted" />
-            انرژی {stats.energy}/{stats.maxEnergy}
+            {t('energy', language)} {stats.energy}/{stats.maxEnergy}
           </span>
           <span className="justify-self-center text-xs text-ink-muted" aria-label={stepLabel}>
             {stepLabel}
@@ -49,24 +52,24 @@ export function StatusBar({
             type="button"
             onClick={onSettings}
             className="justify-self-end rounded-full p-2 text-ink-muted transition hover:text-ink-dim"
-            aria-label="تنظیمات"
+            aria-label={t('settings', language)}
           >
             <IconSettings size={18} />
           </button>
         </div>
         {state.lastAiSource === 'error' && state.lastAiError ? (
           <p className="mt-2 text-center text-[10px] leading-4 text-red-400/90">
-            خطای AI: {state.lastAiError}
+            {isEn ? `AI Error: ${state.lastAiError}` : `خطای AI: ${state.lastAiError}`}
           </p>
         ) : state.lastAiSource === 'live' ? (
           <p className="mt-2 text-center text-[10px] leading-4 text-emerald-400/80">
-            استاد بازی (زنده)
+            {isEn ? 'Dungeon Master (Live)' : 'استاد بازی (زنده)'}
           </p>
         ) : state.aiMode === 'mock' &&
           (storyTurnCount || 0) >= 5 &&
           state.aiMockReason ? (
           <p className="mt-2 text-center text-[10px] leading-4 text-amber/80">
-            آفلاین: {state.aiMockReason}
+            {isEn ? `Offline: ${state.aiMockReason}` : `آفلاین: ${state.aiMockReason}`}
           </p>
         ) : null}
       </header>
@@ -81,7 +84,7 @@ export function StatusBar({
             {characterName}
             <span className="text-ink-muted">
               {' '}
-              — {CLASS_LABELS[classType]} — سطح {stats.level}
+              — {getClassLabel(classType, language)} — {t('levelShort', language)} {stats.level}
             </span>
           </h1>
           <p className="mt-0.5 text-xs text-ink-muted">{stepLabel}</p>
@@ -92,7 +95,7 @@ export function StatusBar({
               type="button"
               onClick={onInbox}
               className="relative rounded-full p-2 text-ink-dim transition hover:text-amber"
-              aria-label="صندوق پیام"
+              aria-label={t('inbox', language)}
             >
               <IconBell size={20} />
               {unreadCount > 0 && (
@@ -104,7 +107,7 @@ export function StatusBar({
             type="button"
             onClick={onSettings}
             className="rounded-full p-2 text-ink-dim transition hover:text-amber"
-            aria-label="تنظیمات"
+            aria-label={t('settings', language)}
           >
             <IconSettings size={20} />
           </button>
@@ -116,7 +119,7 @@ export function StatusBar({
           <>
             <span className="inline-flex items-center gap-1">
               <IconHeart size={14} className="text-red-400/80" />
-              جان: {stats.hp}/{stats.maxHp}
+              {t('hp', language)}: {stats.hp}/{stats.maxHp}
             </span>
             <span className="text-line">|</span>
           </>
@@ -125,7 +128,7 @@ export function StatusBar({
           <>
             <span className="inline-flex items-center gap-1">
               <IconFlask size={14} className="text-sky-400/80" />
-              مانا: {stats.mana}/{stats.maxMana}
+              {t('mana', language)}: {stats.mana}/{stats.maxMana}
             </span>
             <span className="text-line">|</span>
           </>
@@ -134,7 +137,7 @@ export function StatusBar({
           <>
             <span className="inline-flex items-center gap-1">
               <IconCoin size={14} className="text-amber" />
-              {stats.gold.toLocaleString('fa-IR')}
+              {isEn ? stats.gold.toLocaleString('en-US') : stats.gold.toLocaleString('fa-IR')}
             </span>
             <span className="text-line">|</span>
           </>

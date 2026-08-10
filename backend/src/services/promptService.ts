@@ -108,7 +108,17 @@ export async function updatePrompt(
   };
 }
 
-export async function buildAwakenPrompt(name: string, classType: string): Promise<string> {
+import type { Language } from '../types/game';
+import {
+  buildActionUserPrompt,
+  buildAwakenUserPrompt,
+  buildDiceResultUserPrompt,
+} from '../prompts/system';
+
+export async function buildAwakenPrompt(name: string, classType: string, language: Language = 'fa'): Promise<string> {
+  if (language === 'en') {
+    return buildAwakenUserPrompt(name, classType, 'en');
+  }
   const template = await getPromptBody('awaken');
   return renderTemplate(template, { name, classType });
 }
@@ -125,7 +135,11 @@ export async function buildActionPrompt(params: {
   chosenOption: string;
   earlyResources?: 'energy_only' | 'partial' | 'full';
   unlockedResources?: string;
+  language?: Language;
 }): Promise<string> {
+  if (params.language === 'en') {
+    return buildActionUserPrompt(params);
+  }
   const earlyResources = params.earlyResources ?? 'full';
   const unlockedResources = params.unlockedResources ?? 'energy,hp,mana,gold';
   const template = await getPromptBody('action');
@@ -176,7 +190,11 @@ export async function buildDicePrompt(params: {
   location: string;
   storySnippet: string;
   recentHistory?: string;
+  language?: Language;
 }): Promise<string> {
+  if (params.language === 'en') {
+    return buildDiceResultUserPrompt(params);
+  }
   const template = await getPromptBody('dice');
   const rendered = renderTemplate(template, {
     name: params.name,

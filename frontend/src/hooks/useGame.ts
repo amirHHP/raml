@@ -120,8 +120,13 @@ export function useGame() {
     }
   };
 
-  const awaken = async (name: string) => {
-    const s = await run(() => api.awaken(name));
+  const setLanguage = async (language: 'fa' | 'en') => {
+    const s = await run(() => api.setLanguage(language));
+    if (s) setState(s);
+  };
+
+  const awaken = async (name: string, classType?: any, language?: 'fa' | 'en') => {
+    const s = await run(() => api.awaken(name, classType, language));
     if (s) {
       setState(s);
       setTab('story');
@@ -264,6 +269,7 @@ export function useGame() {
     unreadCount,
     markInboxRead,
     refreshInbox,
+    setLanguage,
     awaken,
     choose,
     submitDice,

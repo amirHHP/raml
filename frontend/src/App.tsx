@@ -17,6 +17,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
 import { EYES_OPEN_MS } from './utils/storyPacing';
 import { track } from './analytics/funnel';
+import { t } from './utils/i18n';
+import type { ClassType, Language } from './types/game';
 
 export default function App() {
   const game = useGame();
@@ -24,7 +26,7 @@ export default function App() {
   const scrollRef = useRef<HTMLElement>(null);
   const skipEyesRef = useRef<(() => void) | null>(null);
 
-  const handleAwaken = async (name: string) => {
+  const handleAwaken = async (name: string, classType?: ClassType, language?: Language) => {
     setOpeningEyes(true);
     const minAnim = new Promise<void>((resolve) => {
       const timer = window.setTimeout(resolve, EYES_OPEN_MS);
@@ -33,17 +35,20 @@ export default function App() {
         resolve();
       };
     });
-    await game.awaken(name);
+    await game.awaken(name, classType, language);
     await minAnim;
     skipEyesRef.current = null;
     setOpeningEyes(false);
     track('awaken_complete');
   };
 
+  const lang: Language = game.state?.language || 'fa';
+  const isEn = lang === 'en';
+
   if (game.loading) {
     return (
       <div className="flex h-full items-center justify-center bg-oled text-ink-muted">
-        در حال بارگذاری رمل...
+        {t('loading', lang)}
       </div>
     );
   }
@@ -51,13 +56,13 @@ export default function App() {
   if (!game.state) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 bg-oled px-6 text-center">
-        <p className="text-ink">{game.error || 'اتصال به سرور برقرار نشد'}</p>
+        <p className="text-ink">{game.error || t('connectionError', lang)}</p>
         <button
           type="button"
           onClick={() => void game.refresh().then(() => undefined)}
           className="rounded-lg border border-amber px-4 py-2 text-sm text-amber"
         >
-          تلاش دوباره
+          {t('retry', lang)}
         </button>
       </div>
     );
@@ -77,7 +82,10 @@ export default function App() {
     game.shop.find((item) => item.sku === 'energy_refill')?.priceTomans ?? null;
 
   return (
-    <div className="mx-auto flex h-full max-w-lg flex-col bg-oled">
+    <div
+      dir={isEn ? 'ltr' : 'rtl'}
+      className="mx-auto flex h-full max-w-lg flex-col bg-oled text-ink"
+    >
       {showChrome && (
         <StatusBar
           state={state}
@@ -97,10 +105,10 @@ export default function App() {
           {game.error}
           <button
             type="button"
-            className="mr-2 underline"
+            className="mx-2 underline"
             onClick={() => game.setError(null)}
           >
-            بستن
+            {t('close', lang)}
           </button>
         </div>
       )}
@@ -124,7 +132,9 @@ export default function App() {
             storyText={state.storyText}
             busy={game.busy || openingEyes}
             storyMsPerWord={state.storyMsPerWord}
-            onAwaken={handleAwaken}
+            language={lang}
+            onSetLanguage={(l) => void game.setLanguage(l)}
+            onAwaken={(name, classType) => handleAwaken(name, classType, lang)}
             onRestore={(code) => game.restoreSave(code)}
           />
         ) : (
@@ -159,6 +169,7 @@ export default function App() {
             {game.tab === 'inventory' && unlocks.inventory && (
               <InventoryPanel
                 items={state.inventory}
+                language={lang}
                 onToggleEquip={(id) => void game.toggleEquip(id)}
               />
             )}
@@ -180,6 +191,7 @@ export default function App() {
       {showBottomNav && (
         <BottomNav
           active={game.tab}
+          language={lang}
           onChange={game.setTab}
           showInventory={unlocks.inventory}
           showStats={unlocks.stats}
@@ -190,6 +202,8 @@ export default function App() {
 
       <SettingsModal
         open={game.settingsOpen}
+        language={lang}
+        onSetLanguage={(l) => void game.setLanguage(l)}
         onClose={() => game.setSettingsOpen(false)}
         onUnlock={() => void game.unlockDebug()}
         busy={game.busy}
@@ -199,6 +213,7 @@ export default function App() {
 
       <InboxModal
         open={game.inboxOpen}
+        language={lang}
         items={game.inboxItems}
         onClose={() => game.setInboxOpen(false)}
         onRead={(id) => void game.markInboxRead(id)}

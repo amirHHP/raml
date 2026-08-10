@@ -1,21 +1,27 @@
 import {
   EQUIP_SLOT_LABELS,
   type InventoryItem,
+  type Language,
 } from '../../types/game';
+import { getSlotLabel, t } from '../../utils/i18n';
 
 export function InventoryPanel({
   items,
+  language = 'fa',
   onToggleEquip,
 }: {
   items: InventoryItem[];
+  language?: Language;
   onToggleEquip?: (itemId: string) => void;
 }) {
+  const isEn = language === 'en';
+
   if (!items.length) {
     return (
       <div className="px-4 py-12 text-center">
         <p className="text-2xl mb-2">🎒</p>
         <p className="text-sm text-ink-muted">
-          کوله‌پشتی خالی است. هنوز آیتمی در طول بازی جمع‌آوری نکرده‌اید.
+          {t('inventoryEmpty', language)}
         </p>
       </div>
     );
@@ -40,7 +46,7 @@ export function InventoryPanel({
             <div className="flex items-center gap-2">
               {item.isEquipped && (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40">
-                  🛡️ تجهیزشده
+                  🛡️ {t('equippedBadge', language)}
                 </span>
               )}
               <span className="rounded-full bg-amber/20 px-2 py-0.5 text-xs font-bold text-amber">
@@ -55,7 +61,7 @@ export function InventoryPanel({
 
           {item.effect ? (
             <div className="flex items-start gap-1.5 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-2 mt-1">
-              <span className="shrink-0 font-bold">✨ کاربرد:</span>
+              <span className="shrink-0 font-bold">✨ {isEn ? 'Effect:' : 'کاربرد:'}</span>
               <span className="leading-5">{item.effect}</span>
             </div>
           ) : null}
@@ -63,7 +69,7 @@ export function InventoryPanel({
           {item.equipSlot ? (
             <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line/30 pt-2">
               <span className="text-[11px] text-amber/80 font-medium">
-                🛡️ پوشیدنی — {EQUIP_SLOT_LABELS[item.equipSlot]}
+                🛡️ {isEn ? 'Wearable' : 'پوشیدنی'} — {isEn ? getSlotLabel(item.equipSlot, language) : EQUIP_SLOT_LABELS[item.equipSlot]}
               </span>
               <button
                 type="button"
@@ -74,7 +80,7 @@ export function InventoryPanel({
                     : 'border border-amber-500/50 bg-amber-950/60 text-amber-300 hover:bg-amber-900/80 active:scale-95'
                 }`}
               >
-                {item.isEquipped ? '✖️ درآوردن' : '🛡️ پوشیدن'}
+                {item.isEquipped ? `✖️ ${t('unequipButton', language)}` : `🛡️ ${t('equipButton', language)}`}
               </button>
             </div>
           ) : null}

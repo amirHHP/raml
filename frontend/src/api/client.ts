@@ -1,4 +1,4 @@
-import type { ClassType, GameState, InboxItem, ShopSku } from '../types/game';
+import type { ClassType, GameState, InboxItem, Language, ShopSku } from '../types/game';
 import { assertValidSaveCode } from '../utils/saveCode';
 
 const DEVICE_KEY = 'raml_device_id';
@@ -43,6 +43,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getState: () => request<GameState>('/api/game/state'),
+  setLanguage: (language: Language) =>
+    request<GameState>('/api/game/language', {
+      method: 'POST',
+      body: JSON.stringify({ language }),
+    }),
   /** Look up a save by code, then bind this device to that identity. */
   restore: async (saveCode: string) => {
     const trimmed = assertValidSaveCode(saveCode);
@@ -59,10 +64,10 @@ export const api = {
     setDeviceId(state.deviceId);
     return state;
   },
-  awaken: (characterName: string, classType: ClassType = 'warrior') =>
+  awaken: (characterName: string, classType: ClassType = 'warrior', language?: Language) =>
     request<GameState>('/api/game/awaken', {
       method: 'POST',
-      body: JSON.stringify({ characterName, classType }),
+      body: JSON.stringify({ characterName, classType, language }),
     }),
   action: (optionId: string) =>
     request<GameState>('/api/game/action', {

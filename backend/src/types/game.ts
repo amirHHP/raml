@@ -1,3 +1,4 @@
+export type Language = 'fa' | 'en';
 export type ClassType = 'warrior' | 'mage' | 'rogue' | 'ranger';
 export type PanelTab = 'story' | 'inventory' | 'stats' | 'shop' | 'home';
 export type HomeActivityId =
@@ -207,6 +208,7 @@ export interface PlayerDocument {
   purchasedSkus: string[];
   storyHistory: Array<string | StoryHistoryEntry>;
   storyTurnCount: number;
+  language?: Language;
   homeUnlocked?: boolean;
   atHome?: boolean;
   activeHomeActivity?: ActiveHomeActivity | null;

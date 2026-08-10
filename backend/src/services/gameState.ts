@@ -62,12 +62,14 @@ export async function persistPlayer(player: IPlayer): Promise<IPlayer> {
   return player;
 }
 
-function defaultPlayer(deviceId: string): Partial<IPlayer> {
+function defaultPlayer(deviceId: string, language: Language = 'fa'): Partial<IPlayer> {
   const now = new Date();
+  const isEn = language === 'en';
   return {
     deviceId,
     characterName: '',
     classType: 'warrior',
+    language,
     status: 'active',
     awakened: false,
     unlockedFullUi: false,
@@ -75,8 +77,10 @@ function defaultPlayer(deviceId: string): Partial<IPlayer> {
     lastEnergyAt: now,
     lastPlayedAt: now,
     playDayCount: 0,
-    currentLocation: 'تاریکی مطلق',
-    storyText: 'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...',
+    currentLocation: isEn ? 'Absolute Darkness' : 'تاریکی مطلق',
+    storyText: isEn
+      ? 'Absolute darkness. A heavy silence. Something stirs within the depths of your soul...'
+      : 'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...',
     enemyLineArtType: 'none',
     needsDiceRoll: false,
     pendingDiceRoll: null,
@@ -412,6 +416,7 @@ export function toClientState(player: IPlayer) {
     deviceId: player.deviceId,
     characterName: player.characterName,
     classType: player.classType,
+    language: player.language || 'fa',
     awakened: player.awakened,
     unlockedFullUi: computeUnlocked(player),
     featureUnlocks,
@@ -455,13 +460,18 @@ export async function awakenPlayer(
   deviceId: string,
   characterName: string,
   classType: ClassType = 'warrior',
+  language?: Language,
 ) {
   const player = await getOrCreatePlayer(deviceId);
+  if (language) {
+    player.language = language;
+  }
   if (player.awakened) {
     return toClientState(player);
   }
 
-  const name = characterName.trim().slice(0, 24) || 'مسافر';
+  const lang = player.language || 'fa';
+  const name = characterName.trim().slice(0, 24) || (lang === 'en' ? 'Traveler' : 'مسافر');
   player.characterName = name;
   player.classType = classType;
   player.awakened = true;
@@ -485,8 +495,8 @@ export async function awakenPlayer(
   const turnNumber = getStoryTurnCount(player) + 1;
   try {
     const { data, source } = await generateGameTurn(
-      await withMilestonePrompt(await buildAwakenPrompt(name, classType), turnNumber),
-      { turnNumber },
+      await withMilestonePrompt(await buildAwakenPrompt(name, classType, lang), turnNumber),
+      { turnNumber, language: lang },
     );
     applyAiResponse(player, data);
     markAiSource(player, source);
@@ -609,6 +619,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
   };
   player.storyHistory = [...(player.storyHistory || []), choiceEntry].slice(-200);
 
+  const lang = player.language || 'fa';
   const turnNumber = getStoryTurnCount(player) + 1;
   const unlocksForTurn = resolveFeatureUnlocksAtTurn(player, turnNumber);
   const earlyResources =
@@ -640,10 +651,11 @@ export async function chooseOption(deviceId: string, optionId: string) {
           chosenOption: option.text,
           earlyResources,
           unlockedResources: formatResourceUnlocks(unlocksForTurn),
+          language: lang,
         }),
         turnNumber,
       ),
-      { turnNumber },
+      { turnNumber, language: lang },
     );
     applyAiResponse(player, data);
     markAiSource(player, source);
@@ -704,6 +716,7 @@ export async function submitDiceRoll(
   const pending = player.pendingDiceRoll;
   const success = total >= pending.minRollSuccess;
 
+  const lang = player.language || 'fa';
   const turnNumber = getStoryTurnCount(player) + 1;
   try {
     const { data, source } = await generateGameTurn(
@@ -719,10 +732,11 @@ export async function submitDiceRoll(
           location: player.currentLocation,
           storySnippet: pending.context || player.storyText.slice(0, 300),
           recentHistory: formatRecentHistory(player),
+          language: lang,
         }),
         turnNumber,
       ),
-      { turnNumber },
+      { turnNumber, language: lang },
     );
     applyAiResponse(player, data);
     markAiSource(player, source);
@@ -731,10 +745,30 @@ export async function submitDiceRoll(
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'خطای AI';
     markAiSource(player, 'error', msg);
-    player.toastMessage = `خطای AI: ${msg} — دوباره تاس بریز`;
+    player.toastMessage = `خطای AI: ${msg}`;
     await persist(player);
-    return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };
+    return toClientState(player);
   }
+}
+
+export async function updatePlayerLanguage(deviceId: string, language: Language) {
+  const player = await getOrCreatePlayer(deviceId);
+  player.language = language;
+
+  if (!player.awakened) {
+    if (language === 'en') {
+      player.currentLocation = 'Absolute Darkness';
+      player.storyText =
+        'Absolute darkness. A heavy silence. Something stirs within the depths of your soul...';
+    } else {
+      player.currentLocation = 'تاریکی مطلق';
+      player.storyText =
+        'تاریکی مطلق. سکوت سنگین. چیزی در ژرفای وجودت می‌جنبد...';
+    }
+  }
+
+  await persist(player);
+  return toClientState(player);
 }
 
 export async function clearToast(deviceId: string) {

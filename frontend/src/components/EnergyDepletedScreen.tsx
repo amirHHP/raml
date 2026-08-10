@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWordTypewriter } from '../hooks/useWordTypewriter';
 import { formatEnergyCountdown } from '../utils/formatCountdown';
+import type { Language } from '../types/game';
+import { t } from '../utils/i18n';
 
-const DEPLETED_COPY =
+const DEPLETED_COPY_FA =
   'نفست بریده.\nنیرویی برای برداشتن قدم بعدی نداری.\n\nمی‌توانی صبر کنی تا انرژی‌ات برگردد…\nیا راه میان‌بر بگیری.';
+
+const DEPLETED_COPY_EN =
+  'You are out of breath.\nYou lack the strength to take another step.\n\nYou can wait for your energy to recover...\nOr take a shortcut.';
 
 export function EnergyDepletedScreen({
   msUntilNextEnergy,
   energyRegenMinutes,
   refillPriceTomans,
+  language = 'fa',
   busy,
   onWatchAd,
   onBuyRefill,
@@ -17,16 +23,19 @@ export function EnergyDepletedScreen({
   msUntilNextEnergy: number;
   energyRegenMinutes: number;
   refillPriceTomans: number | null;
+  language?: Language;
   busy: boolean;
   onWatchAd: () => void;
   onBuyRefill: () => void;
   onTimerElapsed: () => void;
 }) {
-  const { displayed, done, skip } = useWordTypewriter(DEPLETED_COPY, 700);
+  const isEn = language === 'en';
+  const copy = isEn ? DEPLETED_COPY_EN : DEPLETED_COPY_FA;
+  const { displayed, done, skip } = useWordTypewriter(copy, 700);
   const remaining = useLocalCountdown(msUntilNextEnergy, onTimerElapsed);
   const priceLabel =
     refillPriceTomans != null
-      ? `${refillPriceTomans.toLocaleString('fa-IR')} تومان`
+      ? (isEn ? `${refillPriceTomans.toLocaleString('en-US')} Tomans` : `${refillPriceTomans.toLocaleString('fa-IR')} تومان`)
       : null;
 
   return (
@@ -35,12 +44,12 @@ export function EnergyDepletedScreen({
         type="button"
         onClick={skip}
         className="mb-8 w-full text-center"
-        aria-label="متن خستگی"
+        aria-label={isEn ? 'Exhaustion text' : 'متن خستگی'}
       >
         <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink-dim">
           {displayed}
           {!done && (
-            <span className="mr-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
+            <span className="mx-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
               {' '}
             </span>
           )}
@@ -54,13 +63,15 @@ export function EnergyDepletedScreen({
       >
         <div className="text-center">
           <p className="text-[11px] tracking-wide text-ink-muted">
-            انرژی بعدی تا
+            {isEn ? 'Next energy in:' : 'انرژی بعدی تا'}
           </p>
           <p className="mt-2 font-mono text-3xl tabular-nums text-amber amber-text-glow">
             {formatEnergyCountdown(remaining)}
           </p>
           <p className="mt-2 text-[11px] text-ink-muted">
-            هر {energyRegenMinutes.toLocaleString('fa-IR')} دقیقه یک واحد
+            {isEn
+              ? `1 unit every ${energyRegenMinutes} minutes`
+              : `هر ${energyRegenMinutes.toLocaleString('fa-IR')} دقیقه یک واحد`}
           </p>
         </div>
 
@@ -69,17 +80,17 @@ export function EnergyDepletedScreen({
             type="button"
             disabled={busy}
             onClick={onWatchAd}
-            className="w-full border border-amber/50 py-3.5 text-sm text-amber transition enabled:active:opacity-70 disabled:opacity-40"
+            className="w-full border border-amber/50 py-3.5 text-sm text-amber transition enabled:active:opacity-70 disabled:opacity-40 rounded-lg"
           >
-            تماشای تبلیغ ادیوری — +۵ انرژی
+            {t('watchAdButton', language)}
           </button>
           <button
             type="button"
             disabled={busy}
             onClick={onBuyRefill}
-            className="w-full border border-line py-3.5 text-sm text-ink transition enabled:active:opacity-70 disabled:opacity-40"
+            className="w-full border border-line py-3.5 text-sm text-ink transition enabled:active:opacity-70 disabled:opacity-40 rounded-lg"
           >
-            پر کردن کامل انرژی
+            {t('buyRefillButton', language)}
             {priceLabel ? (
               <span className="mt-1 block text-[11px] text-ink-muted">
                 {priceLabel}

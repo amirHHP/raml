@@ -1,3 +1,4 @@
+export type Language = 'fa' | 'en';
 export type ClassType = 'warrior' | 'mage' | 'rogue' | 'ranger';
 export type TabId = 'story' | 'inventory' | 'stats' | 'shop' | 'home';
 
@@ -149,6 +150,7 @@ export interface GameState {
   deviceId: string;
   characterName: string;
   classType: ClassType;
+  language?: Language;
   awakened: boolean;
   unlockedFullUi: boolean;
   featureUnlocks: {

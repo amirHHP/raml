@@ -4,6 +4,7 @@ import type {
   EnemyLineArtType,
   GameOption,
   InventoryItem,
+  Language,
   PendingDiceRoll,
   PlayerStats,
   StoryHistoryEntry,
@@ -15,6 +16,7 @@ export interface IPlayer extends Document {
   deviceId: string;
   characterName: string;
   classType: ClassType;
+  language: Language;
   status: PlayerStatus;
   awakened: boolean;
   unlockedFullUi: boolean;
@@ -129,6 +131,11 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       enum: ['warrior', 'mage', 'rogue', 'ranger'],
       default: 'warrior',
+    },
+    language: {
+      type: String,
+      enum: ['fa', 'en'],
+      default: 'fa',
     },
     status: {
       type: String,

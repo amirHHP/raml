@@ -85,13 +85,16 @@ function StoryBubbleView({
   text,
   animate,
   msPerWord,
+  language = 'fa',
   onDone,
 }: {
   text: string;
   animate: boolean;
   msPerWord: number;
+  language?: string;
   onDone?: () => void;
 }) {
+  const isEn = language === 'en';
   const { displayed, done, skip } = useWordTypewriter(text, msPerWord);
 
   useEffect(() => {
@@ -111,20 +114,20 @@ function StoryBubbleView({
         if (animate && !done) track('story_skipped');
         skip();
       }}
-      className="w-full text-right"
-      aria-label="متن داستان — برای نمایش کامل لمس کنید"
+      className={`w-full ${isEn ? 'text-left' : 'text-right'}`}
+      aria-label={isEn ? 'Story text — tap to display fully' : 'متن داستان — برای نمایش کامل لمس کنید'}
     >
       <p className="whitespace-pre-wrap text-[15px] leading-8 text-ink">
         {animate ? displayed : text}
         {animate && !done && (
-          <span className="mr-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
+          <span className="mx-0.5 inline-block w-1.5 animate-pulse bg-ink-muted align-middle">
             {' '}
           </span>
         )}
       </p>
       {animate && !done && (
         <span className="mt-3 block text-[11px] text-ink-muted">
-          برای رد کردن، لمس کن
+          {isEn ? 'Tap to skip' : 'برای رد کردن، لمس کن'}
         </span>
       )}
     </button>
@@ -178,6 +181,9 @@ export function StoryChat({
   const typingDoneRef = useRef(false);
   const choicePendingRef = useRef(false);
   const turnAtChoiceRef = useRef(0);
+
+  const lang = state.language || 'fa';
+  const isEn = lang === 'en';
   const energyEmpty = state.stats.energy < 1;
   const msPerWord = state.storyMsPerWord || DEFAULT_STORY_MS_PER_WORD;
   const latestKind = bubbles.length > 0 ? bubbles[bubbles.length - 1]?.kind : null;
@@ -303,8 +309,6 @@ export function StoryChat({
     el.scrollTop = el.scrollHeight;
   }, [bubbles, typingDone, busy, stickToBottom, scrollContainerRef, state.options]);
 
-  // If a choice was locked in but story didn't advance (error), still allow picking again
-  // once busy clears and options are present.
   const showActions =
     typingDone &&
     !busy &&
@@ -341,6 +345,7 @@ export function StoryChat({
               text={bubble.text}
               animate={isLatest && animateLatest}
               msPerWord={msPerWord}
+              language={lang}
               onDone={isLatest ? handleTypingDone : undefined}
             />
           </div>
@@ -356,6 +361,7 @@ export function StoryChat({
           msUntilNextEnergy={state.msUntilNextEnergy}
           energyRegenMinutes={state.energyRegenMinutes}
           refillPriceTomans={refillPriceTomans}
+          language={lang}
           busy={busy}
           onWatchAd={onWatchAd}
           onBuyRefill={onBuyRefill}
@@ -376,7 +382,7 @@ export function StoryChat({
 
       {busy && (
         <p className="text-center text-xs text-ink-muted">
-          استاد بازی در حال نوشتن...
+          {isEn ? 'Dungeon Master is writing...' : 'استاد بازی در حال نوشتن...'}
         </p>
       )}
 
@@ -387,7 +393,7 @@ export function StoryChat({
           type="button"
           onClick={() => scrollToBottom('smooth')}
           className="fixed bottom-24 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-amber/40 bg-panel text-amber shadow-lg amber-glow"
-          aria-label="رفتن به پایین"
+          aria-label={isEn ? 'Scroll to bottom' : 'رفتن به پایین'}
         >
           <IconChevronDown size={20} />
         </button>

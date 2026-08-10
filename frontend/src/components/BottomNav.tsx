@@ -1,21 +1,23 @@
 import { IconBag, IconCart, IconHome, IconScroll, IconUser } from './icons';
-import type { TabId } from '../types/game';
+import type { Language, TabId } from '../types/game';
+import { t } from '../utils/i18n';
 
 const ALL_TABS: {
   id: TabId;
-  label: string;
+  labelKey: 'tabStory' | 'tabHome' | 'tabInventory' | 'tabStats' | 'tabShop';
   Icon: typeof IconScroll;
   requires?: 'inventory' | 'stats' | 'home';
 }[] = [
-  { id: 'story', label: 'غار', Icon: IconScroll },
-  { id: 'home', label: 'خانه', Icon: IconHome, requires: 'home' },
-  { id: 'inventory', label: 'کوله‌پشتی', Icon: IconBag, requires: 'inventory' },
-  { id: 'stats', label: 'حال من', Icon: IconUser, requires: 'stats' },
-  { id: 'shop', label: 'فروشگاه', Icon: IconCart },
+  { id: 'story', labelKey: 'tabStory', Icon: IconScroll },
+  { id: 'home', labelKey: 'tabHome', Icon: IconHome, requires: 'home' },
+  { id: 'inventory', labelKey: 'tabInventory', Icon: IconBag, requires: 'inventory' },
+  { id: 'stats', labelKey: 'tabStats', Icon: IconUser, requires: 'stats' },
+  { id: 'shop', labelKey: 'tabShop', Icon: IconCart },
 ];
 
 export function BottomNav({
   active,
+  language = 'fa',
   onChange,
   showInventory = true,
   showStats = true,
@@ -23,6 +25,7 @@ export function BottomNav({
   disableStory = false,
 }: {
   active: TabId;
+  language?: Language;
   onChange: (t: TabId) => void;
   showInventory?: boolean;
   showStats?: boolean;
@@ -36,18 +39,21 @@ export function BottomNav({
     return true;
   });
 
+  const isEn = language === 'en';
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-oled/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
       <ul className="mx-auto flex max-w-lg items-center justify-around px-2">
-        {tabs.map(({ id, label, Icon }) => {
+        {tabs.map(({ id, labelKey, Icon }) => {
           const on = active === id;
           const isDisabled = id === 'story' && disableStory;
+          const label = t(labelKey, language);
           return (
             <li key={id}>
               <button
                 type="button"
                 disabled={isDisabled}
-                title={isDisabled ? 'ابتدا باید خروج از خانه را بزنید' : undefined}
+                title={isDisabled ? (isEn ? 'Return from home first' : 'ابتدا باید خروج از خانه را بزنید') : undefined}
                 onClick={() => !isDisabled && onChange(id)}
                 className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] transition ${
                   isDisabled

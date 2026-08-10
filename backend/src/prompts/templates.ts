@@ -38,6 +38,46 @@ export const DEFAULT_DICE_TEMPLATE = `نتیجهٔ تاس مهارت:
 بر اساس {{resultLabel}}، داستان را ادامه بده (تکرار صحنهٔ قبل ممنوع) و JSON بعدی را بده.
 needs_dice_roll را false بگذار و گزینه‌های جدید ارائه کن.`;
 
+export const DEFAULT_AWAKEN_TEMPLATE_EN = `The player has just opened their eyes.
+Character name: {{name}}
+Class is not selected yet (temporary internal value: {{classType}}); do not emphasize class identity or skills.
+
+Write the opening scene: awakening in darkness, the touch of sand, the sound of desert wind, and the initial choices.
+unlocked_hint: This is day one; keep the scene simple and evocative.
+Set needs_dice_roll to false.`;
+
+export const DEFAULT_ACTION_TEMPLATE_EN = `Current player state:
+Name: {{name}} | Class: {{classType}} | Level: {{level}}
+Location: {{location}}
+Stats: {{stats}}
+Inventory: {{inventory}}
+Recent history summary:
+{{recentHistory}}
+Last scene: {{storySnippet}}
+early_resources: {{earlyResources}}
+unlocked_resources: {{unlockedResources}}
+
+The player chose this option: "{{chosenOption}}"
+
+Advance the story from this exact point. Do not repeat previous sentences or scenes. Change location or situation relative to before.
+One energy unit was already consumed; set energy_change to 0 unless a special event occurs.
+If early_resources=energy_only, options must only check energy (condition_check.stat=energy, min=0).
+Only use unlocked_resources in stats_update or option conditions.`;
+
+export const DEFAULT_DICE_TEMPLATE_EN = `Skill check result:
+Player: {{name}}
+Check type: {{requiredType}}
+Raw roll: {{rawRoll}} + modifier {{modifier}} = {{rollTotal}}
+Minimum success required: {{minSuccess}}
+Result: {{resultLabel}}
+Location: {{location}}
+Context: {{storySnippet}}
+Recent history summary:
+{{recentHistory}}
+
+Based on {{resultLabel}}, continue the story (no scene repetition) and output the next JSON.
+Set needs_dice_roll to false and provide new options.`;
+
 export function renderTemplate(
   template: string,
   vars: Record<string, string | number | boolean>,

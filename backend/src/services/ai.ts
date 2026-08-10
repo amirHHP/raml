@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import OpenAI from 'openai';
-import type { AiGameResponse } from '../types/game';
+import type { AiGameResponse, Language } from '../types/game';
 import {
   getRuntimeAiSettings,
   onAiSettingsChange,
   type RuntimeAiSettings,
 } from './aiSettings';
 import { getPromptBody } from './promptService';
+import { SYSTEM_PROMPT_EN } from '../prompts/system';
 import { extractJson } from './jsonExtract';
 import { ensureAiOptions, normalizeAiPayload } from './aiNormalize';
 import { AI_LIVE_FROM_TURN } from './aiPolicy';
@@ -568,9 +569,146 @@ function hashStr(s: string): number {
 /** First N turns stay on deterministic offline mock; from this turn onward use real AI. */
 export { AI_LIVE_FROM_TURN } from './aiPolicy';
 
+export function mockAiEn(userPrompt: string, turnNumber?: number): AiGameResponse {
+  const isAwaken = userPrompt.includes('opened their eyes') || userPrompt.includes('چشم‌هایش را باز کرده');
+  const isDice = userPrompt.includes('Skill check result') || userPrompt.includes('نتیجهٔ تاس');
+  const success = userPrompt.includes('Result: Success') || userPrompt.includes('نتیجه: موفقیت');
+  const chosen = chosenOptionFromPrompt(userPrompt);
+
+  const isClassChoice =
+    chosen.includes('Warrior') ||
+    chosen.includes('Sword') ||
+    chosen.includes('Mage') ||
+    chosen.includes('Staff') ||
+    chosen.includes('Rogue') ||
+    chosen.includes('Dagger') ||
+    chosen.includes('Ranger') ||
+    chosen.includes('Bow') ||
+    chosen.includes('جنگجو') ||
+    chosen.includes('جادوگر') ||
+    chosen.includes('راهزن') ||
+    chosen.includes('شکارچی');
+
+  if (isAwaken) {
+    return {
+      story_text:
+        'You open your eyes as desert sand swallows you up to your collar. Something beneath the earth grips your ankle, pulling slowly downward.\n\nA flickering lantern rests on the dunes a few paces away, and a raspy voice echoes: "You awakened ahead of your time."',
+      current_location: 'Raml Desert — Sand Pit',
+      enemy_line_art_type: 'shadow',
+      ascii_art:
+        '   ┌─────────────┐\n   │  .---.   ⚡ │\n   │ /     \\     │\n   │ | (o) |     │\n   │ \\  -  /     │\n   │  `---`      │\n   │ ~~~~~~~~~~~ │\n   └─────────────┘',
+      stats_update: { xp: 5 },
+      needs_dice_roll: false,
+      required_roll_type: null,
+      min_roll_success: null,
+      options: [
+        energyOption('Pull yourself out with all your strength', 'sword'),
+        energyOption('Reach out toward the lantern', 'key', 'Sand Amulet'),
+        energyOption('Shout into the dark: Who are you?', 'talk'),
+      ],
+      discovered_item: {
+        id: 'sand_amulet',
+        name: 'Sand Amulet',
+        description: 'Found in the shifting sand; radiates faint warmth in rhythm with your pulse.',
+        effect: 'Illuminates desert darkness and calms shadows',
+        icon: 'amulet',
+        equip_slot: 'accessory',
+      },
+      toast_message: 'New Item: Sand Amulet',
+    };
+  }
+
+  if (isDice) {
+    return {
+      story_text: success
+        ? 'The dice roll in your favor. With a powerful leap, you break free from the sinking sand as whatever grabbed you vanishes into the gloom. The lantern glows in your hands, illuminating a cavern entrance.'
+        : 'The dice betray you. Sand rises to your chest, and claws beneath scrape your leg. You must make a split-second decision.',
+      current_location: 'Raml Desert — Sand Pit',
+      enemy_line_art_type: 'shadow',
+      stats_update: success ? { xp: 15, gold: 25 } : { hp: -12, xp: 5 },
+      needs_dice_roll: false,
+      required_roll_type: null,
+      min_roll_success: null,
+      options: success
+        ? [
+            energyOption('Advance into the narrow cavern gap', 'key'),
+            energyOption('Pick up loot beside the lantern', 'search', 'Ash Cloak'),
+            energyOption('Pause and listen intently', 'talk'),
+          ]
+        : [
+            energyOption('Strike back with all your force', 'sword'),
+            energyOption('Channel the Sand Amulet', 'spell'),
+            energyOption('Retreat into the shadow', 'retreat'),
+          ],
+      discovered_item: null,
+      toast_message: success ? 'Path ahead opened!' : 'You took damage!',
+    };
+  }
+
+  if (turnNumber === 2 || (turnNumber == null && (chosen.includes('Pull') || chosen.includes('lantern') || chosen.includes('Shout')))) {
+    return {
+      story_text: `You take action without hesitation.\n\nThis crucial moment depends on your luck.`,
+      current_location: 'Raml Desert — Sand Pit',
+      enemy_line_art_type: 'shadow',
+      ascii_art:
+        '   .───────.\n  /   o   /|\n /_______/ |\n |  o o  | |\n |   o   |/\n \'───────\'',
+      stats_update: { energy_change: 0 },
+      needs_dice_roll: true,
+      required_roll_type: 'luck',
+      min_roll_success: 8,
+      options: [],
+      discovered_item: null,
+      toast_message: 'Skill Check: Luck',
+    };
+  }
+
+  if (turnNumber === 4 || isClassChoice || chosen.includes('Advance') || chosen.includes('Strike') || chosen.includes('loot')) {
+    return {
+      story_text:
+        'You arrive at an ancient chamber. In the center lies a **glowing ancient chest**.\nAs you approach, four sacred relics shine inside. Choosing one will awaken your **Character Class**:',
+      current_location: 'Cavern of Shadows — Ancient Relic Hall',
+      enemy_line_art_type: 'chest',
+      ascii_art:
+        '  .-----------------------.\n  |  ╔═════════════════╗  |\n  |  ║  [ 🗝️ ] ✨   ║  |\n  |  ╚═════════════════╝  |\n  \'-----------------------\'',
+      stats_update: { xp: 15 },
+      needs_dice_roll: false,
+      required_roll_type: null,
+      min_roll_success: null,
+      options: [
+        energyOption('Claim Heavy Broadsword (Warrior — High STR & Max HP)', 'sword'),
+        energyOption('Claim Crystal Staff (Mage — High INT & Max Mana)', 'spell'),
+        energyOption('Claim Shadow Daggers (Rogue — High AGI & Extra Gold)', 'key'),
+        energyOption('Claim Falcon Bow (Ranger — Balanced AGI & INT)', 'shield'),
+      ],
+      discovered_item: null,
+      toast_message: 'Ancient chest unlocked — choose your class',
+    };
+  }
+
+  return {
+    story_text: `Turn ${turnNumber || 5}: The path branches deeper into forgotten ruins. Strange runes pulse on cold stone walls as a mysterious breeze brushes past...`,
+    current_location: 'Ruined Vaults',
+    enemy_line_art_type: 'chest',
+    ascii_art:
+      '   ┌─────────────┐\n   │  /\\  /\\  /\\ │\n   │ |  ||  ||  |│\n   │ |__||__||__|│\n   └─────────────┘',
+    stats_update: { xp: 10, gold: 5 },
+    needs_dice_roll: false,
+    required_roll_type: null,
+    min_roll_success: null,
+    options: [
+      energyOption('Examine the glowing runes', 'search'),
+      energyOption('Press forward quietly', 'key'),
+      energyOption('Prepare your weapon', 'sword'),
+    ],
+    discovered_item: null,
+    toast_message: null,
+  };
+}
+
 export type GenerateGameTurnOptions = {
   /** 1-based turn number (awaken / action / dice). Defaults to live AI when omitted. */
   turnNumber?: number;
+  language?: Language;
 };
 
 export type GenerateGameTurnResult = {
@@ -623,14 +761,20 @@ export async function generateGameTurn(
   options: GenerateGameTurnOptions = {},
 ): Promise<GenerateGameTurnResult> {
   const settings = await getRuntimeAiSettings();
+  const isEn =
+    options.language === 'en' ||
+    userPrompt.includes('Character name:') ||
+    userPrompt.includes('opened their eyes') ||
+    userPrompt.includes('Current player state:');
+
   if (shouldUseMockAi(settings, options.turnNumber)) {
     return {
-      data: mockAi(userPrompt, options.turnNumber),
+      data: isEn ? mockAiEn(userPrompt, options.turnNumber) : mockAi(userPrompt, options.turnNumber),
       source: 'mock',
     };
   }
 
-  const systemPrompt = await getPromptBody('system');
+  const systemPrompt = isEn ? SYSTEM_PROMPT_EN : await getPromptBody('system');
   try {
     const content = await requestLiveCompletion(settings, systemPrompt, userPrompt);
     let parsed: AiGameResponse;

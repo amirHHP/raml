@@ -17,6 +17,7 @@ import {
   toClientState,
   toggleEquipItem,
   unlockOrReturnHome,
+  updatePlayerLanguage,
 } from '../services/gameState';
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
 import { recordEvents } from '../services/funnel';
@@ -84,12 +85,28 @@ router.get('/state', requireDeviceId, async (req, res) => {
   }
 });
 
+router.post('/language', requireDeviceId, async (req, res) => {
+  try {
+    const body = z.object({ language: z.enum(['fa', 'en']) }).parse(req.body);
+    const state = await updatePlayerLanguage(req.deviceId, body.language);
+    res.json(state);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'زبان نامعتبر است' });
+      return;
+    }
+    console.error(err);
+    res.status(500).json({ error: 'خطا در تغییر زبان' });
+  }
+});
+
 router.post('/awaken', requireDeviceId, async (req, res) => {
   try {
     const body = z
       .object({
         characterName: z.string().min(1).max(24),
         classType: z.enum(['warrior', 'mage', 'rogue', 'ranger']).optional(),
+        language: z.enum(['fa', 'en']).optional(),
       })
       .parse(req.body);
 
@@ -97,6 +114,7 @@ router.post('/awaken', requireDeviceId, async (req, res) => {
       req.deviceId,
       body.characterName,
       body.classType ?? 'warrior',
+      body.language,
     );
     res.json(state);
   } catch (err) {

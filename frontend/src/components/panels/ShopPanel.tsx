@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GameState, ShopSku } from '../../types/game';
+import { t } from '../../utils/i18n';
 
 export function ShopPanel({
   items,
@@ -21,14 +22,16 @@ export function ShopPanel({
   const [restoreCode, setRestoreCode] = useState('');
   const [restoring, setRestoring] = useState(false);
 
+  const lang = state.language || 'fa';
+  const isEn = lang === 'en';
+
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(state.deviceId);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select via prompt for older WebViews
-      window.prompt('کد ذخیره را کپی کن:', state.deviceId);
+      window.prompt(isEn ? 'Copy save code:' : 'کد ذخیره را کپی کن:', state.deviceId);
     }
   };
 
@@ -49,14 +52,13 @@ export function ShopPanel({
 
   return (
     <div className="space-y-3 px-4 py-4 pb-8">
-      <section className="rounded-xl border border-amber/40 bg-panel px-4 py-3 text-right">
-        <p className="text-sm text-amber">کد ذخیره</p>
+      <section className={`rounded-xl border border-amber/40 bg-panel px-4 py-3 ${isEn ? 'text-left' : 'text-right'}`}>
+        <p className="text-sm text-amber">{t('saveCodeLabel', lang)}</p>
         <p className="mt-1 text-xs leading-6 text-ink-muted">
-          پیشرفت بازی روی این کد ذخیره می‌شود. آن را جایی امن نگه دار — اگر داده‌ها پاک
-          شوند، با همین کد می‌توانی دوباره وارد شوی.
+          {t('saveCodeDescription', lang)}
         </p>
         <p
-          className="mt-3 break-all rounded-lg border border-line bg-oled px-3 py-2 font-mono text-xs text-ink"
+          className="mt-3 break-all rounded-lg border border-line bg-oled px-3 py-2 font-mono text-xs text-ink text-left"
           dir="ltr"
         >
           {state.deviceId}
@@ -67,25 +69,25 @@ export function ShopPanel({
             onClick={() => void copyCode()}
             className="flex-1 rounded-lg border border-amber/50 py-2 text-xs text-amber"
           >
-            {copied ? 'کپی شد' : 'کپی کد'}
+            {copied ? t('copied', lang) : t('copySaveCode', lang)}
           </button>
           <button
             type="button"
             onClick={() => setRestoreOpen((v) => !v)}
             className="flex-1 rounded-lg border border-line py-2 text-xs text-ink-dim"
           >
-            {restoreOpen ? 'بستن' : 'ورود با کد'}
+            {restoreOpen ? (isEn ? 'Close' : 'بستن') : t('restoreSaveCode', lang)}
           </button>
         </div>
         {restoreOpen && (
           <div className="mt-3 space-y-2 border-t border-line pt-3">
             <p className="text-xs text-ink-muted">
-              کد ذخیره‌ای که قبلاً کپی کرده‌ای را وارد کن تا همان بازی لود شود.
+              {t('restoreModalHint', lang)}
             </p>
             <input
               value={restoreCode}
               onChange={(e) => setRestoreCode(e.target.value)}
-              placeholder="کد ذخیره"
+              placeholder={t('restoreInputPlaceholder', lang)}
               disabled={busy || restoring}
               dir="ltr"
               className="w-full rounded-lg border border-line bg-oled px-3 py-2 text-left font-mono text-xs text-ink outline-none focus:border-amber/50"
@@ -99,7 +101,7 @@ export function ShopPanel({
               onClick={() => void handleRestore()}
               className="w-full rounded-lg border border-amber/50 py-2 text-xs text-amber disabled:opacity-40"
             >
-              {restoring ? 'در حال بارگذاری...' : 'بارگذاری بازی'}
+              {restoring ? (isEn ? 'Loading...' : 'در حال بارگذاری...') : t('restoreButton', lang)}
             </button>
           </div>
         )}
@@ -109,10 +111,10 @@ export function ShopPanel({
         type="button"
         disabled={busy}
         onClick={onWatchAd}
-        className="w-full rounded-xl border border-amber/50 bg-panel px-4 py-3 text-right transition hover:amber-glow disabled:opacity-40"
+        className={`w-full rounded-xl border border-amber/50 bg-panel px-4 py-3 ${isEn ? 'text-left' : 'text-right'} transition hover:amber-glow disabled:opacity-40`}
       >
-        <p className="text-sm text-amber">تماشای تبلیغ ویدیویی ادیوری</p>
-        <p className="mt-1 text-xs text-ink-muted">+۵ انرژی (شبکه تبلیغاتی Adivery)</p>
+        <p className="text-sm text-amber">{t('watchAdButton', lang)}</p>
+        <p className="mt-1 text-xs text-ink-muted">+5 {t('energy', lang)} (Adivery Network)</p>
       </button>
 
       {items.map((item) => {
@@ -124,7 +126,7 @@ export function ShopPanel({
             type="button"
             disabled={busy || owned}
             onClick={() => onBuy(item.sku)}
-            className="w-full rounded-xl border border-line bg-panel px-4 py-3 text-right transition enabled:hover:border-amber/40 disabled:opacity-45"
+            className={`w-full rounded-xl border border-line bg-panel px-4 py-3 ${isEn ? 'text-left' : 'text-right'} transition enabled:hover:border-amber/40 disabled:opacity-45`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -132,7 +134,9 @@ export function ShopPanel({
                 <p className="mt-1 text-xs text-ink-muted">{item.description}</p>
               </div>
               <span className="shrink-0 text-xs text-amber">
-                {owned ? 'خریداری شده' : `${item.priceTomans.toLocaleString('fa-IR')} تومان`}
+                {owned
+                  ? (isEn ? 'Purchased' : 'خریداری شده')
+                  : (isEn ? `${item.priceTomans.toLocaleString('en-US')} Tomans` : `${item.priceTomans.toLocaleString('fa-IR')} تومان`)}
               </span>
             </div>
           </button>
