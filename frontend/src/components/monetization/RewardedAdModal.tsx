@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { showRewardedVideo, simulateAdReward } from '../../monetization/ads';
 
 export function RewardedAdModal({
@@ -16,7 +16,14 @@ export function RewardedAdModal({
   const [error, setError] = useState<string | null>(null);
   const [canSimulate, setCanSimulate] = useState(false);
 
-  const startAd = useCallback(async () => {
+  // Keep latest onComplete in a ref so useEffect doesn't depend on inline callback reference
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  // Track whether an ad run has already been triggered for the current open session
+  const hasStartedRef = useRef(false);
+
+  const startAd = async () => {
     setLoading(true);
     setError(null);
     setCanSimulate(false);
@@ -25,7 +32,7 @@ export function RewardedAdModal({
     setLoading(false);
 
     if (result.watched) {
-      onComplete();
+      onCompleteRef.current();
     } else {
       setError(
         result.error || 'پخش تبلیغ به اتمام نرسید. برای دریافت انرژی باید تبلیغ تا انتها دیده شود.'
@@ -34,7 +41,7 @@ export function RewardedAdModal({
         setCanSimulate(true);
       }
     }
-  }, [onComplete]);
+  };
 
   const handleSimulate = async () => {
     setLoading(true);
@@ -42,19 +49,53 @@ export function RewardedAdModal({
     const res = await simulateAdReward();
     setLoading(false);
     if (res.watched) {
-      onComplete();
+      onCompleteRef.current();
     }
   };
 
   useEffect(() => {
-    if (open) {
-      void startAd();
-    } else {
+    if (!open) {
       setLoading(false);
       setError(null);
       setCanSimulate(false);
+      hasStartedRef.current = false;
+      return;
     }
-  }, [open, startAd]);
+
+    // Only start ad ONCE per modal open transition
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    let isMounted = true;
+
+    async function runAd() {
+      setLoading(true);
+      setError(null);
+      setCanSimulate(false);
+
+      const result = await showRewardedVideo();
+      if (!isMounted) return;
+
+      setLoading(false);
+
+      if (result.watched) {
+        onCompleteRef.current();
+      } else {
+        setError(
+          result.error || 'پخش تبلیغ به اتمام نرسید. برای دریافت انرژی باید تبلیغ تا انتها دیده شود.'
+        );
+        if (result.canSimulate) {
+          setCanSimulate(true);
+        }
+      }
+    }
+
+    void runAd();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open]);
 
   if (!open) return null;
 
