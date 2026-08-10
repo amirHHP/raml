@@ -22,6 +22,8 @@ import {
 import { getPlayerInbox, markInboxRead } from '../services/notifications';
 import { recordEvents } from '../services/funnel';
 import { FUNNEL_EVENT_NAMES } from '../models/FunnelEvent';
+import { listChangelogs } from '../services/changelog';
+import { getReferralInfo, applyReferralCode } from '../services/referral';
 
 const router = Router();
 
@@ -306,6 +308,45 @@ router.post('/home/claim', requireDeviceId, async (req, res) => {
   } catch (err) {
     const e = err as Error & { status?: number };
     res.status(e.status || 500).json({ error: e.message || 'خطا در دریافت پاداش فعالیت' });
+  }
+});
+
+/** Public changelog list — no device auth required. */
+router.get('/changelogs', async (_req, res) => {
+  try {
+    const items = await listChangelogs();
+    res.json({ items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'خطا در دریافت تغییرات' });
+  }
+});
+
+/* Referral endpoints */
+router.get('/referral', requireDeviceId, async (req, res) => {
+  try {
+    const info = await getReferralInfo(req.deviceId);
+    res.json(info);
+  } catch (err) {
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در دریافت اطلاعات دعوت' });
+  }
+});
+
+router.post('/referral/apply', requireDeviceId, async (req, res) => {
+  try {
+    const body = z.object({ referralCode: z.string().min(4).max(16) }).parse(req.body);
+    const result = await applyReferralCode(req.deviceId, body.referralCode);
+    res.json(result);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'کد دعوت نامعتبر است' });
+      return;
+    }
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در اعمال کد دعوت' });
   }
 });
 

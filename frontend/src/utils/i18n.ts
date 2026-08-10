@@ -140,6 +140,27 @@ export const TRANSLATIONS = {
     inboxTitle: 'صندوق پیام‌ها',
     inboxEmpty: 'هیچ پیامی در صندوق وجود ندارد.',
     markReadButton: 'علامت به‌عنوان خوانده‌شده',
+
+    // Changelog
+    changelogTitle: 'تاریخچه تغییرات',
+    changelogEmpty: 'هنوز تغییراتی ثبت نشده.',
+    changelogButton: 'تاریخچه تغییرات',
+
+    // Referral
+    referralTitle: 'دعوت دوستان',
+    referralSubtitle: 'کد دعوتت رو با دوستات به اشتراک بذار. وقتی دوستت بازی رو شروع کنه، هر دوتاتون سکه می‌گیرین!',
+    referralCodeLabel: 'کد دعوت تو:',
+    referralCopyCode: 'کپی کد',
+    referralShare: 'اشتراک‌گذاری',
+    referralProgress: 'دعوت‌های موفق:',
+    referralFriendsTitle: 'دوستان دعوت‌شده:',
+    referralNoFriends: 'هنوز کسی رو دعوت نکردی.',
+    referralEnterCode: 'کد دعوت دوستت رو وارد کن:',
+    referralApply: 'ثبت کد دعوت',
+    referralApplied: 'کد دعوت ثبت شد!',
+    referralRewardNote: 'هر دعوت: +۵۰ طلا برای تو، +۲۵ طلا برای دوستت',
+    referralShareText: 'بیا تو بازی رمل! کد دعوت من: {code} 🎮',
+    referralAlreadyApplied: 'قبلاً کد دعوت ثبت شده.',
   },
 
   en: {
@@ -281,6 +302,27 @@ export const TRANSLATIONS = {
     inboxTitle: 'Messages Inbox',
     inboxEmpty: 'No messages in inbox.',
     markReadButton: 'Mark as Read',
+
+    // Changelog
+    changelogTitle: 'Changelog',
+    changelogEmpty: 'No changelogs yet.',
+    changelogButton: 'Changelog',
+
+    // Referral
+    referralTitle: 'Invite Friends',
+    referralSubtitle: 'Share your invite code with friends. When they start playing, you both earn coins!',
+    referralCodeLabel: 'Your Invite Code:',
+    referralCopyCode: 'Copy Code',
+    referralShare: 'Share',
+    referralProgress: 'Successful Invites:',
+    referralFriendsTitle: 'Invited Friends:',
+    referralNoFriends: 'No friends invited yet.',
+    referralEnterCode: 'Enter your friend\'s invite code:',
+    referralApply: 'Apply Code',
+    referralApplied: 'Invite code applied!',
+    referralRewardNote: 'Each invite: +50 Gold for you, +25 Gold for your friend',
+    referralShareText: 'Join me in Raml! My invite code: {code} \ud83c\udfae',
+    referralAlreadyApplied: 'Invite code already applied.',
   },
 } as const;
 

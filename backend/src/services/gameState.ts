@@ -12,6 +12,7 @@ import {
 } from './promptService';
 import { withMilestonePrompt } from './milestonePromptService';
 import { parseItemStatEffect } from './itemEffects';
+import { ensureReferralCode, grantReferralRewards } from './referral';
 import type {
   AiGameResponse,
   ClassType,
@@ -453,6 +454,7 @@ export function toClientState(player: IPlayer) {
       : null,
     msUntilNextEnergy: msUntilNextEnergy(player),
     energyRegenMinutes: config.energyRegenMinutes,
+    referralCode: player.referralCode || '',
   };
 }
 
@@ -511,6 +513,10 @@ export async function awakenPlayer(
     await persist(player);
     throw Object.assign(new Error(msg), { status: 502 });
   }
+  // Grant referral rewards if this player was referred
+  await grantReferralRewards(player);
+  // Ensure referral code is generated for the new player
+  await ensureReferralCode(player);
   await persist(player);
   return toClientState(player);
 }

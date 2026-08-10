@@ -15,6 +15,7 @@ import { HomePanel } from './components/panels/HomePanel';
 import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
+import { ChangelogModal } from './components/ChangelogModal';
 import { EYES_OPEN_MS } from './utils/storyPacing';
 import { track } from './analytics/funnel';
 import { t } from './utils/i18n';
@@ -23,6 +24,7 @@ import type { ClassType, Language } from './types/game';
 export default function App() {
   const game = useGame();
   const [openingEyes, setOpeningEyes] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
   const skipEyesRef = useRef<(() => void) | null>(null);
 
@@ -206,6 +208,10 @@ export default function App() {
         onSetLanguage={(l) => void game.setLanguage(l)}
         onClose={() => game.setSettingsOpen(false)}
         onUnlock={() => void game.unlockDebug()}
+        onChangelog={() => {
+          game.setSettingsOpen(false);
+          setChangelogOpen(true);
+        }}
         busy={game.busy}
         playDayCount={state.playDayCount}
         unlocked={state.unlockedFullUi}
@@ -225,6 +231,13 @@ export default function App() {
         onClose={() => game.setAdOpen(false)}
         onComplete={() => void game.claimAd()}
       />
+
+      <ChangelogModal
+        open={changelogOpen}
+        language={lang}
+        onClose={() => setChangelogOpen(false)}
+      />
+
       <Analytics />
       <SpeedInsights />
     </div>

@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAdmin } from '../middleware/requireAdmin';
+import {
+  createChangelog,
+  deleteChangelog,
+  listChangelogs,
+} from '../services/changelog';
 import { getAdminStats, getPlayerDetail, listPlayers, patchPlayer } from '../services/adminPlayers';
 import { getPublicAiSettings, getRuntimeAiSettings, updateAiSettings } from '../services/aiSettings';
 import {
@@ -328,6 +333,45 @@ router.post('/notifications', async (req, res) => {
     res.status(201).json(result);
   } catch (err) {
     sendError(res, err, 'خطا در ارسال اعلان');
+  }
+});
+
+// ── Changelogs ──────────────────────────────────────────────────
+
+router.get('/changelogs', async (_req, res) => {
+  try {
+    const items = await listChangelogs();
+    res.json({ items });
+  } catch (err) {
+    sendError(res, err, 'خطا در لیست تغییرات');
+  }
+});
+
+router.post('/changelogs', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        version: z.string().min(1).max(30),
+        title: z.string().min(1).max(200),
+        titleEn: z.string().max(200).optional(),
+        items: z.array(z.string().min(1).max(500)).min(1).max(50),
+        itemsEn: z.array(z.string().min(1).max(500)).max(50).optional(),
+      })
+      .parse(req.body);
+
+    const item = await createChangelog(body);
+    res.status(201).json(item);
+  } catch (err) {
+    sendError(res, err, 'خطا در ایجاد تغییرات');
+  }
+});
+
+router.delete('/changelogs/:id', async (req, res) => {
+  try {
+    await deleteChangelog(String(req.params.id));
+    res.json({ ok: true });
+  } catch (err) {
+    sendError(res, err, 'خطا در حذف تغییرات');
   }
 });
 

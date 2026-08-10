@@ -1,4 +1,4 @@
-import type { ClassType, GameState, InboxItem, Language, ShopSku } from '../types/game';
+import type { ChangelogEntry, ClassType, GameState, InboxItem, Language, ReferralInfo, ShopSku } from '../types/game';
 import { assertValidSaveCode } from '../utils/saveCode';
 
 const DEVICE_KEY = 'raml_device_id';
@@ -134,5 +134,14 @@ export const api = {
     request<GameState>('/api/game/inventory/equip', {
       method: 'POST',
       body: JSON.stringify({ itemId }),
+    }),
+  getChangelogs: () =>
+    request<{ items: ChangelogEntry[] }>('/api/game/changelogs'),
+  getReferralInfo: () =>
+    request<ReferralInfo>('/api/game/referral'),
+  applyReferral: (referralCode: string) =>
+    request<{ referrerName: string }>('/api/game/referral/apply', {
+      method: 'POST',
+      body: JSON.stringify({ referralCode }),
     }),
 };

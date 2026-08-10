@@ -200,6 +200,7 @@ export interface GameState {
     total: number;
     success: boolean;
   };
+  referralCode: string;
 }
 
 export interface ShopSku {
@@ -215,6 +216,24 @@ export interface InboxItem {
   title: string;
   body: string;
   readAt: string | null;
+  createdAt: string;
+}
+
+export interface ReferralInfo {
+  referralCode: string;
+  referralCount: number;
+  maxReferrals: number;
+  referredBy: string | null;
+  referredFriends: string[];
+}
+
+export interface ChangelogEntry {
+  id: string;
+  version: string;
+  title: string;
+  titleEn: string;
+  items: string[];
+  itemsEn: string[];
   createdAt: string;
 }
 

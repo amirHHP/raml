@@ -118,7 +118,17 @@ export type AdminNotification = {
   createdAt: string;
 };
 
-export type TabId = 'dashboard' | 'players' | 'game' | 'ai' | 'prompts' | 'notifications';
+export type ChangelogItem = {
+  id: string;
+  version: string;
+  title: string;
+  titleEn: string;
+  items: string[];
+  itemsEn: string[];
+  createdAt: string;
+};
+
+export type TabId = 'dashboard' | 'players' | 'game' | 'ai' | 'prompts' | 'notifications' | 'changelogs';
 
 export const CLASS_LABELS: Record<string, string> = {
   warrior: 'جنگجو',

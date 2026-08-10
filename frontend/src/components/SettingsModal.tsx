@@ -9,6 +9,7 @@ export function SettingsModal({
   onSetLanguage,
   onClose,
   onUnlock,
+  onChangelog,
   busy,
   playDayCount,
   unlocked,
@@ -18,6 +19,7 @@ export function SettingsModal({
   onSetLanguage?: (lang: Language) => void;
   onClose: () => void;
   onUnlock: () => void;
+  onChangelog?: () => void;
   busy: boolean;
   playDayCount: number;
   unlocked: boolean;
@@ -109,11 +111,36 @@ export function SettingsModal({
           </li>
         </ul>
 
+        {/* Changelog Button */}
+        {onChangelog && (
+          <button
+            type="button"
+            onClick={onChangelog}
+            className="mt-4 w-full flex items-center justify-center gap-2 rounded-lg border border-line/70 bg-black/30 py-2.5 text-sm text-ink-dim transition hover:border-amber/40 hover:text-amber"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 8v4l3 3" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            {t('changelogButton', language)}
+          </button>
+        )}
+
         <button
           type="button"
           disabled={busy || unlocked}
           onClick={onUnlock}
-          className="mt-5 w-full rounded-lg border border-amber/40 py-2.5 text-sm text-amber disabled:opacity-40"
+          className="mt-3 w-full rounded-lg border border-amber/40 py-2.5 text-sm text-amber disabled:opacity-40"
         >
           {unlocked
             ? t('fullUiUnlockedMsg', language)
@@ -130,3 +157,4 @@ export function SettingsModal({
     </div>
   );
 }
+

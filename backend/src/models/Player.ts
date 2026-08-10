@@ -50,6 +50,9 @@ export interface IPlayer extends Document {
     durationMinutes: number;
     costCoins: number;
   } | null;
+  referralCode: string;
+  referredBy: string | null;
+  referralCount: number;
 }
 
 const ConditionSchema = new Schema(
@@ -181,6 +184,9 @@ const PlayerSchema = new Schema<IPlayer>(
       ),
       default: null,
     },
+    referralCode: { type: String, default: '', unique: true, sparse: true },
+    referredBy: { type: String, default: null },
+    referralCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
