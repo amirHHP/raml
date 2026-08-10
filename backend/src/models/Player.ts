@@ -26,6 +26,7 @@ export interface IPlayer extends Document {
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
   asciiArt?: string | null;
+  svgArt?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];
@@ -147,6 +148,7 @@ const PlayerSchema = new Schema<IPlayer>(
     },
     enemyLineArtType: { type: String, default: 'none' },
     asciiArt: { type: String, default: null },
+    svgArt: { type: String, default: null },
     needsDiceRoll: { type: Boolean, default: false },
     pendingDiceRoll: { type: PendingDiceSchema, default: null },
     options: { type: [OptionSchema], default: [] },

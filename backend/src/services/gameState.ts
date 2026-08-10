@@ -238,6 +238,7 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   player.currentLocation = ai.current_location;
   player.enemyLineArtType = ai.enemy_line_art_type;
   player.asciiArt = ai.ascii_art ?? null;
+  player.svgArt = ai.svg_art ?? null;
   player.storyTurnCount = getStoryTurnCount(player) + 1;
   player.storyHistory = [
     ...(player.storyHistory || []),
@@ -246,6 +247,7 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
       text: ai.story_text,
       enemyLineArtType: ai.enemy_line_art_type,
       asciiArt: ai.ascii_art ?? null,
+      svgArt: ai.svg_art ?? null,
     },
   ].slice(-200);
   const unlocks = resolveFeatureUnlocks(player);
@@ -426,6 +428,7 @@ export function toClientState(player: IPlayer) {
     storyText: player.storyText,
     enemyLineArtType: player.enemyLineArtType,
     asciiArt: player.asciiArt ?? null,
+    svgArt: player.svgArt ?? null,
     needsDiceRoll: player.needsDiceRoll,
     pendingDiceRoll: player.pendingDiceRoll,
     options: player.options,

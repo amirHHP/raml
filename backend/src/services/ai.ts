@@ -68,9 +68,15 @@ const AiResponseSchema = z.object({
       'castle',
       'boss_demon',
       'magic_portal',
+      'ancient_tree',
+      'phoenix',
+      'mystic_potion',
+      'ruined_altar',
+      'wolf',
     ])
     .catch('none'),
   ascii_art: z.string().nullable().optional().catch(null),
+  svg_art: z.string().nullable().optional().catch(null),
   stats_update: z
     .object({
       hp: AiStatSchema,

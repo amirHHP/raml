@@ -10,7 +10,7 @@ import type { EnemyLineArtType, GameOption, GameState, StoryHistoryEntry } from 
 
 function parseHistoryBubbles(
   history: Array<string | StoryHistoryEntry>,
-  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null },
+  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null },
 ): ChatBubble[] {
   if (!history || history.length === 0) return [];
   return history.map((item, idx) => {
@@ -22,6 +22,7 @@ function parseHistoryBubbles(
         text: item,
         enemyLineArtType: isLast ? currentState?.enemyLineArtType : 'none',
         asciiArt: isLast ? currentState?.asciiArt : null,
+        svgArt: isLast ? currentState?.svgArt : null,
       };
     }
     if (item.kind === 'choice') {
@@ -40,6 +41,7 @@ function parseHistoryBubbles(
       text: item.text,
       enemyLineArtType: item.enemyLineArtType || (isLast ? currentState?.enemyLineArtType : 'none'),
       asciiArt: item.asciiArt !== undefined ? item.asciiArt : (isLast ? currentState?.asciiArt : null),
+      svgArt: item.svgArt !== undefined ? item.svgArt : (isLast ? currentState?.svgArt : null),
     };
   });
 }
@@ -60,6 +62,7 @@ type StoryBubble = {
   text: string;
   enemyLineArtType?: EnemyLineArtType;
   asciiArt?: string | null;
+  svgArt?: string | null;
 };
 
 type ChoiceBubble = {
@@ -193,6 +196,7 @@ export function StoryChat({
       const initialBubbles = parseHistoryBubbles(history, {
         enemyLineArtType: state.enemyLineArtType,
         asciiArt: state.asciiArt,
+        svgArt: state.svgArt,
       });
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
@@ -219,6 +223,7 @@ export function StoryChat({
       parseHistoryBubbles(history, {
         enemyLineArtType: state.enemyLineArtType,
         asciiArt: state.asciiArt,
+        svgArt: state.svgArt,
       }),
     );
     setAnimateLatest(true);
@@ -327,10 +332,11 @@ export function StoryChat({
 
         const lineArtType = isLatest ? state.enemyLineArtType : (bubble.enemyLineArtType || 'none');
         const asciiArt = isLatest ? state.asciiArt : bubble.asciiArt;
+        const svgArt = isLatest ? state.svgArt : bubble.svgArt;
 
         return (
           <div key={bubble.id} className="flex flex-col gap-3">
-            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} />
+            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} />
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}

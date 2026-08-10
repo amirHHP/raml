@@ -46,7 +46,12 @@ export type EnemyLineArtType =
   | 'chest'
   | 'castle'
   | 'boss_demon'
-  | 'magic_portal';
+  | 'magic_portal'
+  | 'ancient_tree'
+  | 'phoenix'
+  | 'mystic_potion'
+  | 'ruined_altar'
+  | 'wolf';
 
 export type StatKey = 'hp' | 'mana' | 'gold' | 'energy' | 'strength' | 'agility' | 'intellect';
 
@@ -110,6 +115,7 @@ export interface AiGameResponse {
   current_location: string;
   enemy_line_art_type: EnemyLineArtType;
   ascii_art?: string | null;
+  svg_art?: string | null;
   stats_update: StatsUpdate;
   needs_dice_roll: boolean;
   required_roll_type: 'strength' | 'agility' | 'intellect' | 'luck' | null;
@@ -162,7 +168,7 @@ export interface InventoryItem {
 }
 
 export type StoryHistoryEntry =
-  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null }
+  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null }
   | {
       kind: 'choice';
       text: string;
@@ -191,6 +197,7 @@ export interface PlayerDocument {
   storyText: string;
   enemyLineArtType: EnemyLineArtType;
   asciiArt?: string | null;
+  svgArt?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];
