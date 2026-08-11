@@ -14,6 +14,7 @@ import { withMilestonePrompt } from './milestonePromptService';
 import { parseItemStatEffect } from './itemEffects';
 import { ensureReferralCode, generateRandomReferralCode, grantReferralRewards } from './referral';
 import { generateImage } from './imageGen';
+import { AI_LIVE_FROM_TURN } from './aiPolicy';
 import type {
   AiGameResponse,
   ClassType,
@@ -257,8 +258,9 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
   player.asciiArt = ai.ascii_art ?? null;
   player.svgArt = ai.svg_art ?? null;
 
+  const nextTurnNumber = getStoryTurnCount(player) + 1;
   let imageUrl: string | null = ai.imageUrl ?? null;
-  if (!imageUrl) {
+  if (!imageUrl && nextTurnNumber >= AI_LIVE_FROM_TURN) {
     try {
       const prompt = ai.image_prompt || `${ai.current_location}: ${ai.story_text.slice(0, 100)}`;
       const imgRes = await generateImage({ prompt });
@@ -270,7 +272,7 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
     }
   }
   player.imageUrl = imageUrl;
-  player.storyTurnCount = getStoryTurnCount(player) + 1;
+  player.storyTurnCount = nextTurnNumber;
   player.storyHistory = [
     ...(player.storyHistory || []),
     {
