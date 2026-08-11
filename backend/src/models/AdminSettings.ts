@@ -42,7 +42,7 @@ const AdminSettingsSchema = new Schema<IAdminSettings>(
     tokenbazaarApiKey: { type: String, default: '' },
     tokenbazaarBaseUrl: { type: String, default: 'https://api.tokenbazaar.ai/v1' },
     imageModel: { type: String, default: 'flux-2-pro' },
-    imageQuality: { type: String, default: 'medium' },
+    imageQuality: { type: String, default: '' },
     imageSize: { type: String, default: '1024x1024' },
     imageMode: { type: String, default: 'generation' },
     useMockImageGen: { type: Boolean, default: false },

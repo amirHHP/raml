@@ -18,14 +18,14 @@ export function AiPage() {
   const [tokenbazaarApiKey, setTokenbazaarApiKey] = useState('');
   const [tokenbazaarBaseUrl, setTokenbazaarBaseUrl] = useState('https://api.tokenbazaar.ai/v1');
   const [imageModel, setImageModel] = useState('flux-2-pro');
-  const [imageQuality, setImageQuality] = useState('medium');
+  const [imageQuality, setImageQuality] = useState('');
   const [imageSize, setImageSize] = useState('1024x1024');
   const [imageMode, setImageMode] = useState('generation');
   const [useMockImageGen, setUseMockImageGen] = useState(false);
 
   // Image tester state
   const [imagePrompt, setImagePrompt] = useState('A serene koi pond at sunset, ukiyo-e style.');
-  const [testQuality, setTestQuality] = useState('medium');
+  const [testQuality, setTestQuality] = useState('');
   const [testSize, setTestSize] = useState('1024x1024');
   const [testMode, setTestMode] = useState('generation');
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -52,15 +52,15 @@ export function AiPage() {
         setUseMockAi(s.useMockAi);
         if (s.tokenbazaarBaseUrl) setTokenbazaarBaseUrl(s.tokenbazaarBaseUrl);
         if (s.imageModel) setImageModel(s.imageModel);
-        if (s.imageQuality) {
+        if (typeof s.imageQuality === 'string') {
           setImageQuality(s.imageQuality);
           setTestQuality(s.imageQuality);
         }
-        if (s.imageSize) {
+        if (typeof s.imageSize === 'string') {
           setImageSize(s.imageSize);
           setTestSize(s.imageSize);
         }
-        if (s.imageMode) {
+        if (typeof s.imageMode === 'string') {
           setImageMode(s.imageMode);
           setTestMode(s.imageMode);
         }

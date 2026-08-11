@@ -131,9 +131,9 @@ function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
   const tokenbazaarApiKey = settings.tokenbazaarApiKey.trim();
   const tokenbazaarBaseUrl = settings.tokenbazaarBaseUrl.trim() || 'https://api.tokenbazaar.ai/v1';
   const imageModel = settings.imageModel.trim() || 'flux-2-pro';
-  const imageQuality = settings.imageQuality.trim() || 'medium';
-  const imageSize = settings.imageSize.trim() || '1024x1024';
-  const imageMode = settings.imageMode.trim() || 'generation';
+  const imageQuality = settings.imageQuality.trim();
+  const imageSize = settings.imageSize.trim();
+  const imageMode = settings.imageMode.trim();
   const useMockImageGen = settings.useMockImageGen;
 
   return {
@@ -179,9 +179,9 @@ export async function getRuntimeAiSettings(): Promise<RuntimeAiSettings> {
     tokenbazaarApiKey: doc.tokenbazaarApiKey?.trim() ? doc.tokenbazaarApiKey : config.tokenbazaarApiKey,
     tokenbazaarBaseUrl: doc.tokenbazaarBaseUrl || config.tokenbazaarBaseUrl,
     imageModel: doc.imageModel || config.imageModel,
-    imageQuality: doc.imageQuality || config.imageQuality,
-    imageSize: doc.imageSize || config.imageSize,
-    imageMode: doc.imageMode || config.imageMode,
+    imageQuality: typeof doc.imageQuality === 'string' ? doc.imageQuality : (config.imageQuality || ''),
+    imageSize: typeof doc.imageSize === 'string' ? doc.imageSize : (config.imageSize || '1024x1024'),
+    imageMode: typeof doc.imageMode === 'string' ? doc.imageMode : (config.imageMode || 'generation'),
     useMockImageGen:
       typeof doc.useMockImageGen === 'boolean' ? doc.useMockImageGen : config.useMockImageGen,
   });

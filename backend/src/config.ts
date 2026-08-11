@@ -23,7 +23,7 @@ export const config = {
   tokenbazaarApiKey: process.env.TOKENBAZAAR_API_KEY || '',
   tokenbazaarBaseUrl: process.env.TOKENBAZAAR_BASE_URL || 'https://api.tokenbazaar.ai/v1',
   imageModel: process.env.IMAGE_MODEL || 'flux-2-pro',
-  imageQuality: process.env.IMAGE_QUALITY || 'medium',
+  imageQuality: process.env.IMAGE_QUALITY ?? '',
   imageSize: process.env.IMAGE_SIZE || '1024x1024',
   imageMode: process.env.IMAGE_MODE || 'generation',
   useMockImageGen: process.env.USE_MOCK_IMAGE_GEN === 'true',
