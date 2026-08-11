@@ -426,42 +426,37 @@ export function AiPage() {
 
         <label className="block text-sm text-ink-dim">
           کیفیت پیش‌فرض (Quality)
-          <select
+          <input
+            type="text"
             value={imageQuality}
             onChange={(e) => setImageQuality(e.target.value)}
             className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
-          >
-            <option value="low">Low (کم / ارزان‌تر ~$0.0036)</option>
-            <option value="medium">Medium (متوسط ~$0.0318)</option>
-            <option value="high">High (کیفیت بالا ~$0.1266)</option>
-          </select>
+            placeholder="low / medium / high یا مقدار دلخواه"
+          />
         </label>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block text-sm text-ink-dim">
           ابعاد / رزولوشن (Resolution / Size)
-          <select
+          <input
+            type="text"
             value={imageSize}
             onChange={(e) => setImageSize(e.target.value)}
             className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
-          >
-            <option value="1024x1024">1024x1024 (مربعی 1:1)</option>
-            <option value="1024x1536">1024x1536 (عمودی 2:3)</option>
-            <option value="1536x1024">1536x1024 (افقی 3:2)</option>
-          </select>
+            placeholder="1024x1024 / 1024x1536 یا مقدار دلخواه"
+          />
         </label>
 
         <label className="block text-sm text-ink-dim">
           حالت کارکرد (Mode)
-          <select
+          <input
+            type="text"
             value={imageMode}
             onChange={(e) => setImageMode(e.target.value)}
             className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
-          >
-            <option value="generation">Generation (ساخت تصویر جدید)</option>
-            <option value="edit">Edit (ویرایش تصویر)</option>
-          </select>
+            placeholder="generation / edit یا مقدار دلخواه"
+          />
         </label>
       </div>
 
@@ -506,40 +501,35 @@ export function AiPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <label className="text-xs text-ink-dim">
             کیفیت (quality)
-            <select
+            <input
+              type="text"
               value={testQuality}
               onChange={(e) => setTestQuality(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
-            >
-              <option value="low">low (اقتصادی)</option>
-              <option value="medium">medium (استاندارد)</option>
-              <option value="high">high (بالاترین)</option>
-            </select>
+              placeholder="low / medium / high"
+            />
           </label>
 
           <label className="text-xs text-ink-dim">
             رزولوشن (size)
-            <select
+            <input
+              type="text"
               value={testSize}
               onChange={(e) => setTestSize(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
-            >
-              <option value="1024x1024">1024x1024</option>
-              <option value="1024x1536">1024x1536</option>
-              <option value="1536x1024">1536x1024</option>
-            </select>
+              placeholder="1024x1024"
+            />
           </label>
 
           <label className="text-xs text-ink-dim">
             حالت (mode)
-            <select
+            <input
+              type="text"
               value={testMode}
               onChange={(e) => setTestMode(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
-            >
-              <option value="generation">generation</option>
-              <option value="edit">edit</option>
-            </select>
+              placeholder="generation / edit"
+            />
           </label>
         </div>
 
@@ -554,6 +544,7 @@ export function AiPage() {
             {testQuality === 'high' && testSize === '1024x1024' && 'quality=high · resolution=1024x1024 → $0.1266 / image'}
             {testQuality === 'high' && testSize === '1024x1536' && 'quality=high · resolution=1024x1536 → $0.1899 / image'}
             {testQuality === 'high' && testSize === '1536x1024' && 'quality=high · resolution=1536x1024 → $0.1890 / image'}
+            {!['low', 'medium', 'high'].includes(testQuality) && `quality=${testQuality} · resolution=${testSize} · mode=${testMode}`}
           </div>
 
           <button
