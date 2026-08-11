@@ -118,7 +118,7 @@ export async function generateImage(options: ImageGenOptions): Promise<ImageGenR
       quality,
       mode,
       n: options.n ?? 1,
-      response_format: options.response_format ?? 'url',
+      response_format: options.response_format ?? 'b64_json',
     };
 
     const response = await fetch(endpointUrl, {
@@ -177,9 +177,17 @@ export async function generateImage(options: ImageGenOptions): Promise<ImageGenR
       };
     }
 
+    const imageUrl = firstImage.url
+      ? firstImage.url
+      : firstImage.b64_json
+        ? firstImage.b64_json.startsWith('data:')
+          ? firstImage.b64_json
+          : `data:image/png;base64,${firstImage.b64_json}`
+        : undefined;
+
     return {
       ok: true,
-      imageUrl: firstImage.url,
+      imageUrl,
       b64_json: firstImage.b64_json,
       model,
       prompt,
