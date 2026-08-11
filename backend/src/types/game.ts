@@ -168,6 +168,8 @@ export interface InventoryItem {
   effect?: string | null;
   /** True when item is actively worn/equipped by the character. */
   isEquipped?: boolean;
+  /** AI-generated image URL for the item. */
+  imageUrl?: string | null;
 }
 
 export type StoryHistoryEntry =

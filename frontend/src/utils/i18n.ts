@@ -181,6 +181,24 @@ export const TRANSLATIONS = {
     iosInstallStep3Desc: 'در بالای صفحه روی «افزودن» (Add) بزنید تا آیکون بازی به صفحهٔ برنامه‌هایتان اضافه شود.',
     iosInstallDismiss: 'متوجه شدم / بعداً',
     installPwaButton: 'راهنمای نصب وب‌اپلیکیشن (PWA)',
+
+    // Popup Notifications
+    popupDismiss: 'متوجه شدم!',
+    popupNewItem: 'آیتم جدید کشف شد!',
+    popupItemAdded: 'به کوله‌پشتی اضافه شد',
+    popupFeatureUnlocked: 'قابلیت جدید آنلاک شد!',
+    popupUnlockHp: '❤️ جان (HP) آنلاک شد!',
+    popupUnlockMana: '🔮 مانا آنلاک شد!',
+    popupUnlockGold: '🪙 طلا آنلاک شد!',
+    popupUnlockInventory: '🎒 کوله‌پشتی آنلاک شد!',
+    popupUnlockStats: '📊 آمار و مشخصات آنلاک شد!',
+    popupUnlockHome: '🏠 خانه آنلاک شد!',
+    popupUnlockHpDesc: 'حالا می‌تونی سلامت قهرمانت رو ببینی و مدیریت کنی.',
+    popupUnlockManaDesc: 'قدرت جادویی در اختیار تو قرار گرفت.',
+    popupUnlockGoldDesc: 'حالا می‌تونی سکه جمع کنی و خرید کنی.',
+    popupUnlockInventoryDesc: 'حالا می‌تونی آیتم‌هات رو ببینی و مدیریت کنی.',
+    popupUnlockStatsDesc: 'آمار و مشخصات قهرمانت رو از این به بعد ببین.',
+    popupUnlockHomeDesc: 'یه پناهگاه امن برای استراحت و تمرین.',
   },
 
   en: {
@@ -363,6 +381,24 @@ export const TRANSLATIONS = {
     iosInstallStep3Desc: 'Tap "Add" in the top-right corner to place Raml on your home screen.',
     iosInstallDismiss: 'Got it / Later',
     installPwaButton: 'WebApp (PWA) Installation Guide',
+
+    // Popup Notifications
+    popupDismiss: 'Got it!',
+    popupNewItem: 'New Item Discovered!',
+    popupItemAdded: 'Added to Inventory',
+    popupFeatureUnlocked: 'New Feature Unlocked!',
+    popupUnlockHp: '❤️ HP Unlocked!',
+    popupUnlockMana: '🔮 Mana Unlocked!',
+    popupUnlockGold: '🪙 Gold Unlocked!',
+    popupUnlockInventory: '🎒 Inventory Unlocked!',
+    popupUnlockStats: '📊 Stats Unlocked!',
+    popupUnlockHome: '🏠 Home Unlocked!',
+    popupUnlockHpDesc: 'You can now see and manage your hero\'s health.',
+    popupUnlockManaDesc: 'Magical power is now at your disposal.',
+    popupUnlockGoldDesc: 'You can now collect coins and make purchases.',
+    popupUnlockInventoryDesc: 'You can now view and manage your items.',
+    popupUnlockStatsDesc: 'Hero stats and attributes are now visible.',
+    popupUnlockHomeDesc: 'A safe haven for rest and training.',
   },
 } as const;
 

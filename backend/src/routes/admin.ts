@@ -5,6 +5,7 @@ import {
   createChangelog,
   deleteChangelog,
   listChangelogs,
+  syncChangelogsFromGitHub,
 } from '../services/changelog';
 import { getAdminStats, getPlayerDetail, listPlayers, patchPlayer } from '../services/adminPlayers';
 import { getPublicAiSettings, getRuntimeAiSettings, updateAiSettings } from '../services/aiSettings';
@@ -407,6 +408,15 @@ router.post('/changelogs', async (req, res) => {
     res.status(201).json(item);
   } catch (err) {
     sendError(res, err, 'خطا در ایجاد تغییرات');
+  }
+});
+
+router.post('/changelogs/sync', async (_req, res) => {
+  try {
+    const result = await syncChangelogsFromGitHub();
+    res.json({ ok: true, count: result.count });
+  } catch (err) {
+    sendError(res, err, 'خطا در همگام‌سازی با گیت‌هاب');
   }
 });
 

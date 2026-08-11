@@ -435,3 +435,188 @@
     animation: none;
   }
 }
+
+/* ─── Item / Unlock Popup Notifications ──────────────────────── */
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: popup-overlay-in 350ms ease-out both;
+}
+
+.popup-overlay.is-exiting {
+  animation: popup-overlay-out 280ms ease-in both;
+}
+
+.popup-card {
+  position: relative;
+  max-width: 360px;
+  width: calc(100% - 3rem);
+  padding: 2rem 1.5rem;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in oklab, var(--color-gold) 40%, transparent);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(201, 162, 39, 0.08) 0%, transparent 55%),
+    linear-gradient(175deg, #0d0c09 0%, #040403 100%);
+  box-shadow:
+    0 0 40px rgba(201, 162, 39, 0.1),
+    0 0 80px rgba(201, 162, 39, 0.04),
+    inset 0 1px 0 rgba(201, 162, 39, 0.1);
+  animation: popup-card-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 80ms;
+}
+
+.popup-overlay.is-exiting .popup-card {
+  animation: popup-card-out 250ms ease-in both;
+}
+
+/* Engraved gold corners */
+.popup-card::before,
+.popup-card::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: color-mix(in oklab, var(--color-gold) 55%, transparent);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+}
+
+.popup-card::before {
+  top: 8px;
+  right: 8px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+.popup-card::after {
+  bottom: 8px;
+  left: 8px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
+.popup-image-frame {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 1.25rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1.5px solid color-mix(in oklab, var(--color-gold) 50%, transparent);
+  box-shadow:
+    0 0 20px rgba(201, 162, 39, 0.15),
+    inset 0 0 30px rgba(0, 0, 0, 0.5);
+  animation: popup-image-glow 2.5s ease-in-out infinite alternate;
+}
+
+.popup-image-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-unlock-icon {
+  font-size: 4rem;
+  line-height: 1;
+  display: block;
+  text-align: center;
+  margin-bottom: 1rem;
+  animation: popup-icon-float 2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.5));
+}
+
+.popup-dismiss-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-gold) 45%, transparent);
+  background: linear-gradient(180deg, #1a1608 0%, #0a0903 100%);
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popup-dismiss-btn:hover {
+  background: linear-gradient(180deg, #241f0c 0%, #0f0d05 100%);
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.15);
+}
+
+.popup-dismiss-btn:active {
+  transform: scale(0.97);
+}
+
+/* Keyframes */
+@keyframes popup-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popup-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes popup-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popup-card-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes popup-image-glow {
+  from {
+    box-shadow:
+      0 0 20px rgba(201, 162, 39, 0.15),
+      inset 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+  to {
+    box-shadow:
+      0 0 30px rgba(201, 162, 39, 0.3),
+      0 0 60px rgba(201, 162, 39, 0.1),
+      inset 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@keyframes popup-icon-float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup-overlay,
+  .popup-card,
+  .popup-image-frame,
+  .popup-unlock-icon {
+    animation: none;
+  }
+}

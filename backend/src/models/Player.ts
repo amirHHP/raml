@@ -110,6 +110,7 @@ const InventorySchema = new Schema(
       default: undefined,
     },
     isEquipped: { type: Boolean, default: false },
+    imageUrl: { type: String, default: null },
   },
   { _id: false },
 );

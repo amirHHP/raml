@@ -128,6 +128,8 @@ export interface InventoryItem {
   effect?: string | null;
   /** True when item is actively worn/equipped by the character. */
   isEquipped?: boolean;
+  /** AI-generated image URL for the item. */
+  imageUrl?: string | null;
 }
 
 export type StoryHistoryEntry =
@@ -202,6 +204,10 @@ export interface GameState {
     success: boolean;
   };
   referralCode: string;
+  /** Transient: features unlocked this turn (e.g. ['hp', 'inventory']). */
+  newlyUnlockedFeatures?: string[] | null;
+  /** Transient: item discovered this turn. */
+  newlyDiscoveredItem?: InventoryItem | null;
 }
 
 export interface ShopSku {

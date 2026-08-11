@@ -81,6 +81,25 @@ export function ChangelogsPage() {
     }
   };
 
+  const handleSync = async () => {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await adminApi.syncChangelogs();
+      setMessage(
+        res.count > 0
+          ? `${res.count} تغییر جدید از گیت‌هاب سینک شد`
+          : 'همه تغییرات گیت‌هاب قبل‌تر سینک شده بودند',
+      );
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Create form */}
@@ -88,7 +107,30 @@ export function ChangelogsPage() {
         onSubmit={(e) => void handleCreate(e)}
         className="space-y-4 rounded-xl border border-line bg-sand/70 p-5"
       >
-        <h2 className="text-lg font-medium">افزودن تغییرات جدید (Changelog)</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium">افزودن تغییرات جدید (Changelog)</h2>
+          <button
+            type="button"
+            onClick={() => void handleSync()}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-md border border-amber/40 bg-amber/10 px-3 py-1.5 text-xs font-medium text-amber hover:bg-amber/20 disabled:opacity-50"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            همگام‌سازی از گیت‌هاب
+          </button>
+        </div>
 
         <label className="block text-sm text-ink-dim">
           نسخه (Version)

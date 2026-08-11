@@ -184,4 +184,9 @@ export const adminApi = {
     request<{ ok: boolean }>(`/api/admin/changelogs/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }),
+  syncChangelogs: () =>
+    request<{ ok: boolean; count: number }>('/api/admin/changelogs/sync', {
+      method: 'POST',
+      body: '{}',
+    }),
 };

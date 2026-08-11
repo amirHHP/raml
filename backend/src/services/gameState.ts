@@ -32,6 +32,15 @@ import type {
 /** In-memory fallback when MongoDB is unavailable. */
 const memoryStore = new Map<string, IPlayer>();
 
+/**
+ * Transient per-request notification data — not persisted.
+ * Cleared after each toClientState() call.
+ */
+const pendingNotifications = new Map<string, {
+  newlyUnlockedFeatures?: string[];
+  newlyDiscoveredItem?: InventoryItem | null;
+}>();
+
 let useMemory = false;
 
 export function setUseMemory(value: boolean): void {
@@ -252,6 +261,9 @@ function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
 }
 
 async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<void> {
+  // Snapshot feature unlocks BEFORE advancing the turn for diff detection
+  const unlocksBefore = resolveFeatureUnlocks(player);
+
   player.storyText = ai.story_text;
   player.currentLocation = ai.current_location;
   player.enemyLineArtType = ai.enemy_line_art_type;
@@ -287,15 +299,42 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
   const unlocks = resolveFeatureUnlocks(player);
   applyStatsUpdate(player, ai.stats_update || {}, unlocks);
 
+  // --- Detect newly unlocked features ---
+  const newlyUnlocked: string[] = [];
+  if (!unlocksBefore.hp && unlocks.hp) newlyUnlocked.push('hp');
+  if (!unlocksBefore.mana && unlocks.mana) newlyUnlocked.push('mana');
+  if (!unlocksBefore.gold && unlocks.gold) newlyUnlocked.push('gold');
+  if (!unlocksBefore.inventory && unlocks.inventory) newlyUnlocked.push('inventory');
+  if (!unlocksBefore.stats && unlocks.stats) newlyUnlocked.push('stats');
+  if (!unlocksBefore.home && unlocks.home) newlyUnlocked.push('home');
+
+  let discoveredItemForClient: InventoryItem | null = null;
+
   if (ai.discovered_item) {
     const discovered = ai.discovered_item;
     const existing = player.inventory.find((i) => i.id === discovered.id);
     const effectStats = parseItemStatEffect(discovered.effect);
 
+    // Generate AI image for the discovered item
+    let itemImageUrl: string | null = null;
+    if (nextTurnNumber >= AI_LIVE_FROM_TURN) {
+      try {
+        const itemPrompt = `Fantasy RPG item: ${discovered.name}. ${discovered.description || ''}. Dark souls style, single item on dark background, detailed illustration, game inventory icon.`;
+        const itemImgRes = await generateImage({ prompt: itemPrompt, size: '512x512' });
+        if (itemImgRes.ok && itemImgRes.imageUrl) {
+          itemImageUrl = itemImgRes.imageUrl;
+        }
+      } catch (err) {
+        console.error('Failed to generate item image:', err);
+      }
+    }
+
     if (existing) {
       existing.quantity += 1;
       if (discovered.equip_slot) existing.equipSlot = discovered.equip_slot;
       if (discovered.effect) existing.effect = discovered.effect;
+      if (itemImageUrl && !existing.imageUrl) existing.imageUrl = itemImageUrl;
+      discoveredItemForClient = { ...existing } as InventoryItem;
     } else {
       const isSlotOccupied = discovered.equip_slot
         ? player.inventory.some((i) => i.equipSlot === discovered.equip_slot && i.isEquipped)
@@ -311,8 +350,10 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
         ...(discovered.equip_slot ? { equipSlot: discovered.equip_slot } : {}),
         ...(discovered.effect ? { effect: discovered.effect } : {}),
         isEquipped: shouldEquip,
+        imageUrl: itemImageUrl,
       };
       player.inventory.push(newItem);
+      discoveredItemForClient = { ...newItem };
 
       if (shouldEquip) {
         for (const [stat, val] of Object.entries(effectStats)) {
@@ -326,6 +367,14 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
         }
       }
     }
+  }
+
+  // Store pending notifications for the next toClientState() call
+  const notif: { newlyUnlockedFeatures?: string[]; newlyDiscoveredItem?: InventoryItem | null } = {};
+  if (newlyUnlocked.length > 0) notif.newlyUnlockedFeatures = newlyUnlocked;
+  if (discoveredItemForClient) notif.newlyDiscoveredItem = discoveredItemForClient;
+  if (Object.keys(notif).length > 0) {
+    pendingNotifications.set(player.deviceId, notif);
   }
 
   player.toastMessage =
@@ -445,6 +494,11 @@ export function toClientState(player: IPlayer) {
   const mode = resolveAiMode(settingsForClient(), Math.max(1, turnCount));
   const featureUnlocks = resolveFeatureUnlocks(player);
   const unlockTurns = getUnlockTurnSettings();
+
+  // Consume transient notification data (one-shot delivery)
+  const notif = pendingNotifications.get(player.deviceId);
+  if (notif) pendingNotifications.delete(player.deviceId);
+
   return {
     deviceId: player.deviceId,
     characterName: player.characterName,
@@ -488,6 +542,9 @@ export function toClientState(player: IPlayer) {
     msUntilNextEnergy: msUntilNextEnergy(player),
     energyRegenMinutes: config.energyRegenMinutes,
     referralCode: player.referralCode || '',
+    // Transient notification fields (only present when something new happened)
+    newlyUnlockedFeatures: notif?.newlyUnlockedFeatures ?? null,
+    newlyDiscoveredItem: notif?.newlyDiscoveredItem ?? null,
   };
 }
 

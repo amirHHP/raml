@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { initFunnel, track } from '../analytics/funnel';
 import type { GameState, InboxItem, ShopSku, TabId } from '../types/game';
+import type { PopupData } from '../components/ItemPopup';
 
 export function useGame() {
   const [state, setState] = useState<GameState | null>(null);
@@ -15,8 +16,29 @@ export function useGame() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [popupQueue, setPopupQueue] = useState<PopupData[]>([]);
   const busyRef = useRef(false);
   busyRef.current = busy;
+
+  /** Extract popup notifications from a server response and enqueue them. */
+  const enqueuePopups = useCallback((s: GameState) => {
+    const popups: PopupData[] = [];
+    if (s.newlyUnlockedFeatures && s.newlyUnlockedFeatures.length > 0) {
+      for (const feat of s.newlyUnlockedFeatures) {
+        popups.push({ kind: 'unlock', feature: feat });
+      }
+    }
+    if (s.newlyDiscoveredItem) {
+      popups.push({ kind: 'item', item: s.newlyDiscoveredItem });
+    }
+    if (popups.length > 0) {
+      setPopupQueue((prev) => [...prev, ...popups]);
+    }
+  }, []);
+
+  const dismissPopup = useCallback(() => {
+    setPopupQueue((prev) => prev.slice(1));
+  }, []);
 
   const refreshInbox = useCallback(async () => {
     const inbox = await api.getInbox();
@@ -128,6 +150,7 @@ export function useGame() {
   const awaken = async (name: string, classType?: any, language?: 'fa' | 'en') => {
     const s = await run(() => api.awaken(name, classType, language));
     if (s) {
+      enqueuePopups(s);
       setState(s);
       setTab('story');
       return true;
@@ -138,6 +161,7 @@ export function useGame() {
   const choose = async (optionId: string) => {
     const s = await run(() => api.action(optionId));
     if (s) {
+      enqueuePopups(s);
       setState(s);
       setTab('story');
       if ((s.storyTurnCount || 0) >= 5) track('turn_5');
@@ -148,7 +172,10 @@ export function useGame() {
     const total = rawRoll + modifier;
     track('first_dice');
     const s = await run(() => api.dice({ rawRoll, modifier, total }));
-    if (s) setState(s);
+    if (s) {
+      enqueuePopups(s);
+      setState(s);
+    }
   };
 
   const claimAd = async () => {
@@ -286,5 +313,8 @@ export function useGame() {
     cancelHomeActivity,
     claimHomeActivity,
     toggleEquip,
+    popupQueue,
+    currentPopup: popupQueue.length > 0 ? popupQueue[0] : null,
+    dismissPopup,
   };
 }

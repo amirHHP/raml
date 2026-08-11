@@ -18,6 +18,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
 import { ChangelogModal } from './components/ChangelogModal';
 import { IosInstallPrompt } from './components/IosInstallPrompt';
+import { ItemPopup } from './components/ItemPopup';
 import { EYES_OPEN_MS } from './utils/storyPacing';
 import { track } from './analytics/funnel';
 import { t } from './utils/i18n';
@@ -261,6 +262,14 @@ export default function App() {
         forceShow={iosInstallForce}
         onClose={() => setIosInstallOpen(false)}
       />
+
+      {game.currentPopup && (
+        <ItemPopup
+          popup={game.currentPopup}
+          language={lang}
+          onDismiss={game.dismissPopup}
+        />
+      )}
 
       <Analytics />
       <SpeedInsights />

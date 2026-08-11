@@ -38,6 +38,18 @@ export function InventoryPanel({
               : 'border-amber/30 bg-panel'
           }`}
         >
+          {/* Item AI image (if available) */}
+          {item.imageUrl && (
+            <div className="mb-2 overflow-hidden rounded-lg border border-amber/20">
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="w-full h-32 object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-2">
             <div className="flex items-center gap-2">
               <span className="text-base">{item.icon || '🎒'}</span>
