@@ -7,7 +7,7 @@ const MAX_REFERRALS = 20;
 /**
  * Generate a unique 6-character alphanumeric referral code (uppercase + digits).
  */
-function generateCode(): string {
+export function generateRandomReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous: 0/O, 1/I
   let code = '';
   for (let i = 0; i < 6; i++) {
@@ -25,8 +25,8 @@ export async function ensureReferralCode(player: IPlayer): Promise<string> {
   }
 
   let attempts = 0;
-  while (attempts < 10) {
-    const code = generateCode();
+  while (attempts < 15) {
+    const code = generateRandomReferralCode();
     // Check uniqueness
     const exists = isUsingMemory()
       ? Array.from(getMemoryPlayers().values()).some((p) => p.referralCode === code)
@@ -39,7 +39,7 @@ export async function ensureReferralCode(player: IPlayer): Promise<string> {
     attempts++;
   }
   // Fallback: use a longer random string
-  player.referralCode = generateCode() + generateCode();
+  player.referralCode = generateRandomReferralCode() + generateRandomReferralCode();
   await persistPlayer(player);
   return player.referralCode;
 }
@@ -247,13 +247,33 @@ export async function getAdminReferralStats(): Promise<AdminReferralStats> {
 }
 
 /**
- * Cleanup migration for MongoDB: updates any empty string referralCodes to null
- * and rebuilds the sparse unique index to prevent E11000 duplicate key errors.
+ * Cleanup migration for MongoDB: updates any empty string/null referralCodes to valid unique codes
+ * and rebuilds the index to prevent E11000 duplicate key errors.
  */
 export async function fixReferralCodeDuplicates(): Promise<void> {
   if (isUsingMemory()) return;
   try {
-    await Player.updateMany({ referralCode: '' }, { $set: { referralCode: null } });
+    const unassigned = await Player.find({
+      $or: [
+        { referralCode: null },
+        { referralCode: '' },
+        { referralCode: { $exists: false } },
+      ],
+    });
+
+    for (const p of unassigned) {
+      let code = generateRandomReferralCode();
+      let attempts = 0;
+      while (attempts < 10) {
+        const exists = await Player.findOne({ referralCode: code });
+        if (!exists) break;
+        code = generateRandomReferralCode();
+        attempts++;
+      }
+      p.referralCode = code;
+      await p.save().catch(() => undefined);
+    }
+
     const collection = Player.collection;
     const indexes = await collection.indexes().catch(() => []);
     const hasReferralIndex = indexes.some((idx: any) => idx.name === 'referralCode_1');

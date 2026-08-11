@@ -12,7 +12,7 @@ import {
 } from './promptService';
 import { withMilestonePrompt } from './milestonePromptService';
 import { parseItemStatEffect } from './itemEffects';
-import { ensureReferralCode, grantReferralRewards } from './referral';
+import { ensureReferralCode, generateRandomReferralCode, grantReferralRewards } from './referral';
 import type {
   AiGameResponse,
   ClassType,
@@ -108,7 +108,7 @@ function defaultPlayer(deviceId: string, language: Language = 'fa'): Partial<IPl
     storyTurnCount: 0,
     lastAiSource: null,
     lastAiError: null,
-    referralCode: null,
+    referralCode: generateRandomReferralCode(),
     referredBy: null,
     referralCount: 0,
   };
@@ -383,6 +383,9 @@ export async function getOrCreatePlayer(deviceId: string): Promise<IPlayer> {
   let player = await Player.findOne({ deviceId });
   if (!player) {
     player = await Player.create(defaultPlayer(deviceId));
+  }
+  if (!player.referralCode) {
+    await ensureReferralCode(player);
   }
   assertNotBanned(player);
   regenerateEnergy(player);

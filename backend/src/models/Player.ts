@@ -184,11 +184,16 @@ const PlayerSchema = new Schema<IPlayer>(
       ),
       default: null,
     },
-    referralCode: { type: String, default: null, unique: true, sparse: true },
+    referralCode: { type: String, default: null },
     referredBy: { type: String, default: null },
     referralCount: { type: Number, default: 0 },
   },
   { timestamps: true },
+);
+
+PlayerSchema.index(
+  { referralCode: 1 },
+  { unique: true, sparse: true, partialFilterExpression: { referralCode: { $type: 'string' } } },
 );
 
 export const Player =
