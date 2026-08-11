@@ -63,9 +63,25 @@ export type AiSettings = {
   openaiBaseUrl: string;
   openaiModel: string;
   useMockAi: boolean;
+  tokenbazaarApiKeyMasked?: string;
+  tokenbazaarApiKeySet?: boolean;
+  tokenbazaarBaseUrl?: string;
+  imageModel?: string;
+  useMockImageGen?: boolean;
   updatedAt: string | null;
   provider?: 'gemini' | 'openai' | 'other';
   aiLiveFromTurn?: number;
+};
+
+export type ImageGenResult = {
+  ok: boolean;
+  imageUrl?: string;
+  b64_json?: string;
+  model: string;
+  prompt: string;
+  size: string;
+  ms: number;
+  error?: string;
 };
 
 export type GameSettings = {

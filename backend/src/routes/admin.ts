@@ -8,6 +8,7 @@ import {
 } from '../services/changelog';
 import { getAdminStats, getPlayerDetail, listPlayers, patchPlayer } from '../services/adminPlayers';
 import { getPublicAiSettings, getRuntimeAiSettings, updateAiSettings } from '../services/aiSettings';
+import { generateImage } from '../services/imageGen';
 import {
   getPublicGameSettings,
   MAX_STORY_MS_PER_WORD,
@@ -127,6 +128,10 @@ router.put('/ai', async (req, res) => {
         openaiBaseUrl: z.string().url().optional(),
         openaiModel: z.string().min(1).optional(),
         useMockAi: z.boolean().optional(),
+        tokenbazaarApiKey: z.string().optional(),
+        tokenbazaarBaseUrl: z.string().url().optional(),
+        imageModel: z.string().min(1).optional(),
+        useMockImageGen: z.boolean().optional(),
       })
       .parse(req.body);
 
@@ -134,6 +139,28 @@ router.put('/ai', async (req, res) => {
     res.json(settings);
   } catch (err) {
     sendError(res, err, 'خطا در ذخیره تنظیمات AI');
+  }
+});
+
+/** Generate image test endpoint via TokenBazaar AI */
+router.post('/ai/generate-image', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        prompt: z.string().min(1),
+        model: z.string().optional(),
+        size: z.string().optional(),
+      })
+      .parse(req.body);
+
+    const result = await generateImage(body);
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, err, 'خطا در تولید تصویر AI');
   }
 });
 

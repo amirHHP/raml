@@ -15,6 +15,19 @@ export function AiPage() {
   const [baseUrl, setBaseUrl] = useState('');
   const [model, setModel] = useState('');
   const [useMockAi, setUseMockAi] = useState(true);
+  const [tokenbazaarApiKey, setTokenbazaarApiKey] = useState('');
+  const [tokenbazaarBaseUrl, setTokenbazaarBaseUrl] = useState('https://api.tokenbazaar.ai/v1');
+  const [imageModel, setImageModel] = useState('flux-2-pro');
+  const [useMockImageGen, setUseMockImageGen] = useState(false);
+
+  // Image tester state
+  const [imagePrompt, setImagePrompt] = useState('A serene koi pond at sunset, ukiyo-e style.');
+  const [imageSize, setImageSize] = useState('1024x1024');
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [imageGenInfo, setImageGenInfo] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const [models, setModels] = useState<GeminiModelInfo[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +45,9 @@ export function AiPage() {
         setBaseUrl(s.openaiBaseUrl);
         setModel(s.openaiModel);
         setUseMockAi(s.useMockAi);
+        if (s.tokenbazaarBaseUrl) setTokenbazaarBaseUrl(s.tokenbazaarBaseUrl);
+        if (s.imageModel) setImageModel(s.imageModel);
+        if (typeof s.useMockImageGen === 'boolean') setUseMockImageGen(s.useMockImageGen);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -112,6 +128,30 @@ export function AiPage() {
     }
   };
 
+  const testGenerateImage = async () => {
+    setGeneratingImage(true);
+    setImageError(null);
+    setImageGenInfo(null);
+    setGeneratedImageUrl(null);
+    try {
+      const result = await adminApi.generateImage({
+        prompt: imagePrompt,
+        model: imageModel,
+        size: imageSize,
+      });
+      if (result.ok) {
+        setGeneratedImageUrl(result.imageUrl || (result.b64_json ? `data:image/png;base64,${result.b64_json}` : null));
+        setImageGenInfo(`تصویر با موفقیت در ${result.ms}ms تولید شد (مدل: ${result.model})`);
+      } else {
+        setImageError(result.error || 'خطا در ساخت تصویر');
+      }
+    } catch (err) {
+      setImageError((err as Error).message);
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -119,6 +159,7 @@ export function AiPage() {
     setMessage(null);
     try {
       const trimmedKey = apiKey.trim();
+      const trimmedTbKey = tokenbazaarApiKey.trim();
       if (trimmedKey && !looksLikeApiKey(trimmedKey)) {
         setError(
           'این شبیه کلید Gemini (AIza…) یا OpenAI (sk-…) نیست. اگر مرورگر رمز ادمین را اینجا پر کرده، فیلد را پاک کنید.',
@@ -131,31 +172,33 @@ export function AiPage() {
         openaiBaseUrl: string;
         openaiModel: string;
         useMockAi: boolean;
+        tokenbazaarApiKey?: string;
+        tokenbazaarBaseUrl: string;
+        imageModel: string;
+        useMockImageGen: boolean;
       } = {
         openaiBaseUrl: baseUrl.trim(),
         openaiModel: model.trim(),
         useMockAi,
+        tokenbazaarBaseUrl: tokenbazaarBaseUrl.trim(),
+        imageModel: imageModel.trim(),
+        useMockImageGen,
       };
       if (trimmedKey) body.openaiApiKey = trimmedKey;
+      if (trimmedTbKey) body.tokenbazaarApiKey = trimmedTbKey;
+
       const s = await adminApi.putAi(body);
       setSettings(s);
       setBaseUrl(s.openaiBaseUrl);
       setModel(s.openaiModel);
       setApiKey('');
+      setTokenbazaarApiKey('');
       setUseMockAi(s.useMockAi);
-      if (trimmedKey) {
-        setMessage(
-          s.openaiApiKeySet
-            ? `کلید جدید ذخیره شد (${s.openaiApiKeyMasked})`
-            : 'ذخیره شد ولی کلید خالی است',
-        );
-      } else {
-        setMessage(
-          s.openaiApiKeySet
-            ? `تنظیمات ذخیره شد — کلید قبلی نگه داشته شد (${s.openaiApiKeyMasked})`
-            : 'تنظیمات ذخیره شد — هنوز کلیدی تنظیم نشده',
-        );
-      }
+      if (s.tokenbazaarBaseUrl) setTokenbazaarBaseUrl(s.tokenbazaarBaseUrl);
+      if (s.imageModel) setImageModel(s.imageModel);
+      if (typeof s.useMockImageGen === 'boolean') setUseMockImageGen(s.useMockImageGen);
+
+      setMessage('تنظیمات هوش مصنوعی (متن و تصویر) ذخیره شد');
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -306,13 +349,59 @@ export function AiPage() {
         </p>
       )}
 
+      <hr className="my-6 border-line/60" />
+
+      {/* TokenBazaar Image Generation Section */}
+      <h3 className="text-md font-medium text-amber">تنظیمات ساخت تصویر با هوش مصنوعی (TokenBazaar AI)</h3>
+      <p className="text-xs text-ink-dim">
+        کلید فعلی تصویر:{' '}
+        <span className="text-amber">
+          {settings?.tokenbazaarApiKeySet ? settings.tokenbazaarApiKeyMasked : 'تنظیم نشده'}
+        </span>
+      </p>
+
+      <label className="block text-sm text-ink-dim">
+        TokenBazaar API Key (خالی بگذارید تا همان قبلی بماند)
+        <input
+          type="password"
+          name="raml-tokenbazaar-api-key"
+          autoComplete="new-password"
+          data-1p-ignore
+          data-lpignore="true"
+          value={tokenbazaarApiKey}
+          onChange={(e) => setTokenbazaarApiKey(e.target.value)}
+          className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          placeholder="tb_live_... یا sk-..."
+        />
+      </label>
+
+      <label className="block text-sm text-ink-dim">
+        TokenBazaar Base URL
+        <input
+          value={tokenbazaarBaseUrl}
+          onChange={(e) => setTokenbazaarBaseUrl(e.target.value)}
+          className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          placeholder="https://api.tokenbazaar.ai/v1"
+        />
+      </label>
+
+      <label className="block text-sm text-ink-dim">
+        مدل تصویر (Image Model)
+        <input
+          value={imageModel}
+          onChange={(e) => setImageModel(e.target.value)}
+          className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          placeholder="flux-2-pro"
+        />
+      </label>
+
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
-          checked={useMockAi}
-          onChange={(e) => setUseMockAi(e.target.checked)}
+          checked={useMockImageGen}
+          onChange={(e) => setUseMockImageGen(e.target.checked)}
         />
-        استفاده از Mock AI کامل (همیشه آفلاین — حتی بعد از نوبت {liveFrom})
+        حالت Mock ساخت تصویر (بدون مصرف توکن)
       </label>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -323,8 +412,63 @@ export function AiPage() {
         disabled={busy}
         className="rounded-md bg-amber px-4 py-2 font-medium text-stone-950 disabled:opacity-60"
       >
-        {busy ? 'در حال ذخیره...' : 'ذخیره'}
+        {busy ? 'در حال ذخیره...' : 'ذخیره تنظیمات'}
       </button>
+
+      {/* Interactive AI Image Tester */}
+      <div className="mt-8 rounded-lg border border-amber/30 bg-sand-2/40 p-4 space-y-3">
+        <h4 className="text-sm font-medium text-amber">تست ساخت تصویر آنلاین (TokenBazaar)</h4>
+        
+        <label className="block text-xs text-ink-dim">
+          پرامپت (Prompt)
+          <textarea
+            rows={2}
+            value={imagePrompt}
+            onChange={(e) => setImagePrompt(e.target.value)}
+            className="mt-1 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-xs text-ink outline-none focus:border-amber"
+            placeholder="A serene koi pond at sunset, ukiyo-e style."
+          />
+        </label>
+
+        <div className="flex items-center gap-3">
+          <label className="text-xs text-ink-dim flex-1">
+            سایز (Size)
+            <select
+              value={imageSize}
+              onChange={(e) => setImageSize(e.target.value)}
+              className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
+            >
+              <option value="1024x1024">1024x1024 (مربعی)</option>
+              <option value="512x512">512x512 (کوچک)</option>
+              <option value="1792x1024">1792x1024 (عریض)</option>
+              <option value="1024x1792">1024x1792 (عمودی)</option>
+            </select>
+          </label>
+
+          <button
+            type="button"
+            disabled={generatingImage || !imagePrompt.trim()}
+            onClick={() => void testGenerateImage()}
+            className="mt-4 rounded-md border border-amber bg-amber/20 px-3 py-1.5 text-xs font-medium text-amber hover:bg-amber/30 disabled:opacity-50"
+          >
+            {generatingImage ? 'در حال تولید...' : 'تولید تصویر با AI'}
+          </button>
+        </div>
+
+        {imageGenInfo && <p className="text-xs text-emerald-400">{imageGenInfo}</p>}
+        {imageError && <p className="text-xs text-red-400">{imageError}</p>}
+
+        {generatedImageUrl && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-line bg-stone-950 p-2 text-center">
+            <img
+              src={generatedImageUrl}
+              alt="Generated AI result"
+              className="max-h-72 mx-auto rounded object-contain"
+            />
+            <p className="mt-2 text-[10px] text-ink-muted dir-ltr truncate">{generatedImageUrl}</p>
+          </div>
+        )}
+      </div>
     </form>
   );
 }

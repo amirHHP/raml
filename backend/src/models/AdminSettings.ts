@@ -6,6 +6,10 @@ export interface IAdminSettings extends Document {
   openaiBaseUrl: string;
   openaiModel: string;
   useMockAi: boolean;
+  tokenbazaarApiKey: string;
+  tokenbazaarBaseUrl: string;
+  imageModel: string;
+  useMockImageGen: boolean;
   /** Milliseconds per word for story typewriter (lower = faster). */
   storyMsPerWord: number;
   /** Story turn when backpack tab unlocks. */
@@ -32,6 +36,10 @@ const AdminSettingsSchema = new Schema<IAdminSettings>(
     openaiBaseUrl: { type: String, default: 'https://api.openai.com/v1' },
     openaiModel: { type: String, default: 'gpt-4o-mini' },
     useMockAi: { type: Boolean, default: true },
+    tokenbazaarApiKey: { type: String, default: '' },
+    tokenbazaarBaseUrl: { type: String, default: 'https://api.tokenbazaar.ai/v1' },
+    imageModel: { type: String, default: 'flux-2-pro' },
+    useMockImageGen: { type: Boolean, default: false },
     storyMsPerWord: { type: Number, default: 400 },
     unlockInventoryAtTurn: { type: Number, default: 10 },
     unlockStatsAtTurn: { type: Number, default: 20 },

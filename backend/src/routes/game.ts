@@ -24,6 +24,7 @@ import { recordEvents } from '../services/funnel';
 import { FUNNEL_EVENT_NAMES } from '../models/FunnelEvent';
 import { listChangelogs } from '../services/changelog';
 import { getReferralInfo, applyReferralCode } from '../services/referral';
+import { generateImage } from '../services/imageGen';
 
 const router = Router();
 
@@ -347,6 +348,33 @@ router.post('/referral/apply', requireDeviceId, async (req, res) => {
     const e = err as Error & { status?: number };
     console.error(err);
     res.status(e.status || 500).json({ error: e.message || 'خطا در اعمال کد دعوت' });
+  }
+});
+
+router.post('/generate-image', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        prompt: z.string().min(1),
+        model: z.string().optional(),
+        size: z.string().optional(),
+      })
+      .parse(req.body);
+
+    const result = await generateImage(body);
+    if (!result.ok) {
+      res.status(400).json(result);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'فرمت درخواست تصویر نامعتبر است' });
+      return;
+    }
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در ساخت تصویر' });
   }
 });
 

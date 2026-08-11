@@ -5,6 +5,8 @@ import {
   IconFlask,
   IconHeart,
   IconSettings,
+  IconVolumeHigh,
+  IconVolumeMute,
 } from './icons';
 import { type GameState } from '../types/game';
 import { toFaDigits } from '../utils/formatCountdown';
@@ -23,11 +25,15 @@ export function StatusBar({
   onSettings,
   onInbox,
   unreadCount = 0,
+  audioMuted = false,
+  onToggleAudio,
 }: {
   state: GameState;
   onSettings: () => void;
   onInbox?: () => void;
   unreadCount?: number;
+  audioMuted?: boolean;
+  onToggleAudio?: () => void;
 }) {
   const { stats, characterName, classType, storyTurnCount, language = 'fa' } = state;
   const unlocks = state.featureUnlocks || DEFAULT_UNLOCKS;
@@ -90,6 +96,21 @@ export function StatusBar({
           <p className="mt-0.5 text-xs text-ink-muted">{stepLabel}</p>
         </div>
         <div className="flex items-center gap-1">
+          {onToggleAudio && (
+            <button
+              type="button"
+              onClick={onToggleAudio}
+              className="rounded-full p-2 text-ink-dim transition hover:text-amber"
+              aria-label={audioMuted ? t('audioOff', language) : t('audioOn', language)}
+              title={audioMuted ? t('bgmLabel', language) + ' (' + t('audioOff', language) + ')' : t('bgmLabel', language) + ' (' + t('audioOn', language) + ')'}
+            >
+              {audioMuted ? (
+                <IconVolumeMute size={20} className="text-ink-muted" />
+              ) : (
+                <IconVolumeHigh size={20} className="text-amber" />
+              )}
+            </button>
+          )}
           {onInbox && (
             <button
               type="button"

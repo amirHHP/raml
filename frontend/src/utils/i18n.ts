@@ -136,6 +136,14 @@ export const TRANSLATIONS = {
     fullUiUnlockedMsg: 'رابط کامل بازی فعال است.',
     unlockFullUiButton: 'آنلاک کامل بازی (دیباگ)',
 
+    // Audio Settings
+    audioSettingsTitle: 'تنظیمات صدا و موزیک',
+    bgmLabel: 'موزیک زمینه (BGM)',
+    sfxLabel: 'جلوه‌های صوتی (SFX)',
+    volumeLabel: 'شدت صدا',
+    audioOn: 'روشن',
+    audioOff: 'خاموش',
+
     // Inbox Modal
     inboxTitle: 'صندوق پیام‌ها',
     inboxEmpty: 'هیچ پیامی در صندوق وجود ندارد.',
@@ -309,6 +317,14 @@ export const TRANSLATIONS = {
     playDayCountLabel: 'Days Played:',
     fullUiUnlockedMsg: 'Full game interface unlocked.',
     unlockFullUiButton: 'Unlock Full Interface (Debug)',
+
+    // Audio Settings
+    audioSettingsTitle: 'Sound & Music Settings',
+    bgmLabel: 'Background Music (BGM)',
+    sfxLabel: 'Sound Effects (SFX)',
+    volumeLabel: 'Volume',
+    audioOn: 'On',
+    audioOff: 'Off',
 
     // Inbox Modal
     inboxTitle: 'Messages Inbox',

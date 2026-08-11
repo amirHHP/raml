@@ -47,6 +47,10 @@ function settingsForClient(): RuntimeAiSettings {
       openaiBaseUrl: config.openaiBaseUrl,
       openaiModel: config.openaiModel,
       useMockAi: config.useMockAi,
+      tokenbazaarApiKey: config.tokenbazaarApiKey,
+      tokenbazaarBaseUrl: config.tokenbazaarBaseUrl,
+      imageModel: config.imageModel,
+      useMockImageGen: config.useMockImageGen,
     }
   );
 }

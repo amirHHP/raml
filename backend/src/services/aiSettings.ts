@@ -12,6 +12,10 @@ export type RuntimeAiSettings = {
   openaiBaseUrl: string;
   openaiModel: string;
   useMockAi: boolean;
+  tokenbazaarApiKey: string;
+  tokenbazaarBaseUrl: string;
+  imageModel: string;
+  useMockImageGen: boolean;
 };
 
 type PublicAiSettings = {
@@ -20,6 +24,11 @@ type PublicAiSettings = {
   openaiBaseUrl: string;
   openaiModel: string;
   useMockAi: boolean;
+  tokenbazaarApiKeyMasked: string;
+  tokenbazaarApiKeySet: boolean;
+  tokenbazaarBaseUrl: string;
+  imageModel: string;
+  useMockImageGen: boolean;
   updatedAt: string | null;
   provider: 'gemini' | 'openai' | 'other';
   aiLiveFromTurn: number;
@@ -50,6 +59,10 @@ function fromEnv(): RuntimeAiSettings {
     openaiBaseUrl: config.openaiBaseUrl,
     openaiModel: config.openaiModel,
     useMockAi: config.useMockAi,
+    tokenbazaarApiKey: config.tokenbazaarApiKey,
+    tokenbazaarBaseUrl: config.tokenbazaarBaseUrl,
+    imageModel: config.imageModel,
+    useMockImageGen: config.useMockImageGen,
   };
 }
 
@@ -74,6 +87,11 @@ function toPublic(settings: RuntimeAiSettings, updatedAt: Date | null): PublicAi
     openaiBaseUrl: settings.openaiBaseUrl,
     openaiModel: settings.openaiModel,
     useMockAi: settings.useMockAi,
+    tokenbazaarApiKeyMasked: maskApiKey(settings.tokenbazaarApiKey),
+    tokenbazaarApiKeySet: Boolean(settings.tokenbazaarApiKey),
+    tokenbazaarBaseUrl: settings.tokenbazaarBaseUrl,
+    imageModel: settings.imageModel,
+    useMockImageGen: settings.useMockImageGen,
     updatedAt: updatedAt ? updatedAt.toISOString() : null,
     provider: detectProvider(settings),
     aiLiveFromTurn: AI_LIVE_FROM_TURN,
@@ -97,7 +115,22 @@ function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
     settings.openaiModel.trim() ||
     (isGeminiBaseUrl(openaiBaseUrl) ? 'gemini-2.0-flash' : 'gpt-4o-mini');
   const useMockAi = !openaiApiKey ? true : settings.useMockAi;
-  return { openaiApiKey, openaiBaseUrl, openaiModel, useMockAi };
+
+  const tokenbazaarApiKey = settings.tokenbazaarApiKey.trim();
+  const tokenbazaarBaseUrl = settings.tokenbazaarBaseUrl.trim() || 'https://api.tokenbazaar.ai/v1';
+  const imageModel = settings.imageModel.trim() || 'flux-2-pro';
+  const useMockImageGen = settings.useMockImageGen;
+
+  return {
+    openaiApiKey,
+    openaiBaseUrl,
+    openaiModel,
+    useMockAi,
+    tokenbazaarApiKey,
+    tokenbazaarBaseUrl,
+    imageModel,
+    useMockImageGen,
+  };
 }
 
 export async function getRuntimeAiSettings(): Promise<RuntimeAiSettings> {
@@ -125,6 +158,11 @@ export async function getRuntimeAiSettings(): Promise<RuntimeAiSettings> {
     openaiModel: doc.openaiModel || config.openaiModel,
     useMockAi:
       typeof doc.useMockAi === 'boolean' ? doc.useMockAi : config.useMockAi,
+    tokenbazaarApiKey: doc.tokenbazaarApiKey?.trim() ? doc.tokenbazaarApiKey : config.tokenbazaarApiKey,
+    tokenbazaarBaseUrl: doc.tokenbazaarBaseUrl || config.tokenbazaarBaseUrl,
+    imageModel: doc.imageModel || config.imageModel,
+    useMockImageGen:
+      typeof doc.useMockImageGen === 'boolean' ? doc.useMockImageGen : config.useMockImageGen,
   });
   cachedAtMs = Date.now();
   return cached;
@@ -146,16 +184,23 @@ export async function updateAiSettings(input: {
   openaiBaseUrl?: string;
   openaiModel?: string;
   useMockAi?: boolean;
+  tokenbazaarApiKey?: string;
+  tokenbazaarBaseUrl?: string;
+  imageModel?: string;
+  useMockImageGen?: boolean;
 }): Promise<PublicAiSettings> {
   const current = await getRuntimeAiSettings();
 
   let openaiApiKey = current.openaiApiKey;
   if (input.openaiApiKey !== undefined) {
-    // Empty string clears; non-empty replaces; callers omit field to keep key
     openaiApiKey = input.openaiApiKey;
   }
 
-  // When admin sets a new key without explicitly toggling mock, auto-disable mock
+  let tokenbazaarApiKey = current.tokenbazaarApiKey;
+  if (input.tokenbazaarApiKey !== undefined) {
+    tokenbazaarApiKey = input.tokenbazaarApiKey;
+  }
+
   const useMockAi =
     input.useMockAi !== undefined
       ? input.useMockAi
@@ -168,6 +213,10 @@ export async function updateAiSettings(input: {
     openaiBaseUrl: input.openaiBaseUrl ?? current.openaiBaseUrl,
     openaiModel: input.openaiModel ?? current.openaiModel,
     useMockAi,
+    tokenbazaarApiKey,
+    tokenbazaarBaseUrl: input.tokenbazaarBaseUrl ?? current.tokenbazaarBaseUrl,
+    imageModel: input.imageModel ?? current.imageModel,
+    useMockImageGen: input.useMockImageGen ?? current.useMockImageGen,
   });
 
   if (useMemory) {
@@ -178,8 +227,6 @@ export async function updateAiSettings(input: {
     return toPublic(next, new Date());
   }
 
-  // Explicit $set so we never replace the whole AdminSettings document
-  // (game unlock turns / storyMsPerWord live on the same singleton).
   const doc = await AdminSettings.findOneAndUpdate(
     { singletonKey: 'default' },
     {
@@ -188,6 +235,10 @@ export async function updateAiSettings(input: {
         openaiBaseUrl: next.openaiBaseUrl,
         openaiModel: next.openaiModel,
         useMockAi: next.useMockAi,
+        tokenbazaarApiKey: next.tokenbazaarApiKey,
+        tokenbazaarBaseUrl: next.tokenbazaarBaseUrl,
+        imageModel: next.imageModel,
+        useMockImageGen: next.useMockImageGen,
       },
       $setOnInsert: { singletonKey: 'default' },
     },

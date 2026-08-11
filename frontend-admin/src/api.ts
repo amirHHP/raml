@@ -7,6 +7,7 @@ import type {
   FunnelReport,
   GameSettings,
   GeminiModelInfo,
+  ImageGenResult,
   PromptItem,
   PromptKey,
   MilestonePromptItem,
@@ -89,9 +90,18 @@ export const adminApi = {
     openaiBaseUrl?: string;
     openaiModel?: string;
     useMockAi?: boolean;
+    tokenbazaarApiKey?: string;
+    tokenbazaarBaseUrl?: string;
+    imageModel?: string;
+    useMockImageGen?: boolean;
   }) =>
     request<AiSettings>('/api/admin/ai', {
       method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  generateImage: (body: { prompt: string; model?: string; size?: string }) =>
+    request<ImageGenResult>('/api/admin/ai/generate-image', {
+      method: 'POST',
       body: JSON.stringify(body),
     }),
   getGame: () => request<GameSettings>('/api/admin/game'),

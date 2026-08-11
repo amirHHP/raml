@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useGame } from './hooks/useGame';
+import { useAudioEngine } from './hooks/useAudioEngine';
 import { StatusBar } from './components/StatusBar';
 import { StoryChat } from './components/StoryChat';
 import { BottomNav } from './components/BottomNav';
@@ -24,6 +25,7 @@ import type { ClassType, Language } from './types/game';
 
 export default function App() {
   const game = useGame();
+  const audio = useAudioEngine(game.state, game.tab);
   const [openingEyes, setOpeningEyes] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [iosInstallOpen, setIosInstallOpen] = useState<boolean | undefined>(undefined);
@@ -94,6 +96,8 @@ export default function App() {
       {showChrome && (
         <StatusBar
           state={state}
+          audioMuted={!audio.settings.bgmEnabled}
+          onToggleAudio={() => audio.toggleBgm()}
           onSettings={() => game.setSettingsOpen(true)}
           onInbox={() => {
             void game.refreshInbox().catch(() => undefined);
@@ -223,6 +227,11 @@ export default function App() {
         busy={game.busy}
         playDayCount={state.playDayCount}
         unlocked={state.unlockedFullUi}
+        audioSettings={audio.settings}
+        onToggleBgm={audio.toggleBgm}
+        onToggleSfx={audio.toggleSfx}
+        onSetBgmVolume={audio.setBgmVolume}
+        onSetSfxVolume={audio.setSfxVolume}
       />
 
       <InboxModal

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { getDeviceId } from '../api/client';
+import type { AudioSettings } from '../utils/audioEngine';
 import type { Language } from '../types/game';
 import { t } from '../utils/i18n';
+import { IconMusic, IconVolumeHigh, IconVolumeMute } from './icons';
 
 export function SettingsModal({
   open,
@@ -14,6 +16,11 @@ export function SettingsModal({
   busy,
   playDayCount,
   unlocked,
+  audioSettings,
+  onToggleBgm,
+  onToggleSfx,
+  onSetBgmVolume,
+  onSetSfxVolume,
 }: {
   open: boolean;
   language?: Language;
@@ -25,6 +32,11 @@ export function SettingsModal({
   busy: boolean;
   playDayCount: number;
   unlocked: boolean;
+  audioSettings?: AudioSettings;
+  onToggleBgm?: () => void;
+  onToggleSfx?: () => void;
+  onSetBgmVolume?: (vol: number) => void;
+  onSetSfxVolume?: (vol: number) => void;
 }) {
   const [copied, setCopied] = useState(false);
   if (!open) return null;
@@ -40,8 +52,84 @@ export function SettingsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
-      <div className="w-full max-w-md rounded-t-2xl border border-line bg-panel p-5 sm:rounded-2xl">
+      <div className="w-full max-w-md rounded-t-2xl border border-line bg-panel p-5 sm:rounded-2xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-base text-ink font-medium">{t('settingsTitle', language)}</h3>
+
+        {/* Audio & Music Settings Section */}
+        {audioSettings && (
+          <div className="mt-4 rounded-xl border border-amber/30 bg-amber/5 p-3.5 space-y-3">
+            <h4 className="text-xs font-medium text-amber flex items-center gap-1.5">
+              <IconMusic size={16} />
+              {t('audioSettingsTitle', language)}
+            </h4>
+
+            {/* BGM Toggle & Volume */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-ink-dim font-medium">{t('bgmLabel', language)}</span>
+                <button
+                  type="button"
+                  onClick={onToggleBgm}
+                  className={`px-3 py-1 text-[11px] rounded-lg border font-medium transition ${
+                    audioSettings.bgmEnabled
+                      ? 'border-amber bg-amber/20 text-amber'
+                      : 'border-line bg-black/40 text-ink-muted'
+                  }`}
+                >
+                  {audioSettings.bgmEnabled ? t('audioOn', language) : t('audioOff', language)}
+                </button>
+              </div>
+              {audioSettings.bgmEnabled && (
+                <div className="flex items-center gap-2 pt-1">
+                  <IconVolumeMute size={14} className="text-ink-muted" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audioSettings.bgmVolume}
+                    onChange={(e) => onSetBgmVolume?.(parseFloat(e.target.value))}
+                    className="flex-1 accent-amber h-1.5 rounded-lg bg-black/50 cursor-pointer"
+                  />
+                  <IconVolumeHigh size={14} className="text-amber" />
+                </div>
+              )}
+            </div>
+
+            {/* SFX Toggle & Volume */}
+            <div className="space-y-1.5 pt-1 border-t border-line/40">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-ink-dim font-medium">{t('sfxLabel', language)}</span>
+                <button
+                  type="button"
+                  onClick={onToggleSfx}
+                  className={`px-3 py-1 text-[11px] rounded-lg border font-medium transition ${
+                    audioSettings.sfxEnabled
+                      ? 'border-amber bg-amber/20 text-amber'
+                      : 'border-line bg-black/40 text-ink-muted'
+                  }`}
+                >
+                  {audioSettings.sfxEnabled ? t('audioOn', language) : t('audioOff', language)}
+                </button>
+              </div>
+              {audioSettings.sfxEnabled && (
+                <div className="flex items-center gap-2 pt-1">
+                  <IconVolumeMute size={14} className="text-ink-muted" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audioSettings.sfxVolume}
+                    onChange={(e) => onSetSfxVolume?.(parseFloat(e.target.value))}
+                    className="flex-1 accent-amber h-1.5 rounded-lg bg-black/50 cursor-pointer"
+                  />
+                  <IconVolumeHigh size={14} className="text-amber" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Language Selection */}
         <div className="mt-4 rounded-xl border border-line/60 bg-black/30 p-3">
