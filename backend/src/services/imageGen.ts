@@ -75,9 +75,9 @@ export async function generateImage(options: ImageGenOptions): Promise<ImageGenR
   const startedAt = Date.now();
   const settings = await getRuntimeAiSettings();
   const model = options.model?.trim() || settings.imageModel || 'flux-2-pro';
-  const size = options.size?.trim() || settings.imageSize || '1024x1024';
-  const quality = options.quality?.trim() || settings.imageQuality || 'medium';
-  const mode = options.mode?.trim() || settings.imageMode || 'generation';
+  const size = options.size !== undefined ? options.size.trim() : (settings.imageSize?.trim() ?? '');
+  const quality = options.quality !== undefined ? options.quality.trim() : (settings.imageQuality?.trim() ?? '');
+  const mode = options.mode !== undefined ? options.mode.trim() : (settings.imageMode?.trim() ?? '');
   const prompt = options.prompt.trim();
 
   if (!prompt) {
@@ -114,12 +114,13 @@ export async function generateImage(options: ImageGenOptions): Promise<ImageGenR
     const requestPayload: Record<string, any> = {
       model,
       prompt,
-      size,
-      quality,
-      mode,
       n: options.n ?? 1,
       response_format: options.response_format ?? 'b64_json',
     };
+
+    if (size) requestPayload.size = size;
+    if (quality) requestPayload.quality = quality;
+    if (mode) requestPayload.mode = mode;
 
     const response = await fetch(endpointUrl, {
       method: 'POST',

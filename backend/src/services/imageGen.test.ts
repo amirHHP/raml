@@ -50,22 +50,22 @@ describe('imageGen service', () => {
     assert.match(result.model, /mock/);
   });
 
-  it('falls back to default settings when options are omitted', async () => {
+  it('allows empty quality string and omits it for models that do not support quality', async () => {
     await updateAiSettings({
       tokenbazaarApiKey: '',
       useMockImageGen: false,
-      imageQuality: 'low',
-      imageSize: '1024x1536',
+      imageQuality: '',
+      imageSize: '1024x1024',
       imageMode: 'generation',
     });
     const result = await generateImage({
-      prompt: 'Dragon in ancient castle',
+      prompt: 'Test prompt without quality',
+      model: 'agnes-image-2.0-flash',
+      quality: '',
     });
 
     assert.equal(result.ok, true);
-    assert.equal(result.quality, 'low');
-    assert.equal(result.size, '1024x1536');
-    assert.equal(result.mode, 'generation');
-    assert.ok(result.imageUrl?.startsWith('data:image/svg+xml'));
+    assert.equal(result.quality, '');
+    assert.equal(result.model, 'agnes-image-2.0-flash (mock)');
   });
 });
