@@ -50,6 +50,9 @@ function settingsForClient(): RuntimeAiSettings {
       tokenbazaarApiKey: config.tokenbazaarApiKey,
       tokenbazaarBaseUrl: config.tokenbazaarBaseUrl,
       imageModel: config.imageModel,
+      imageQuality: config.imageQuality,
+      imageSize: config.imageSize,
+      imageMode: config.imageMode,
       useMockImageGen: config.useMockImageGen,
     }
   );

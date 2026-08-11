@@ -93,13 +93,16 @@ export const adminApi = {
     tokenbazaarApiKey?: string;
     tokenbazaarBaseUrl?: string;
     imageModel?: string;
+    imageQuality?: string;
+    imageSize?: string;
+    imageMode?: string;
     useMockImageGen?: boolean;
   }) =>
     request<AiSettings>('/api/admin/ai', {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-  generateImage: (body: { prompt: string; model?: string; size?: string }) =>
+  generateImage: (body: { prompt: string; model?: string; size?: string; quality?: string; mode?: string }) =>
     request<ImageGenResult>('/api/admin/ai/generate-image', {
       method: 'POST',
       body: JSON.stringify(body),

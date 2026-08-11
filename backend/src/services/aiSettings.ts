@@ -15,6 +15,9 @@ export type RuntimeAiSettings = {
   tokenbazaarApiKey: string;
   tokenbazaarBaseUrl: string;
   imageModel: string;
+  imageQuality: string;
+  imageSize: string;
+  imageMode: string;
   useMockImageGen: boolean;
 };
 
@@ -28,6 +31,9 @@ type PublicAiSettings = {
   tokenbazaarApiKeySet: boolean;
   tokenbazaarBaseUrl: string;
   imageModel: string;
+  imageQuality: string;
+  imageSize: string;
+  imageMode: string;
   useMockImageGen: boolean;
   updatedAt: string | null;
   provider: 'gemini' | 'openai' | 'other';
@@ -62,6 +68,9 @@ function fromEnv(): RuntimeAiSettings {
     tokenbazaarApiKey: config.tokenbazaarApiKey,
     tokenbazaarBaseUrl: config.tokenbazaarBaseUrl,
     imageModel: config.imageModel,
+    imageQuality: config.imageQuality,
+    imageSize: config.imageSize,
+    imageMode: config.imageMode,
     useMockImageGen: config.useMockImageGen,
   };
 }
@@ -91,6 +100,9 @@ function toPublic(settings: RuntimeAiSettings, updatedAt: Date | null): PublicAi
     tokenbazaarApiKeySet: Boolean(settings.tokenbazaarApiKey),
     tokenbazaarBaseUrl: settings.tokenbazaarBaseUrl,
     imageModel: settings.imageModel,
+    imageQuality: settings.imageQuality,
+    imageSize: settings.imageSize,
+    imageMode: settings.imageMode,
     useMockImageGen: settings.useMockImageGen,
     updatedAt: updatedAt ? updatedAt.toISOString() : null,
     provider: detectProvider(settings),
@@ -119,6 +131,9 @@ function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
   const tokenbazaarApiKey = settings.tokenbazaarApiKey.trim();
   const tokenbazaarBaseUrl = settings.tokenbazaarBaseUrl.trim() || 'https://api.tokenbazaar.ai/v1';
   const imageModel = settings.imageModel.trim() || 'flux-2-pro';
+  const imageQuality = settings.imageQuality.trim() || 'medium';
+  const imageSize = settings.imageSize.trim() || '1024x1024';
+  const imageMode = settings.imageMode.trim() || 'generation';
   const useMockImageGen = settings.useMockImageGen;
 
   return {
@@ -129,6 +144,9 @@ function finalize(settings: RuntimeAiSettings): RuntimeAiSettings {
     tokenbazaarApiKey,
     tokenbazaarBaseUrl,
     imageModel,
+    imageQuality,
+    imageSize,
+    imageMode,
     useMockImageGen,
   };
 }
@@ -161,6 +179,9 @@ export async function getRuntimeAiSettings(): Promise<RuntimeAiSettings> {
     tokenbazaarApiKey: doc.tokenbazaarApiKey?.trim() ? doc.tokenbazaarApiKey : config.tokenbazaarApiKey,
     tokenbazaarBaseUrl: doc.tokenbazaarBaseUrl || config.tokenbazaarBaseUrl,
     imageModel: doc.imageModel || config.imageModel,
+    imageQuality: doc.imageQuality || config.imageQuality,
+    imageSize: doc.imageSize || config.imageSize,
+    imageMode: doc.imageMode || config.imageMode,
     useMockImageGen:
       typeof doc.useMockImageGen === 'boolean' ? doc.useMockImageGen : config.useMockImageGen,
   });
@@ -187,6 +208,9 @@ export async function updateAiSettings(input: {
   tokenbazaarApiKey?: string;
   tokenbazaarBaseUrl?: string;
   imageModel?: string;
+  imageQuality?: string;
+  imageSize?: string;
+  imageMode?: string;
   useMockImageGen?: boolean;
 }): Promise<PublicAiSettings> {
   const current = await getRuntimeAiSettings();
@@ -216,6 +240,9 @@ export async function updateAiSettings(input: {
     tokenbazaarApiKey,
     tokenbazaarBaseUrl: input.tokenbazaarBaseUrl ?? current.tokenbazaarBaseUrl,
     imageModel: input.imageModel ?? current.imageModel,
+    imageQuality: input.imageQuality ?? current.imageQuality,
+    imageSize: input.imageSize ?? current.imageSize,
+    imageMode: input.imageMode ?? current.imageMode,
     useMockImageGen: input.useMockImageGen ?? current.useMockImageGen,
   });
 
@@ -238,6 +265,9 @@ export async function updateAiSettings(input: {
         tokenbazaarApiKey: next.tokenbazaarApiKey,
         tokenbazaarBaseUrl: next.tokenbazaarBaseUrl,
         imageModel: next.imageModel,
+        imageQuality: next.imageQuality,
+        imageSize: next.imageSize,
+        imageMode: next.imageMode,
         useMockImageGen: next.useMockImageGen,
       },
       $setOnInsert: { singletonKey: 'default' },

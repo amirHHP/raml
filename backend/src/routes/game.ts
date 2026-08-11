@@ -358,6 +358,8 @@ router.post('/generate-image', async (req, res) => {
         prompt: z.string().min(1),
         model: z.string().optional(),
         size: z.string().optional(),
+        quality: z.string().optional(),
+        mode: z.string().optional(),
       })
       .parse(req.body);
 

@@ -9,6 +9,9 @@ export interface IAdminSettings extends Document {
   tokenbazaarApiKey: string;
   tokenbazaarBaseUrl: string;
   imageModel: string;
+  imageQuality: string;
+  imageSize: string;
+  imageMode: string;
   useMockImageGen: boolean;
   /** Milliseconds per word for story typewriter (lower = faster). */
   storyMsPerWord: number;
@@ -39,6 +42,9 @@ const AdminSettingsSchema = new Schema<IAdminSettings>(
     tokenbazaarApiKey: { type: String, default: '' },
     tokenbazaarBaseUrl: { type: String, default: 'https://api.tokenbazaar.ai/v1' },
     imageModel: { type: String, default: 'flux-2-pro' },
+    imageQuality: { type: String, default: 'medium' },
+    imageSize: { type: String, default: '1024x1024' },
+    imageMode: { type: String, default: 'generation' },
     useMockImageGen: { type: Boolean, default: false },
     storyMsPerWord: { type: Number, default: 400 },
     unlockInventoryAtTurn: { type: Number, default: 10 },

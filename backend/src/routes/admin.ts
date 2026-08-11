@@ -131,6 +131,9 @@ router.put('/ai', async (req, res) => {
         tokenbazaarApiKey: z.string().optional(),
         tokenbazaarBaseUrl: z.string().url().optional(),
         imageModel: z.string().min(1).optional(),
+        imageQuality: z.string().optional(),
+        imageSize: z.string().optional(),
+        imageMode: z.string().optional(),
         useMockImageGen: z.boolean().optional(),
       })
       .parse(req.body);
@@ -150,6 +153,8 @@ router.post('/ai/generate-image', async (req, res) => {
         prompt: z.string().min(1),
         model: z.string().optional(),
         size: z.string().optional(),
+        quality: z.string().optional(),
+        mode: z.string().optional(),
       })
       .parse(req.body);
 

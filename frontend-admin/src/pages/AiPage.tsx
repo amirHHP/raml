@@ -18,11 +18,16 @@ export function AiPage() {
   const [tokenbazaarApiKey, setTokenbazaarApiKey] = useState('');
   const [tokenbazaarBaseUrl, setTokenbazaarBaseUrl] = useState('https://api.tokenbazaar.ai/v1');
   const [imageModel, setImageModel] = useState('flux-2-pro');
+  const [imageQuality, setImageQuality] = useState('medium');
+  const [imageSize, setImageSize] = useState('1024x1024');
+  const [imageMode, setImageMode] = useState('generation');
   const [useMockImageGen, setUseMockImageGen] = useState(false);
 
   // Image tester state
   const [imagePrompt, setImagePrompt] = useState('A serene koi pond at sunset, ukiyo-e style.');
-  const [imageSize, setImageSize] = useState('1024x1024');
+  const [testQuality, setTestQuality] = useState('medium');
+  const [testSize, setTestSize] = useState('1024x1024');
+  const [testMode, setTestMode] = useState('generation');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [imageGenInfo, setImageGenInfo] = useState<string | null>(null);
@@ -47,6 +52,18 @@ export function AiPage() {
         setUseMockAi(s.useMockAi);
         if (s.tokenbazaarBaseUrl) setTokenbazaarBaseUrl(s.tokenbazaarBaseUrl);
         if (s.imageModel) setImageModel(s.imageModel);
+        if (s.imageQuality) {
+          setImageQuality(s.imageQuality);
+          setTestQuality(s.imageQuality);
+        }
+        if (s.imageSize) {
+          setImageSize(s.imageSize);
+          setTestSize(s.imageSize);
+        }
+        if (s.imageMode) {
+          setImageMode(s.imageMode);
+          setTestMode(s.imageMode);
+        }
         if (typeof s.useMockImageGen === 'boolean') setUseMockImageGen(s.useMockImageGen);
       })
       .catch((e: Error) => {
@@ -137,11 +154,13 @@ export function AiPage() {
       const result = await adminApi.generateImage({
         prompt: imagePrompt,
         model: imageModel,
-        size: imageSize,
+        size: testSize,
+        quality: testQuality,
+        mode: testMode,
       });
       if (result.ok) {
         setGeneratedImageUrl(result.imageUrl || (result.b64_json ? `data:image/png;base64,${result.b64_json}` : null));
-        setImageGenInfo(`تصویر با موفقیت در ${result.ms}ms تولید شد (مدل: ${result.model})`);
+        setImageGenInfo(`تصویر در ${result.ms}ms با موفقیت ساخت شد (مدل: ${result.model} | کیفیت: ${result.quality} | ابعاد: ${result.size})`);
       } else {
         setImageError(result.error || 'خطا در ساخت تصویر');
       }
@@ -175,6 +194,9 @@ export function AiPage() {
         tokenbazaarApiKey?: string;
         tokenbazaarBaseUrl: string;
         imageModel: string;
+        imageQuality: string;
+        imageSize: string;
+        imageMode: string;
         useMockImageGen: boolean;
       } = {
         openaiBaseUrl: baseUrl.trim(),
@@ -182,6 +204,9 @@ export function AiPage() {
         useMockAi,
         tokenbazaarBaseUrl: tokenbazaarBaseUrl.trim(),
         imageModel: imageModel.trim(),
+        imageQuality,
+        imageSize,
+        imageMode,
         useMockImageGen,
       };
       if (trimmedKey) body.openaiApiKey = trimmedKey;
@@ -196,6 +221,9 @@ export function AiPage() {
       setUseMockAi(s.useMockAi);
       if (s.tokenbazaarBaseUrl) setTokenbazaarBaseUrl(s.tokenbazaarBaseUrl);
       if (s.imageModel) setImageModel(s.imageModel);
+      if (s.imageQuality) setImageQuality(s.imageQuality);
+      if (s.imageSize) setImageSize(s.imageSize);
+      if (s.imageMode) setImageMode(s.imageMode);
       if (typeof s.useMockImageGen === 'boolean') setUseMockImageGen(s.useMockImageGen);
 
       setMessage('تنظیمات هوش مصنوعی (متن و تصویر) ذخیره شد');
@@ -385,15 +413,57 @@ export function AiPage() {
         />
       </label>
 
-      <label className="block text-sm text-ink-dim">
-        مدل تصویر (Image Model)
-        <input
-          value={imageModel}
-          onChange={(e) => setImageModel(e.target.value)}
-          className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
-          placeholder="flux-2-pro"
-        />
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block text-sm text-ink-dim">
+          مدل تصویر (Model)
+          <input
+            value={imageModel}
+            onChange={(e) => setImageModel(e.target.value)}
+            className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+            placeholder="flux-2-pro"
+          />
+        </label>
+
+        <label className="block text-sm text-ink-dim">
+          کیفیت پیش‌فرض (Quality)
+          <select
+            value={imageQuality}
+            onChange={(e) => setImageQuality(e.target.value)}
+            className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          >
+            <option value="low">Low (کم / ارزان‌تر ~$0.0036)</option>
+            <option value="medium">Medium (متوسط ~$0.0318)</option>
+            <option value="high">High (کیفیت بالا ~$0.1266)</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block text-sm text-ink-dim">
+          ابعاد / رزولوشن (Resolution / Size)
+          <select
+            value={imageSize}
+            onChange={(e) => setImageSize(e.target.value)}
+            className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          >
+            <option value="1024x1024">1024x1024 (مربعی 1:1)</option>
+            <option value="1024x1536">1024x1536 (عمودی 2:3)</option>
+            <option value="1536x1024">1536x1024 (افقی 3:2)</option>
+          </select>
+        </label>
+
+        <label className="block text-sm text-ink-dim">
+          حالت کارکرد (Mode)
+          <select
+            value={imageMode}
+            onChange={(e) => setImageMode(e.target.value)}
+            className="mt-2 w-full rounded-md border border-line bg-sand-2 px-3 py-2 text-ink outline-none focus:border-amber"
+          >
+            <option value="generation">Generation (ساخت تصویر جدید)</option>
+            <option value="edit">Edit (ویرایش تصویر)</option>
+          </select>
+        </label>
+      </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input
@@ -417,7 +487,10 @@ export function AiPage() {
 
       {/* Interactive AI Image Tester */}
       <div className="mt-8 rounded-lg border border-amber/30 bg-sand-2/40 p-4 space-y-3">
-        <h4 className="text-sm font-medium text-amber">تست ساخت تصویر آنلاین (TokenBazaar)</h4>
+        <h4 className="text-sm font-medium text-amber flex items-center justify-between">
+          <span>تست ساخت تصویر آنلاین (TokenBazaar Playground)</span>
+          <span className="text-xs text-ink-muted dir-ltr">Endpoint: /v1/images/generations</span>
+        </h4>
         
         <label className="block text-xs text-ink-dim">
           پرامپت (Prompt)
@@ -430,26 +503,64 @@ export function AiPage() {
           />
         </label>
 
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-ink-dim flex-1">
-            سایز (Size)
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <label className="text-xs text-ink-dim">
+            کیفیت (quality)
             <select
-              value={imageSize}
-              onChange={(e) => setImageSize(e.target.value)}
+              value={testQuality}
+              onChange={(e) => setTestQuality(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
             >
-              <option value="1024x1024">1024x1024 (مربعی)</option>
-              <option value="512x512">512x512 (کوچک)</option>
-              <option value="1792x1024">1792x1024 (عریض)</option>
-              <option value="1024x1792">1024x1792 (عمودی)</option>
+              <option value="low">low (اقتصادی)</option>
+              <option value="medium">medium (استاندارد)</option>
+              <option value="high">high (بالاترین)</option>
             </select>
           </label>
+
+          <label className="text-xs text-ink-dim">
+            رزولوشن (size)
+            <select
+              value={testSize}
+              onChange={(e) => setTestSize(e.target.value)}
+              className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
+            >
+              <option value="1024x1024">1024x1024</option>
+              <option value="1024x1536">1024x1536</option>
+              <option value="1536x1024">1536x1024</option>
+            </select>
+          </label>
+
+          <label className="text-xs text-ink-dim">
+            حالت (mode)
+            <select
+              value={testMode}
+              onChange={(e) => setTestMode(e.target.value)}
+              className="mt-1 w-full rounded-md border border-line bg-sand-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
+            >
+              <option value="generation">generation</option>
+              <option value="edit">edit</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-[11px] text-ink-muted dir-ltr font-mono">
+            {testQuality === 'low' && testSize === '1024x1024' && 'quality=low · resolution=1024x1024 → $0.0036 / image'}
+            {testQuality === 'low' && testSize === '1024x1536' && 'quality=low · resolution=1024x1536 → $0.0054 / image'}
+            {testQuality === 'low' && testSize === '1536x1024' && 'quality=low · resolution=1536x1024 → $0.0053 / image'}
+            {testQuality === 'medium' && testSize === '1024x1024' && 'resolution=1024x1024 → $0.0318 / image'}
+            {testQuality === 'medium' && testSize === '1024x1536' && 'resolution=1024x1536 → $0.0477 / image'}
+            {testQuality === 'medium' && testSize === '1536x1024' && 'resolution=1536x1024 → $0.0473 / image'}
+            {testQuality === 'high' && testSize === '1024x1024' && 'quality=high · resolution=1024x1024 → $0.1266 / image'}
+            {testQuality === 'high' && testSize === '1024x1536' && 'quality=high · resolution=1024x1536 → $0.1899 / image'}
+            {testQuality === 'high' && testSize === '1536x1024' && 'quality=high · resolution=1536x1024 → $0.1890 / image'}
+          </div>
 
           <button
             type="button"
             disabled={generatingImage || !imagePrompt.trim()}
             onClick={() => void testGenerateImage()}
-            className="mt-4 rounded-md border border-amber bg-amber/20 px-3 py-1.5 text-xs font-medium text-amber hover:bg-amber/30 disabled:opacity-50"
+            className="rounded-md border border-amber bg-amber/20 px-4 py-1.5 text-xs font-medium text-amber hover:bg-amber/30 disabled:opacity-50"
           >
             {generatingImage ? 'در حال تولید...' : 'تولید تصویر با AI'}
           </button>
@@ -463,7 +574,7 @@ export function AiPage() {
             <img
               src={generatedImageUrl}
               alt="Generated AI result"
-              className="max-h-72 mx-auto rounded object-contain"
+              className="max-h-80 mx-auto rounded object-contain"
             />
             <p className="mt-2 text-[10px] text-ink-muted dir-ltr truncate">{generatedImageUrl}</p>
           </div>

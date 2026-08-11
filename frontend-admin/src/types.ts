@@ -67,6 +67,9 @@ export type AiSettings = {
   tokenbazaarApiKeySet?: boolean;
   tokenbazaarBaseUrl?: string;
   imageModel?: string;
+  imageQuality?: string;
+  imageSize?: string;
+  imageMode?: string;
   useMockImageGen?: boolean;
   updatedAt: string | null;
   provider?: 'gemini' | 'openai' | 'other';
@@ -80,6 +83,8 @@ export type ImageGenResult = {
   model: string;
   prompt: string;
   size: string;
+  quality: string;
+  mode: string;
   ms: number;
   error?: string;
 };
