@@ -161,6 +161,18 @@ export const TRANSLATIONS = {
     referralRewardNote: 'هر دعوت: +۵۰ طلا برای تو، +۲۵ طلا برای دوستت',
     referralShareText: 'بیا تو بازی رمل! کد دعوت من: {code} 🎮',
     referralAlreadyApplied: 'قبلاً کد دعوت ثبت شده.',
+
+    // iOS WebApp Install Prompt
+    iosInstallTitle: 'نصب اپلیکیشن رمل (WebApp)',
+    iosInstallSubtitle: 'برای تجربهٔ کامل، روان و بدون کادر مرورگر، رمل را به صفحهٔ اصلی آیفون یا آیپد خود اضافه کنید:',
+    iosInstallStep1Title: '۱. دکمهٔ اشتراک‌گذاری (Share)',
+    iosInstallStep1Desc: 'در پایین مرورگر سَفاری (Safari)، روی آیکون اشتراک‌گذاری (کادر با فلش رو به بالا) بزنید.',
+    iosInstallStep2Title: '۲. افزودن به صفحه اصلی',
+    iosInstallStep2Desc: 'منو را به پایین بکشید و گزینهٔ «افزودن به صفحه اصلی» (Add to Home Screen) را انتخاب کنید.',
+    iosInstallStep3Title: '۳. تایید و افزودن',
+    iosInstallStep3Desc: 'در بالای صفحه روی «افزودن» (Add) بزنید تا آیکون بازی به صفحهٔ برنامه‌هایتان اضافه شود.',
+    iosInstallDismiss: 'متوجه شدم / بعداً',
+    installPwaButton: 'راهنمای نصب وب‌اپلیکیشن (PWA)',
   },
 
   en: {
@@ -321,8 +333,20 @@ export const TRANSLATIONS = {
     referralApply: 'Apply Code',
     referralApplied: 'Invite code applied!',
     referralRewardNote: 'Each invite: +50 Gold for you, +25 Gold for your friend',
-    referralShareText: 'Join me in Raml! My invite code: {code} \ud83c\udfae',
+    referralShareText: 'Join me in Raml! My invite code: {code} 🎮',
     referralAlreadyApplied: 'Invite code already applied.',
+
+    // iOS WebApp Install Prompt
+    iosInstallTitle: 'Install Raml App (WebApp)',
+    iosInstallSubtitle: 'For a full-screen, immersive experience without browser bars, add Raml to your Home Screen:',
+    iosInstallStep1Title: '1. Tap the Share button',
+    iosInstallStep1Desc: 'At the bottom of Safari, tap the Share icon (square with an upward arrow).',
+    iosInstallStep2Title: '2. Select "Add to Home Screen"',
+    iosInstallStep2Desc: 'Scroll down the menu options and tap "Add to Home Screen".',
+    iosInstallStep3Title: '3. Tap "Add"',
+    iosInstallStep3Desc: 'Tap "Add" in the top-right corner to place Raml on your home screen.',
+    iosInstallDismiss: 'Got it / Later',
+    installPwaButton: 'WebApp (PWA) Installation Guide',
   },
 } as const;
 

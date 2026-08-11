@@ -16,6 +16,7 @@ import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
 import { ChangelogModal } from './components/ChangelogModal';
+import { IosInstallPrompt } from './components/IosInstallPrompt';
 import { EYES_OPEN_MS } from './utils/storyPacing';
 import { track } from './analytics/funnel';
 import { t } from './utils/i18n';
@@ -25,6 +26,8 @@ export default function App() {
   const game = useGame();
   const [openingEyes, setOpeningEyes] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [iosInstallOpen, setIosInstallOpen] = useState<boolean | undefined>(undefined);
+  const [iosInstallForce, setIosInstallForce] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
   const skipEyesRef = useRef<(() => void) | null>(null);
 
@@ -212,6 +215,11 @@ export default function App() {
           game.setSettingsOpen(false);
           setChangelogOpen(true);
         }}
+        onOpenIosInstall={() => {
+          game.setSettingsOpen(false);
+          setIosInstallForce(true);
+          setIosInstallOpen(true);
+        }}
         busy={game.busy}
         playDayCount={state.playDayCount}
         unlocked={state.unlockedFullUi}
@@ -236,6 +244,13 @@ export default function App() {
         open={changelogOpen}
         language={lang}
         onClose={() => setChangelogOpen(false)}
+      />
+
+      <IosInstallPrompt
+        open={iosInstallOpen}
+        language={lang}
+        forceShow={iosInstallForce}
+        onClose={() => setIosInstallOpen(false)}
       />
 
       <Analytics />
