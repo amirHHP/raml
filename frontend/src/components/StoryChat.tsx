@@ -10,7 +10,7 @@ import type { EnemyLineArtType, GameOption, GameState, StoryHistoryEntry } from 
 
 function parseHistoryBubbles(
   history: Array<string | StoryHistoryEntry>,
-  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null },
+  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null; imageUrl?: string | null },
 ): ChatBubble[] {
   if (!history || history.length === 0) return [];
   return history.map((item, idx) => {
@@ -23,6 +23,7 @@ function parseHistoryBubbles(
         enemyLineArtType: isLast ? currentState?.enemyLineArtType : 'none',
         asciiArt: isLast ? currentState?.asciiArt : null,
         svgArt: isLast ? currentState?.svgArt : null,
+        imageUrl: isLast ? currentState?.imageUrl : null,
       };
     }
     if (item.kind === 'choice') {
@@ -42,6 +43,7 @@ function parseHistoryBubbles(
       enemyLineArtType: item.enemyLineArtType || (isLast ? currentState?.enemyLineArtType : 'none'),
       asciiArt: item.asciiArt !== undefined ? item.asciiArt : (isLast ? currentState?.asciiArt : null),
       svgArt: item.svgArt !== undefined ? item.svgArt : (isLast ? currentState?.svgArt : null),
+      imageUrl: item.imageUrl !== undefined ? item.imageUrl : (isLast ? currentState?.imageUrl : null),
     };
   });
 }
@@ -63,6 +65,7 @@ type StoryBubble = {
   enemyLineArtType?: EnemyLineArtType;
   asciiArt?: string | null;
   svgArt?: string | null;
+  imageUrl?: string | null;
 };
 
 type ChoiceBubble = {
@@ -203,6 +206,7 @@ export function StoryChat({
         enemyLineArtType: state.enemyLineArtType,
         asciiArt: state.asciiArt,
         svgArt: state.svgArt,
+        imageUrl: state.imageUrl,
       });
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
@@ -230,6 +234,7 @@ export function StoryChat({
         enemyLineArtType: state.enemyLineArtType,
         asciiArt: state.asciiArt,
         svgArt: state.svgArt,
+        imageUrl: state.imageUrl,
       }),
     );
     setAnimateLatest(true);
@@ -337,10 +342,11 @@ export function StoryChat({
         const lineArtType = isLatest ? state.enemyLineArtType : (bubble.enemyLineArtType || 'none');
         const asciiArt = isLatest ? state.asciiArt : bubble.asciiArt;
         const svgArt = isLatest ? state.svgArt : bubble.svgArt;
+        const imageUrl = isLatest ? state.imageUrl : bubble.imageUrl;
 
         return (
           <div key={bubble.id} className="flex flex-col gap-3">
-            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} />
+            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} imageUrl={imageUrl} />
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}

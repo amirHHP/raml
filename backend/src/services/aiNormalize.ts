@@ -224,6 +224,14 @@ export function normalizeAiPayload(raw: unknown): unknown {
         'svg_code',
         'svg',
       ) ?? null,
+    image_prompt:
+      pickString(
+        record,
+        'image_prompt',
+        'imagePrompt',
+        'visual_prompt',
+        'prompt',
+      ) ?? null,
     stats_update: asRecord(record.stats_update ?? record.statsUpdate) ?? {},
     needs_dice_roll: coerceBool(record.needs_dice_roll ?? record.needsDiceRoll),
     required_roll_type:

@@ -131,7 +131,7 @@ export interface InventoryItem {
 }
 
 export type StoryHistoryEntry =
-  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null }
+  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null; imageUrl?: string | null }
   | {
       kind: 'choice';
       text: string;
@@ -185,6 +185,7 @@ export interface GameState {
   enemyLineArtType: EnemyLineArtType;
   asciiArt?: string | null;
   svgArt?: string | null;
+  imageUrl?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];

@@ -78,6 +78,7 @@ const AiResponseSchema = z.object({
     .catch('none'),
   ascii_art: z.string().nullable().optional().catch(null),
   svg_art: z.string().nullable().optional().catch(null),
+  image_prompt: z.string().nullable().optional().catch(null),
   stats_update: z
     .object({
       hp: AiStatSchema,

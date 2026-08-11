@@ -117,6 +117,8 @@ export interface AiGameResponse {
   enemy_line_art_type: EnemyLineArtType;
   ascii_art?: string | null;
   svg_art?: string | null;
+  image_prompt?: string | null;
+  imageUrl?: string | null;
   stats_update: StatsUpdate;
   needs_dice_roll: boolean;
   required_roll_type: 'strength' | 'agility' | 'intellect' | 'luck' | null;
@@ -169,7 +171,7 @@ export interface InventoryItem {
 }
 
 export type StoryHistoryEntry =
-  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null }
+  | { kind: 'story'; text: string; enemyLineArtType?: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null; imageUrl?: string | null }
   | {
       kind: 'choice';
       text: string;
@@ -199,6 +201,7 @@ export interface PlayerDocument {
   enemyLineArtType: EnemyLineArtType;
   asciiArt?: string | null;
   svgArt?: string | null;
+  imageUrl?: string | null;
   needsDiceRoll: boolean;
   pendingDiceRoll: PendingDiceRoll | null;
   options: GameOption[];

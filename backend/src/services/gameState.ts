@@ -13,6 +13,7 @@ import {
 import { withMilestonePrompt } from './milestonePromptService';
 import { parseItemStatEffect } from './itemEffects';
 import { ensureReferralCode, generateRandomReferralCode, grantReferralRewards } from './referral';
+import { generateImage } from './imageGen';
 import type {
   AiGameResponse,
   ClassType,
@@ -249,12 +250,26 @@ function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
   });
 }
 
-function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
+async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<void> {
   player.storyText = ai.story_text;
   player.currentLocation = ai.current_location;
   player.enemyLineArtType = ai.enemy_line_art_type;
   player.asciiArt = ai.ascii_art ?? null;
   player.svgArt = ai.svg_art ?? null;
+
+  let imageUrl: string | null = ai.imageUrl ?? null;
+  if (!imageUrl) {
+    try {
+      const prompt = ai.image_prompt || `${ai.current_location}: ${ai.story_text.slice(0, 100)}`;
+      const imgRes = await generateImage({ prompt });
+      if (imgRes.ok && imgRes.imageUrl) {
+        imageUrl = imgRes.imageUrl;
+      }
+    } catch (err) {
+      console.error('Failed to generate image for turn:', err);
+    }
+  }
+  player.imageUrl = imageUrl;
   player.storyTurnCount = getStoryTurnCount(player) + 1;
   player.storyHistory = [
     ...(player.storyHistory || []),
@@ -264,6 +279,7 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
       enemyLineArtType: ai.enemy_line_art_type,
       asciiArt: ai.ascii_art ?? null,
       svgArt: ai.svg_art ?? null,
+      imageUrl: imageUrl,
     },
   ].slice(-200);
   const unlocks = resolveFeatureUnlocks(player);
@@ -449,6 +465,7 @@ export function toClientState(player: IPlayer) {
     enemyLineArtType: player.enemyLineArtType,
     asciiArt: player.asciiArt ?? null,
     svgArt: player.svgArt ?? null,
+    imageUrl: player.imageUrl ?? null,
     needsDiceRoll: player.needsDiceRoll,
     pendingDiceRoll: player.pendingDiceRoll,
     options: player.options,
@@ -514,7 +531,7 @@ export async function awakenPlayer(
       await withMilestonePrompt(await buildAwakenPrompt(name, classType, lang), turnNumber),
       { turnNumber, language: lang },
     );
-    applyAiResponse(player, data);
+    await applyAiResponse(player, data);
     markAiSource(player, source);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'خطای AI';
@@ -677,7 +694,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
       ),
       { turnNumber, language: lang },
     );
-    applyAiResponse(player, data);
+    await applyAiResponse(player, data);
     markAiSource(player, source);
     await persist(player);
     return toClientState(player);
@@ -758,7 +775,7 @@ export async function submitDiceRoll(
       ),
       { turnNumber, language: lang },
     );
-    applyAiResponse(player, data);
+    await applyAiResponse(player, data);
     markAiSource(player, source);
     await persist(player);
     return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };
