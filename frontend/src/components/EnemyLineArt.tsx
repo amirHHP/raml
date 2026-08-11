@@ -167,18 +167,11 @@ export function EnemyLineArt({
   if (imageUrl) {
     return (
       <div className={`flex justify-center py-3 ${className}`} aria-hidden>
-        <div className="w-full max-w-sm overflow-hidden rounded-xl border border-amber/30 bg-zinc-950/90 p-3 shadow-md shadow-amber/5 backdrop-blur-sm space-y-2">
-          <div className="flex justify-between items-center pb-1.5 border-b border-amber/15 text-[10px] text-amber/60 font-mono tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
-              تصویرگری AI
-            </span>
-            <span>TokenBazaar AI</span>
-          </div>
+        <div className="w-full max-w-sm overflow-hidden rounded-xl border border-amber/30 bg-zinc-950/90 p-2 shadow-md shadow-amber/5 backdrop-blur-sm">
           <div className="overflow-hidden rounded-lg border border-line/40 bg-black">
             <img
               src={imageUrl}
-              alt="تصویرگری هوش مصنوعی"
+              alt="تصویر صحنه"
               className="w-full max-h-72 object-cover rounded-md"
               loading="lazy"
             />
