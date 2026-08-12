@@ -170,8 +170,10 @@ export function EnemyLineArt({
   const isEn = language === 'en';
   const isAiTurn = turnNumber >= 5;
 
-  // 1. AI Generated Image (TokenBazaar AI / Flux-2-Pro / Mock SVG Data URL)
-  if (imageUrl) {
+  const isMockImage = imageUrl?.includes('RAML AI Image Generator') || imageUrl?.includes('Mock Mode');
+
+  // 1. AI Generated Image (TokenBazaar AI / Flux-2-Pro)
+  if (imageUrl && !isMockImage) {
     return (
       <div className={`flex justify-center py-3 ${className}`} aria-hidden>
         <div className="w-full max-w-sm overflow-hidden rounded-xl border border-amber/30 bg-zinc-950/90 p-2 shadow-md shadow-amber/5 backdrop-blur-sm">

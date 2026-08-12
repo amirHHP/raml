@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { getEquippedBySlot, listEquippedItems } from './equipment.ts';
+import { cleanItemName, getEquippedBySlot, getItemEmoji, listEquippedItems } from './equipment.ts';
 import type { InventoryItem } from '../types/game.ts';
 
 function item(
@@ -25,13 +25,13 @@ describe('getEquippedBySlot', () => {
     );
   });
 
-  it('maps wearables to slots; later item wins same slot', () => {
+  it('maps wearables to slots; first item wins unless specified', () => {
     const result = getEquippedBySlot([
       item({ id: 'old_hat', name: 'کلاه کهنه', equipSlot: 'head' }),
       item({ id: 'amulet', name: 'طلسم', equipSlot: 'accessory' }),
       item({ id: 'new_hat', name: 'کلاه نو', equipSlot: 'head' }),
     ]);
-    assert.equal(result.head?.id, 'new_hat');
+    assert.equal(result.head?.id, 'old_hat');
     assert.equal(result.accessory?.name, 'طلسم');
   });
 });
@@ -46,5 +46,28 @@ describe('listEquippedItems', () => {
       listed.map((e) => e.slot),
       ['head', 'weapon'],
     );
+  });
+});
+
+describe('getItemEmoji & cleanItemName', () => {
+  it('maps icon slugs like amulet to emojis', () => {
+    assert.equal(getItemEmoji({ icon: 'amulet', name: 'طلسم شن' }), '📿');
+    assert.equal(getItemEmoji({ icon: 'sword', name: 'شمشیر تاریکی' }), '🗡️');
+    assert.equal(getItemEmoji({ icon: 'shield', name: 'سپر کویر' }), '🛡️');
+    assert.equal(getItemEmoji({ icon: 'potion', name: 'معجون حیات' }), '🧪');
+  });
+
+  it('preserves existing emoji icons', () => {
+    assert.equal(getItemEmoji({ icon: '💍', name: 'حلقه قدرت' }), '💍');
+  });
+
+  it('infers emoji from equipSlot or Persian name when icon slug is unknown', () => {
+    assert.equal(getItemEmoji({ name: 'طلسم شن القدیم' }), '📿');
+    assert.equal(getItemEmoji({ equipSlot: 'accessory' }), '📿');
+  });
+
+  it('strips redundant leading icon slug from name', () => {
+    assert.equal(cleanItemName('amulet طلسم شن', 'amulet'), 'طلسم شن');
+    assert.equal(cleanItemName('طلسم شن', 'amulet'), 'طلسم شن');
   });
 });

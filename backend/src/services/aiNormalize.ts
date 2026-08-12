@@ -151,20 +151,74 @@ function normalizeOption(raw: unknown): Record<string, unknown> | null {
   };
 }
 
+const RAW_ICON_TO_EMOJI: Record<string, string> = {
+  amulet: '📿',
+  pendant: '📿',
+  necklace: '📿',
+  talisman: '📿',
+  sword: '🗡️',
+  dagger: '🗡️',
+  blade: '⚔️',
+  weapon: '⚔️',
+  shield: '🛡️',
+  armor: '🛡️',
+  chest: '🛡️',
+  helmet: '🪖',
+  head: '🪖',
+  boots: '🥾',
+  feet: '🥾',
+  gloves: '🥊',
+  hands: '🥊',
+  ring: '💍',
+  potion: '🧪',
+  elixir: '🧪',
+  flask: '🧪',
+  scroll: '📜',
+  map: '🗺️',
+  book: '📖',
+  key: '🔑',
+  gem: '💎',
+  crystal: '💎',
+  gold: '🪙',
+  search: '🔍',
+  backpack: '🎒',
+};
+
 function normalizeDiscoveredItem(raw: unknown): unknown {
   const record = asRecord(raw);
   if (!record) return null;
 
   const id = pickString(record, 'id', 'item_id');
-  const name = pickString(record, 'name', 'title');
+  let name = pickString(record, 'name', 'title');
   const description = pickString(record, 'description', 'desc') ?? name;
   if (!id || !name) return null;
+
+  const rawIcon = pickString(record, 'icon');
+  let icon = '🎒';
+
+  if (rawIcon) {
+    if (/\p{Extended_Pictographic}/u.test(rawIcon)) {
+      icon = rawIcon;
+    } else {
+      const slug = rawIcon.trim().toLowerCase();
+      icon = RAW_ICON_TO_EMOJI[slug] || '🎒';
+      if (name.toLowerCase().startsWith(slug + ' ')) {
+        name = name.slice(slug.length).trim();
+      }
+    }
+  } else {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('طلسم') || lowerName.includes('amulet')) icon = '📿';
+    else if (lowerName.includes('شمشیر') || lowerName.includes('sword')) icon = '🗡️';
+    else if (lowerName.includes('سپر') || lowerName.includes('shield')) icon = '🛡️';
+    else if (lowerName.includes('معجون') || lowerName.includes('potion')) icon = '🧪';
+  }
 
   return {
     id,
     name,
     description,
-    icon: pickString(record, 'icon') ?? 'amulet',
+    icon,
     equip_slot: record.equip_slot ?? record.equipSlot ?? null,
   };
 }

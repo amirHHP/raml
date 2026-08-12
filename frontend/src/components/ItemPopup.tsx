@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { InventoryItem, Language } from '../types/game';
+import { cleanItemName, getItemEmoji } from '../utils/equipment';
 import { t, type TranslationKey } from '../utils/i18n';
 
 export type PopupData =
@@ -75,10 +76,10 @@ export function ItemPopup({
         </div>
       </div>
     );
-  }
-
   // kind === 'item'
   const { item } = popup;
+  const emoji = getItemEmoji(item);
+  const displayName = cleanItemName(item.name, item.icon);
 
   return (
     <div
@@ -100,10 +101,10 @@ export function ItemPopup({
         {/* Item image or icon */}
         {item.imageUrl ? (
           <div className="popup-image-frame mt-4">
-            <img src={item.imageUrl} alt={item.name} loading="eager" />
+            <img src={item.imageUrl} alt={displayName} loading="eager" />
           </div>
         ) : (
-          <span className="popup-unlock-icon mt-3">{item.icon || '🎒'}</span>
+          <span className="popup-unlock-icon mt-3">{emoji}</span>
         )}
 
         {/* Item name */}
@@ -111,7 +112,7 @@ export function ItemPopup({
           className="mt-2 text-center text-base font-semibold"
           style={{ color: 'var(--color-bone)' }}
         >
-          {item.icon} {item.name}
+          {emoji} {displayName}
         </h3>
 
         {/* Description */}

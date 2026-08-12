@@ -263,6 +263,10 @@ function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
 function triggerTurnImageGen(deviceId: string, targetTurnNumber: number, prompt: string): void {
   setImmediate(async () => {
     try {
+      // Skip image generation entirely in mock mode — mock SVGs are only for the admin playground
+      const settings = settingsForClient();
+      if (settings.useMockImageGen || !settings.tokenbazaarApiKey) return;
+
       const imgRes = await generateImage({ prompt });
       if (!imgRes.ok || !imgRes.imageUrl) return;
 
@@ -345,24 +349,27 @@ function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
     const effectStats = parseItemStatEffect(discovered.effect);
 
     if (nextTurnNumber >= AI_LIVE_FROM_TURN) {
-      const itemPrompt = `Fantasy RPG item: ${discovered.name}. ${discovered.description || ''}. Dark souls style, single item on dark background, detailed illustration, game inventory icon.`;
-      const itemId = discovered.id;
-      const deviceId = player.deviceId;
-      setImmediate(async () => {
-        try {
-          const itemImgRes = await generateImage({ prompt: itemPrompt, size: '512x512' });
-          if (itemImgRes.ok && itemImgRes.imageUrl) {
-            const p = await getOrCreatePlayer(deviceId);
-            const item = p.inventory.find((i) => i.id === itemId);
-            if (item) {
-              item.imageUrl = itemImgRes.imageUrl;
-              await persistPlayer(p);
+      const itemSettings = settingsForClient();
+      if (!itemSettings.useMockImageGen && itemSettings.tokenbazaarApiKey) {
+        const itemPrompt = `Fantasy RPG item: ${discovered.name}. ${discovered.description || ''}. Dark souls style, single item on dark background, detailed illustration, game inventory icon.`;
+        const itemId = discovered.id;
+        const deviceId = player.deviceId;
+        setImmediate(async () => {
+          try {
+            const itemImgRes = await generateImage({ prompt: itemPrompt, size: '512x512' });
+            if (itemImgRes.ok && itemImgRes.imageUrl) {
+              const p = await getOrCreatePlayer(deviceId);
+              const item = p.inventory.find((i) => i.id === itemId);
+              if (item) {
+                item.imageUrl = itemImgRes.imageUrl;
+                await persistPlayer(p);
+              }
             }
+          } catch (err) {
+            console.error('Failed to generate item image:', err);
           }
-        } catch (err) {
-          console.error('Failed to generate item image:', err);
-        }
-      });
+        });
+      }
     }
 
     if (existing) {

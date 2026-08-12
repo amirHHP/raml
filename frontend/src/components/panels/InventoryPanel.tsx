@@ -4,6 +4,7 @@ import {
   type Language,
 } from '../../types/game';
 import { getSlotLabel, t } from '../../utils/i18n';
+import { cleanItemName, getItemEmoji } from '../../utils/equipment';
 
 export function InventoryPanel({
   items,
@@ -29,32 +30,35 @@ export function InventoryPanel({
 
   return (
     <ul className="space-y-3 px-4 py-4">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          className={`rounded-xl border px-4 py-3.5 space-y-1.5 transition ${
-            item.isEquipped
-              ? 'border-amber/60 bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]'
-              : 'border-amber/30 bg-panel'
-          }`}
-        >
-          {/* Item AI image (if available) */}
-          {item.imageUrl && (
-            <div className="mb-2 overflow-hidden rounded-lg border border-amber/20">
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-full h-32 object-cover"
-                loading="lazy"
-              />
-            </div>
-          )}
+      {items.map((item) => {
+        const emoji = getItemEmoji(item);
+        const displayName = cleanItemName(item.name, item.icon);
+        return (
+          <li
+            key={item.id}
+            className={`rounded-xl border px-4 py-3.5 space-y-1.5 transition ${
+              item.isEquipped
+                ? 'border-amber/60 bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]'
+                : 'border-amber/30 bg-panel'
+            }`}
+          >
+            {/* Item AI image (if available) */}
+            {item.imageUrl && (
+              <div className="mb-2 overflow-hidden rounded-lg border border-amber/20">
+                <img
+                  src={item.imageUrl}
+                  alt={displayName}
+                  className="w-full h-32 object-cover"
+                  loading="lazy"
+                />
+              </div>
+            )}
 
-          <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-base">{item.icon || '🎒'}</span>
-              <h3 className="font-semibold text-sm text-ink">{item.name}</h3>
-            </div>
+            <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">{emoji}</span>
+                <h3 className="font-semibold text-sm text-ink">{displayName}</h3>
+              </div>
             <div className="flex items-center gap-2">
               {item.isEquipped && (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40">
@@ -95,9 +99,9 @@ export function InventoryPanel({
                 {item.isEquipped ? `✖️ ${t('unequipButton', language)}` : `🛡️ ${t('equipButton', language)}`}
               </button>
             </div>
-          ) : null}
         </li>
-      ))}
+      );
+      })}
     </ul>
   );
 }
