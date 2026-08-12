@@ -260,7 +260,40 @@ function mapOptions(ai: AiGameResponse, unlocks: FeatureUnlocks): GameOption[] {
   });
 }
 
-async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<void> {
+function triggerTurnImageGen(deviceId: string, targetTurnNumber: number, prompt: string): void {
+  setImmediate(async () => {
+    try {
+      const imgRes = await generateImage({ prompt });
+      if (!imgRes.ok || !imgRes.imageUrl) return;
+
+      const player = await getOrCreatePlayer(deviceId);
+
+      if (Array.isArray(player.storyHistory)) {
+        let storyTurnCounter = 0;
+        for (let i = 0; i < player.storyHistory.length; i++) {
+          const entry = player.storyHistory[i];
+          if (typeof entry !== 'string' && entry.kind === 'story') {
+            storyTurnCounter++;
+            if (storyTurnCounter === targetTurnNumber) {
+              entry.imageUrl = imgRes.imageUrl;
+              break;
+            }
+          }
+        }
+      }
+
+      if (getStoryTurnCount(player) === targetTurnNumber) {
+        player.imageUrl = imgRes.imageUrl;
+      }
+
+      await persistPlayer(player);
+    } catch (err) {
+      console.error('Background image generation failed:', err);
+    }
+  });
+}
+
+function applyAiResponse(player: IPlayer, ai: AiGameResponse): void {
   // Snapshot feature unlocks BEFORE advancing the turn for diff detection
   const unlocksBefore = resolveFeatureUnlocks(player);
 
@@ -269,22 +302,11 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
   player.enemyLineArtType = ai.enemy_line_art_type;
   player.asciiArt = ai.ascii_art ?? null;
   player.svgArt = ai.svg_art ?? null;
+  player.imageUrl = ai.imageUrl ?? null;
 
   const nextTurnNumber = getStoryTurnCount(player) + 1;
-  let imageUrl: string | null = ai.imageUrl ?? null;
-  if (!imageUrl && nextTurnNumber >= AI_LIVE_FROM_TURN) {
-    try {
-      const prompt = ai.image_prompt || `${ai.current_location}: ${ai.story_text.slice(0, 100)}`;
-      const imgRes = await generateImage({ prompt });
-      if (imgRes.ok && imgRes.imageUrl) {
-        imageUrl = imgRes.imageUrl;
-      }
-    } catch (err) {
-      console.error('Failed to generate image for turn:', err);
-    }
-  }
-  player.imageUrl = imageUrl;
   player.storyTurnCount = nextTurnNumber;
+
   player.storyHistory = [
     ...(player.storyHistory || []),
     {
@@ -293,11 +315,18 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
       enemyLineArtType: ai.enemy_line_art_type,
       asciiArt: ai.ascii_art ?? null,
       svgArt: ai.svg_art ?? null,
-      imageUrl: imageUrl,
+      imageUrl: ai.imageUrl ?? null,
     },
   ].slice(-200);
+
   const unlocks = resolveFeatureUnlocks(player);
   applyStatsUpdate(player, ai.stats_update || {}, unlocks);
+
+  // Trigger non-blocking background image generation for live AI turns
+  if (!ai.imageUrl && nextTurnNumber >= AI_LIVE_FROM_TURN) {
+    const prompt = ai.image_prompt || `${ai.current_location}: ${ai.story_text.slice(0, 100)}`;
+    triggerTurnImageGen(player.deviceId, nextTurnNumber, prompt);
+  }
 
   // --- Detect newly unlocked features ---
   const newlyUnlocked: string[] = [];
@@ -315,25 +344,31 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
     const existing = player.inventory.find((i) => i.id === discovered.id);
     const effectStats = parseItemStatEffect(discovered.effect);
 
-    // Generate AI image for the discovered item
-    let itemImageUrl: string | null = null;
     if (nextTurnNumber >= AI_LIVE_FROM_TURN) {
-      try {
-        const itemPrompt = `Fantasy RPG item: ${discovered.name}. ${discovered.description || ''}. Dark souls style, single item on dark background, detailed illustration, game inventory icon.`;
-        const itemImgRes = await generateImage({ prompt: itemPrompt, size: '512x512' });
-        if (itemImgRes.ok && itemImgRes.imageUrl) {
-          itemImageUrl = itemImgRes.imageUrl;
+      const itemPrompt = `Fantasy RPG item: ${discovered.name}. ${discovered.description || ''}. Dark souls style, single item on dark background, detailed illustration, game inventory icon.`;
+      const itemId = discovered.id;
+      const deviceId = player.deviceId;
+      setImmediate(async () => {
+        try {
+          const itemImgRes = await generateImage({ prompt: itemPrompt, size: '512x512' });
+          if (itemImgRes.ok && itemImgRes.imageUrl) {
+            const p = await getOrCreatePlayer(deviceId);
+            const item = p.inventory.find((i) => i.id === itemId);
+            if (item) {
+              item.imageUrl = itemImgRes.imageUrl;
+              await persistPlayer(p);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to generate item image:', err);
         }
-      } catch (err) {
-        console.error('Failed to generate item image:', err);
-      }
+      });
     }
 
     if (existing) {
       existing.quantity += 1;
       if (discovered.equip_slot) existing.equipSlot = discovered.equip_slot;
       if (discovered.effect) existing.effect = discovered.effect;
-      if (itemImageUrl && !existing.imageUrl) existing.imageUrl = itemImageUrl;
       discoveredItemForClient = { ...existing } as InventoryItem;
     } else {
       const isSlotOccupied = discovered.equip_slot
@@ -350,7 +385,6 @@ async function applyAiResponse(player: IPlayer, ai: AiGameResponse): Promise<voi
         ...(discovered.equip_slot ? { equipSlot: discovered.equip_slot } : {}),
         ...(discovered.effect ? { effect: discovered.effect } : {}),
         isEquipped: shouldEquip,
-        imageUrl: itemImageUrl,
       };
       player.inventory.push(newItem);
       discoveredItemForClient = { ...newItem };
@@ -590,7 +624,7 @@ export async function awakenPlayer(
       await withMilestonePrompt(await buildAwakenPrompt(name, classType, lang), turnNumber),
       { turnNumber, language: lang },
     );
-    await applyAiResponse(player, data);
+    applyAiResponse(player, data);
     markAiSource(player, source);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'خطای AI';
@@ -753,7 +787,7 @@ export async function chooseOption(deviceId: string, optionId: string) {
       ),
       { turnNumber, language: lang },
     );
-    await applyAiResponse(player, data);
+    applyAiResponse(player, data);
     markAiSource(player, source);
     await persist(player);
     return toClientState(player);
@@ -834,7 +868,7 @@ export async function submitDiceRoll(
       ),
       { turnNumber, language: lang },
     );
-    await applyAiResponse(player, data);
+    applyAiResponse(player, data);
     markAiSource(player, source);
     await persist(player);
     return { ...toClientState(player), lastRoll: { rawRoll, modifier, total, success } };

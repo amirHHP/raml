@@ -129,6 +129,42 @@ export function useGame() {
     return () => window.clearTimeout(id);
   }, [state?.toastMessage]);
 
+  // Poll for background image generation when turn >= 5 and image is not ready yet
+  useEffect(() => {
+    if (!state?.awakened || (state.storyTurnCount || 0) < 5) return;
+
+    const history = state.storyHistory || [];
+    const latestStory = [...history].reverse().find((h) => typeof h !== 'string' && h.kind === 'story');
+    const needsImage = !state.imageUrl && (!latestStory || (typeof latestStory !== 'string' && !latestStory.imageUrl));
+
+    if (!needsImage) return;
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = window.setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts || busyRef.current) {
+        window.clearInterval(interval);
+        return;
+      }
+      try {
+        const fresh = await api.getState();
+        const freshHistory = fresh.storyHistory || [];
+        const freshLatest = [...freshHistory].reverse().find((h) => typeof h !== 'string' && h.kind === 'story');
+        const hasImageNow = Boolean(fresh.imageUrl || (freshLatest && typeof freshLatest !== 'string' && freshLatest.imageUrl));
+
+        if (hasImageNow || fresh.storyTurnCount !== state.storyTurnCount) {
+          window.clearInterval(interval);
+          setState(fresh);
+        }
+      } catch {
+        // Ignore polling errors
+      }
+    }, 1500);
+
+    return () => window.clearInterval(interval);
+  }, [state?.storyTurnCount, state?.imageUrl, state?.storyHistory, state?.awakened]);
+
   const run = async <T,>(fn: () => Promise<T>): Promise<T | null> => {
     try {
       setBusy(true);
