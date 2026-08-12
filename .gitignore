@@ -23,6 +23,8 @@ frontend/android/build/
 frontend/android/local.properties
 *.apk
 *.aab
+*.keystore
+*.jks
 
 # OS / IDE
 .DS_Store
