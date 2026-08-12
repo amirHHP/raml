@@ -10,11 +10,13 @@ import type { EnemyLineArtType, GameOption, GameState, StoryHistoryEntry } from 
 
 function parseHistoryBubbles(
   history: Array<string | StoryHistoryEntry>,
-  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null; imageUrl?: string | null },
+  currentState?: { enemyLineArtType: EnemyLineArtType; asciiArt?: string | null; svgArt?: string | null; imageUrl?: string | null; storyTurnCount?: number },
 ): ChatBubble[] {
   if (!history || history.length === 0) return [];
+  let storyTurnCounter = 0;
   return history.map((item, idx) => {
     if (typeof item === 'string') {
+      storyTurnCounter++;
       const isLast = idx === history.length - 1;
       return {
         id: `hist-story-${idx}`,
@@ -24,6 +26,7 @@ function parseHistoryBubbles(
         asciiArt: isLast ? currentState?.asciiArt : null,
         svgArt: isLast ? currentState?.svgArt : null,
         imageUrl: isLast ? currentState?.imageUrl : null,
+        turnNumber: isLast ? (currentState?.storyTurnCount || storyTurnCounter) : storyTurnCounter,
       };
     }
     if (item.kind === 'choice') {
@@ -35,6 +38,7 @@ function parseHistoryBubbles(
         icon: item.icon || 'search',
       };
     }
+    storyTurnCounter++;
     const isLast = idx === history.length - 1;
     return {
       id: `hist-story-${idx}`,
@@ -44,6 +48,7 @@ function parseHistoryBubbles(
       asciiArt: item.asciiArt !== undefined ? item.asciiArt : (isLast ? currentState?.asciiArt : null),
       svgArt: item.svgArt !== undefined ? item.svgArt : (isLast ? currentState?.svgArt : null),
       imageUrl: item.imageUrl !== undefined ? item.imageUrl : (isLast ? currentState?.imageUrl : null),
+      turnNumber: isLast ? (currentState?.storyTurnCount || storyTurnCounter) : storyTurnCounter,
     };
   });
 }
@@ -66,6 +71,7 @@ type StoryBubble = {
   asciiArt?: string | null;
   svgArt?: string | null;
   imageUrl?: string | null;
+  turnNumber?: number;
 };
 
 type ChoiceBubble = {
@@ -207,6 +213,7 @@ export function StoryChat({
         asciiArt: state.asciiArt,
         svgArt: state.svgArt,
         imageUrl: state.imageUrl,
+        storyTurnCount: state.storyTurnCount,
       });
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
@@ -235,13 +242,14 @@ export function StoryChat({
         asciiArt: state.asciiArt,
         svgArt: state.svgArt,
         imageUrl: state.imageUrl,
+        storyTurnCount: state.storyTurnCount,
       }),
     );
     setAnimateLatest(true);
     setTypingDone(false);
     typingDoneRef.current = false;
     setStickToBottom(true);
-  }, [hydrated, state.storyHistory, state.storyText, state.storyTurnCount]);
+  }, [hydrated, state.storyHistory, state.storyText, state.storyTurnCount, state.enemyLineArtType, state.asciiArt, state.svgArt, state.imageUrl]);
 
   const handleTypingDone = () => {
     if (typingDoneRef.current) return;
