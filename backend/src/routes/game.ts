@@ -25,6 +25,7 @@ import { FUNNEL_EVENT_NAMES } from '../models/FunnelEvent';
 import { listChangelogs } from '../services/changelog';
 import { getReferralInfo, applyReferralCode } from '../services/referral';
 import { generateImage } from '../services/imageGen';
+import { submitFeedback } from '../services/feedback';
 
 const router = Router();
 
@@ -377,6 +378,36 @@ router.post('/generate-image', async (req, res) => {
     const e = err as Error & { status?: number };
     console.error(err);
     res.status(e.status || 500).json({ error: e.message || 'خطا در ساخت تصویر' });
+  }
+});
+
+router.post('/feedback', requireDeviceId, async (req, res) => {
+  try {
+    const body = z
+      .object({
+        category: z.enum(['general', 'bug', 'suggestion', 'praise']).default('general'),
+        rating: z.number().int().min(1).max(5),
+        message: z.string().min(3).max(2000),
+        characterName: z.string().max(24).optional().nullable(),
+      })
+      .parse(req.body);
+
+    const result = await submitFeedback({
+      deviceId: req.deviceId,
+      characterName: body.characterName || null,
+      category: body.category,
+      rating: body.rating,
+      message: body.message,
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'فیدبک نامعتبر' });
+      return;
+    }
+    const e = err as Error & { status?: number };
+    console.error(err);
+    res.status(e.status || 500).json({ error: e.message || 'خطا در ارسال فیدبک' });
   }
 });
 

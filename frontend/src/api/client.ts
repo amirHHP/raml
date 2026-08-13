@@ -144,4 +144,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ referralCode }),
     }),
+  submitFeedback: (payload: { category: string; rating: number; message: string; characterName?: string | null }) =>
+    request<void>('/api/game/feedback', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };

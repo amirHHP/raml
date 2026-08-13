@@ -17,6 +17,7 @@ import { RewardedAdModal } from './components/monetization/RewardedAdModal';
 import { SettingsModal } from './components/SettingsModal';
 import { InboxModal } from './components/InboxModal';
 import { ChangelogModal } from './components/ChangelogModal';
+import { FeedbackModal } from './components/FeedbackModal';
 import { IosInstallPrompt } from './components/IosInstallPrompt';
 import { ItemPopup } from './components/ItemPopup';
 import { EYES_OPEN_MS } from './utils/storyPacing';
@@ -29,6 +30,7 @@ export default function App() {
   const audio = useAudioEngine(game.state, game.tab);
   const [openingEyes, setOpeningEyes] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [iosInstallOpen, setIosInstallOpen] = useState<boolean | undefined>(undefined);
   const [iosInstallForce, setIosInstallForce] = useState(false);
   const scrollRef = useRef<HTMLElement>(null);
@@ -220,6 +222,10 @@ export default function App() {
           game.setSettingsOpen(false);
           setChangelogOpen(true);
         }}
+        onFeedback={() => {
+          game.setSettingsOpen(false);
+          setFeedbackOpen(true);
+        }}
         onOpenIosInstall={() => {
           game.setSettingsOpen(false);
           setIosInstallForce(true);
@@ -254,6 +260,13 @@ export default function App() {
         open={changelogOpen}
         language={lang}
         onClose={() => setChangelogOpen(false)}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        language={lang}
+        characterName={state.characterName}
+        onClose={() => setFeedbackOpen(false)}
       />
 
       <IosInstallPrompt

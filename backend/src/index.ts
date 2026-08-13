@@ -28,6 +28,7 @@ import {
 import { setFunnelMemory } from './services/funnel';
 import { setChangelogMemory } from './services/changelog';
 import { fixReferralCodeDuplicates } from './services/referral';
+import { setFeedbackMemory } from './services/feedback';
 
 const app = express();
 
@@ -55,6 +56,7 @@ const mongoReady = mongoose
     setGameSettingsMemory(false);
     setFunnelMemory(false);
     setChangelogMemory(false);
+    setFeedbackMemory(false);
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
@@ -71,6 +73,7 @@ const mongoReady = mongoose
     setGameSettingsMemory(true);
     setFunnelMemory(true);
     setChangelogMemory(true);
+    setFeedbackMemory(true);
     (global as { __ramlMemory?: boolean }).__ramlMemory = true;
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();

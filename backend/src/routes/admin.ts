@@ -35,6 +35,7 @@ import {
 } from '../services/notifications';
 import { getFunnelReport } from '../services/funnel';
 import { getAdminReferralStats } from '../services/referral';
+import { listFeedbacks, getFeedbackStats, deleteFeedback } from '../services/feedback';
 
 const router = Router();
 
@@ -426,6 +427,43 @@ router.delete('/changelogs/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     sendError(res, err, 'خطا در حذف تغییرات');
+  }
+});
+
+// ── Feedbacks ──────────────────────────────────────────────────
+
+router.get('/feedbacks/stats', async (_req, res) => {
+  try {
+    const stats = await getFeedbackStats();
+    res.json(stats);
+  } catch (err) {
+    sendError(res, err, 'خطا در آمار فیدبک‌ها');
+  }
+});
+
+router.get('/feedbacks', async (req, res) => {
+  try {
+    const query = z
+      .object({
+        page: z.coerce.number().int().min(1).optional(),
+        limit: z.coerce.number().int().min(1).max(100).optional(),
+        category: z.enum(['general', 'bug', 'suggestion', 'praise']).optional(),
+      })
+      .parse(req.query);
+
+    const result = await listFeedbacks(query);
+    res.json(result);
+  } catch (err) {
+    sendError(res, err, 'خطا در لیست فیدبک‌ها');
+  }
+});
+
+router.delete('/feedbacks/:id', async (req, res) => {
+  try {
+    await deleteFeedback(String(req.params.id));
+    res.json({ ok: true });
+  } catch (err) {
+    sendError(res, err, 'خطا در حذف فیدبک');
   }
 });
 

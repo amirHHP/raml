@@ -199,6 +199,20 @@ export const TRANSLATIONS = {
     popupUnlockInventoryDesc: 'حالا می‌تونی آیتم‌هات رو ببینی و مدیریت کنی.',
     popupUnlockStatsDesc: 'آمار و مشخصات قهرمانت رو از این به بعد ببین.',
     popupUnlockHomeDesc: 'یه پناهگاه امن برای استراحت و تمرین.',
+
+    // Feedback Modal
+    feedbackTitle: 'ارسال بازخورد',
+    feedbackSuccess: 'بازخورد شما با موفقیت ثبت شد. از همراهی شما متشکریم!',
+    feedbackErrorShort: 'متن بازخورد خیلی کوتاه است.',
+    feedbackCategoryLabel: 'موضوع پیام:',
+    feedbackCat_general: 'عمومی',
+    feedbackCat_suggestion: 'پیشنهاد',
+    feedbackCat_bug: 'گزارش مشکل',
+    feedbackCat_praise: 'انتقاد / تشکر',
+    feedbackRatingLabel: 'امتیاز شما به بازی:',
+    feedbackMessageLabel: 'متن پیام:',
+    feedbackMessagePlaceholder: 'نظرات، پیشنهادات یا مشکلات خود را بنویسید...',
+    feedbackSubmit: 'ارسال پیام',
   },
 
   en: {
@@ -399,6 +413,20 @@ export const TRANSLATIONS = {
     popupUnlockInventoryDesc: 'You can now view and manage your items.',
     popupUnlockStatsDesc: 'Hero stats and attributes are now visible.',
     popupUnlockHomeDesc: 'A safe haven for rest and training.',
+
+    // Feedback Modal
+    feedbackTitle: 'Send Feedback',
+    feedbackSuccess: 'Your feedback has been submitted successfully. Thank you!',
+    feedbackErrorShort: 'Feedback message is too short.',
+    feedbackCategoryLabel: 'Category:',
+    feedbackCat_general: 'General',
+    feedbackCat_suggestion: 'Suggestion',
+    feedbackCat_bug: 'Bug Report',
+    feedbackCat_praise: 'Praise',
+    feedbackRatingLabel: 'Rate your experience:',
+    feedbackMessageLabel: 'Message:',
+    feedbackMessagePlaceholder: 'Write your thoughts, suggestions, or issues here...',
+    feedbackSubmit: 'Submit Feedback',
   },
 } as const;
 
