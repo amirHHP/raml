@@ -185,6 +185,7 @@ export function StoryChat({
   const [stickToBottom, setStickToBottom] = useState(true);
 
   const lastStoryRef = useRef<string | null>(null);
+  const lastImageRef = useRef<string | null>(null);
   const lastTurnRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingDoneRef = useRef(false);
@@ -217,6 +218,7 @@ export function StoryChat({
       });
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
+      lastImageRef.current = state.imageUrl ?? null;
       lastTurnRef.current = state.storyTurnCount || history.length;
       const animateFirst = history.length <= 1;
       setAnimateLatest(animateFirst);
@@ -229,11 +231,28 @@ export function StoryChat({
     const turn = state.storyTurnCount || 0;
     const textChanged = Boolean(state.storyText) && state.storyText !== lastStoryRef.current;
     const turnAdvanced = turn > lastTurnRef.current;
+    const imageChanged = Boolean(state.imageUrl) && state.imageUrl !== lastImageRef.current;
 
-    if (!textChanged && !turnAdvanced) return;
+    if (!textChanged && !turnAdvanced && !imageChanged) return;
     if (!state.storyText) return;
 
+    // If only image arrived without a new turn, update bubbles quietly without restarting typewriter!
+    if (imageChanged && !textChanged && !turnAdvanced) {
+      lastImageRef.current = state.imageUrl ?? null;
+      setBubbles(
+        parseHistoryBubbles(history, {
+          enemyLineArtType: state.enemyLineArtType,
+          asciiArt: state.asciiArt,
+          svgArt: state.svgArt,
+          imageUrl: state.imageUrl,
+          storyTurnCount: state.storyTurnCount,
+        }),
+      );
+      return;
+    }
+
     lastStoryRef.current = state.storyText;
+    lastImageRef.current = state.imageUrl ?? null;
     lastTurnRef.current = turnAdvanced ? turn : lastTurnRef.current + 1;
 
     setBubbles(
@@ -354,7 +373,7 @@ export function StoryChat({
 
         return (
           <div key={bubble.id} className="flex flex-col gap-3">
-            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} imageUrl={imageUrl} />
+            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} imageUrl={imageUrl} isLatest={isLatest} language={lang} />
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}
