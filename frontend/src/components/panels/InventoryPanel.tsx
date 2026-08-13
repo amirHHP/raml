@@ -99,6 +99,7 @@ export function InventoryPanel({
                 {item.isEquipped ? `✖️ ${t('unequipButton', language)}` : `🛡️ ${t('equipButton', language)}`}
               </button>
             </div>
+          ) : null}
         </li>
       );
       })}

@@ -76,6 +76,8 @@ export function ItemPopup({
         </div>
       </div>
     );
+  }
+
   // kind === 'item'
   const { item } = popup;
   const emoji = getItemEmoji(item);
