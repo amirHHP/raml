@@ -251,16 +251,17 @@ export function useGame() {
 
   const buySku = async (sku: string) => {
     try {
-      const res = await api.requestZarinpal(sku);
-      if (res.ok && res.paymentUrl) {
+      const res = await run(() => api.requestZarinpal(sku));
+      if (res?.ok && res.paymentUrl) {
         window.location.href = res.paymentUrl;
         return;
       }
-      throw new Error('خطا در دریافت آدرس پرداخت');
+      if (res?.error) {
+        setError(res.error);
+      }
     } catch (e) {
-      console.warn('Zarinpal gateway redirect failed, attempting fallback:', e);
-      const s = await run(() => api.verifyIap(sku));
-      if (s) setState(s);
+      console.error('Zarinpal gateway redirect error:', e);
+      setError((e as Error).message || 'خطا در اتصال به درگاه پرداخت زرین‌پال');
     }
   };
 

@@ -62,6 +62,48 @@ function toPublicTransaction(doc: IPaymentTransaction | PaymentMemEntry) {
 
 export type PublicPaymentTransaction = ReturnType<typeof toPublicTransaction>;
 
+export function formatZarinpalError(body: any, fallbackStatus = 500): string {
+  if (!body) return `خطای ارتباط با درگاه پرداخت (کد ${fallbackStatus})`;
+
+  if (body.errors) {
+    if (typeof body.errors === 'string') return body.errors;
+
+    if (Array.isArray(body.errors)) {
+      const msgs = body.errors
+        .map((e: any) => (typeof e === 'string' ? e : e?.message || JSON.stringify(e)))
+        .filter(Boolean);
+      if (msgs.length > 0) return msgs.join(' | ');
+    }
+
+    if (typeof body.errors === 'object') {
+      const errObj = body.errors;
+      const parts: string[] = [];
+      if (errObj.message) parts.push(String(errObj.message));
+      if (errObj.validations) {
+        if (Array.isArray(errObj.validations)) {
+          parts.push(
+            errObj.validations
+              .map((v: any) => (typeof v === 'object' ? Object.values(v).join(', ') : String(v)))
+              .join(', '),
+          );
+        } else if (typeof errObj.validations === 'object') {
+          parts.push(
+            Object.entries(errObj.validations)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', '),
+          );
+        }
+      }
+      if (parts.length > 0) return parts.join(' - ');
+      if (errObj.code) return `کد خطای زرین‌پال: ${errObj.code}`;
+    }
+  }
+
+  if (body.data?.message) return String(body.data.message);
+
+  return `خطای درگاه زرین‌پال (کد ${body?.data?.code || fallbackStatus})`;
+}
+
 function getZarinpalBaseUrl(): string {
   return config.zarinpalSandbox
     ? 'https://sandbox.zarinpal.com/pg'
@@ -169,19 +211,20 @@ export async function requestZarinpalPayment(options: {
   const requestEndpoint = `${baseUrl}/v4/payment/request.json`;
 
   try {
-    const payload = {
+    const payload: Record<string, unknown> = {
       merchant_id: merchantId,
       amount: amountTomans,
       currency: 'IRT',
       description,
       callback_url: callbackUrl,
-      metadata: {
-        mobile: mobile || undefined,
-        email: email || undefined,
-        sku: pkg.sku,
-        deviceId,
-      },
     };
+
+    const metadata: Record<string, string> = {};
+    if (mobile?.trim()) metadata.mobile = mobile.trim();
+    if (email?.trim()) metadata.email = email.trim();
+    if (Object.keys(metadata).length > 0) {
+      payload.metadata = metadata;
+    }
 
     const response = await fetch(requestEndpoint, {
       method: 'POST',
@@ -197,15 +240,21 @@ export async function requestZarinpalPayment(options: {
       errors?: Array<{ code: number; message: string }> | Record<string, unknown>;
     };
 
-    if (!response.ok || !body.data || body.data.code !== 100) {
-      const errMsg =
-        (Array.isArray(body.errors) && body.errors[0]?.message) ||
-        body.data?.message ||
-        `خطای درگاه زرین‌پال (کد ${body.data?.code || response.status})`;
+    const isSuccess = response.ok && body.data && (body.data.code === 100 || body.data.code === 101);
+
+    if (!isSuccess || !body.data?.authority) {
+      const errMsg = formatZarinpalError(body, response.status);
+      console.error('Zarinpal request failed:', {
+        status: response.status,
+        requestEndpoint,
+        callbackUrl,
+        merchantIdMasked: merchantId ? `${merchantId.slice(0, 8)}...` : '(empty)',
+        body,
+      });
 
       return {
         ok: false,
-        code: body.data?.code || response.status,
+        code: body.data?.code || (body.errors as any)?.code || response.status,
         error: errMsg,
       };
     }
@@ -229,7 +278,7 @@ export async function requestZarinpalPayment(options: {
       code: body.data.code,
     };
   } catch (err) {
-    console.error('Zarinpal request payment error:', err);
+    console.error('Zarinpal request payment network exception:', err);
     return {
       ok: false,
       error: 'خطا در برقراری ارتباط با درگاه پرداخت زرین‌پال',
@@ -401,8 +450,9 @@ export async function verifyZarinpalPayment(options: {
     };
 
     const code = body.data?.code;
+    const isSuccess = (code === 100 || code === 101);
 
-    if (code === 100 || code === 101) {
+    if (isSuccess && body.data) {
       tx.status = 'paid';
       tx.refId = String(body.data?.ref_id || '');
       tx.cardPan = body.data?.card_pan || '';
@@ -429,10 +479,14 @@ export async function verifyZarinpalPayment(options: {
       };
     }
 
-    const errMsg =
-      (Array.isArray(body.errors) && body.errors[0]?.message) ||
-      body.data?.message ||
-      `تأیید پرداخت ناموفق بود (کد ${code || response.status})`;
+    const errMsg = formatZarinpalError(body, response.status);
+    console.error('Zarinpal verify failed:', {
+      status: response.status,
+      verifyEndpoint,
+      authority: cleanAuth,
+      merchantIdMasked: merchantId ? `${merchantId.slice(0, 8)}...` : '(empty)',
+      body,
+    });
 
     tx.status = 'failed';
     tx.errorMessage = errMsg;
@@ -444,7 +498,7 @@ export async function verifyZarinpalPayment(options: {
 
     return {
       ok: false,
-      code,
+      code: code || (body.errors as any)?.code || response.status,
       error: errMsg,
       transaction: toPublicTransaction(tx),
     };

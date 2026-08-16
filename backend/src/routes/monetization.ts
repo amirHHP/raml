@@ -63,12 +63,17 @@ router.post('/zarinpal/request', requireDeviceId, async (req, res) => {
       })
       .parse(req.body);
 
+    const host = req.get('x-forwarded-host') || req.get('host');
+    const proto = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+    const dynamicOrigin = host ? `${proto}://${host}` : config.backendBaseUrl;
+    const callbackUrl = body.callbackUrl || `${dynamicOrigin}/api/mono/zarinpal/callback`;
+
     const result = await requestZarinpalPayment({
       sku: body.sku,
       deviceId: req.deviceId,
       mobile: body.mobile,
       email: body.email,
-      callbackUrl: body.callbackUrl,
+      callbackUrl,
     });
 
     if (!result.ok) {
@@ -100,7 +105,10 @@ router.get('/zarinpal/callback', async (req, res) => {
   const authority = String(req.query.Authority || req.query.authority || '');
   const status = String(req.query.Status || req.query.status || '');
 
-  const frontendUrl = config.frontendBaseUrl.replace(/\/+$/, '');
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const proto = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+  const dynamicOrigin = host ? `${proto}://${host}` : config.frontendBaseUrl;
+  const frontendUrl = dynamicOrigin.replace(/\/+$/, '');
 
   if (!authority) {
     res.redirect(`${frontendUrl}?payment_status=failed&error=missing_authority`);
