@@ -29,6 +29,8 @@ import { setFunnelMemory } from './services/funnel';
 import { setChangelogMemory } from './services/changelog';
 import { fixReferralCodeDuplicates } from './services/referral';
 import { setFeedbackMemory } from './services/feedback';
+import { setShopPackagesMemory, ensureShopPackageSeeds } from './services/shopPackages';
+import { setZarinpalMemory } from './services/zarinpal';
 
 const app = express();
 
@@ -57,10 +59,13 @@ const mongoReady = mongoose
     setFunnelMemory(false);
     setChangelogMemory(false);
     setFeedbackMemory(false);
+    setShopPackagesMemory(false);
+    setZarinpalMemory(false);
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
     await fixReferralCodeDuplicates();
+    await ensureShopPackageSeeds();
   })
   .catch(async (err) => {
     mongoError = err instanceof Error ? err.message : String(err);
@@ -74,10 +79,13 @@ const mongoReady = mongoose
     setFunnelMemory(true);
     setChangelogMemory(true);
     setFeedbackMemory(true);
+    setShopPackagesMemory(true);
+    setZarinpalMemory(true);
     (global as { __ramlMemory?: boolean }).__ramlMemory = true;
     await ensurePromptSeeds();
     await ensureMilestoneSeeds();
     await ensureGameSettingsLoaded();
+    await ensureShopPackageSeeds();
   });
 
 app.use(async (_req, _res, next) => {

@@ -3,41 +3,33 @@ import { z } from 'zod';
 import { requireDeviceId } from '../middleware/deviceId';
 import { getOrCreatePlayer, toClientState } from '../services/gameState';
 import { refillEnergy } from '../services/energy';
+import {
+  listPublicShopPackages,
+  getShopPackageBySku,
+  DEFAULT_SHOP_PACKAGES,
+} from '../services/shopPackages';
+import {
+  requestZarinpalPayment,
+  verifyZarinpalPayment,
+  applyPackageRewardToPlayer,
+} from '../services/zarinpal';
+import { config } from '../config';
 
-/**
- * Cafe Bazaar monetization skeleton.
- * Real Tapsell/Yektanet + Bazaar IAP plug in via Capacitor on the client;
- * these endpoints validate server-side grants.
- */
-
-export const SHOP_SKUS = [
-  {
-    sku: 'energy_refill',
-    title: 'پر کردن انرژی',
-    description: 'انرژی را کامل پر می‌کند',
-    priceTomans: 1000,
-    type: 'consumable' as const,
-  },
-  {
-    sku: 'scenario_kavir',
-    title: 'سناریو: شن‌های کویر',
-    description: 'باز کردن ماجرای ویژه کویر',
-    priceTomans: 5000,
-    type: 'non_consumable' as const,
-  },
-  {
-    sku: 'unlock_full_ui',
-    title: 'باز کردن رابط کامل',
-    description: 'بدون انتظار ۳ روزه',
-    priceTomans: 2000,
-    type: 'non_consumable' as const,
-  },
-];
+export const SHOP_SKUS = DEFAULT_SHOP_PACKAGES;
 
 const router = Router();
 
-router.get('/shop', (_req, res) => {
-  res.json({ items: SHOP_SKUS });
+/**
+ * Public shop endpoint — returns all active packages sorted.
+ */
+router.get('/shop', async (_req, res) => {
+  try {
+    const items = await listPublicShopPackages();
+    res.json({ items });
+  } catch (err) {
+    console.error('Error fetching shop packages:', err);
+    res.status(500).json({ error: 'خطا در دریافت بسته‌های فروشگاه' });
+  }
 });
 
 /** Mock rewarded ad grant: +5 energy */
@@ -57,7 +49,135 @@ router.post('/ads/reward', requireDeviceId, async (req, res) => {
 });
 
 /**
- * Mock IAP verify — production would validate Bazaar purchase token.
+ * ZarinPal payment request endpoint.
+ * Body: { sku, mobile?, email?, callbackUrl? }
+ */
+router.post('/zarinpal/request', requireDeviceId, async (req, res) => {
+  try {
+    const body = z
+      .object({
+        sku: z.string().min(1),
+        mobile: z.string().optional(),
+        email: z.string().email().optional(),
+        callbackUrl: z.string().url().optional(),
+      })
+      .parse(req.body);
+
+    const result = await requestZarinpalPayment({
+      sku: body.sku,
+      deviceId: req.deviceId,
+      mobile: body.mobile,
+      email: body.email,
+      callbackUrl: body.callbackUrl,
+    });
+
+    if (!result.ok) {
+      res.status(400).json({ error: result.error || 'خطا در ایجاد تراکنش درگاه پرداخت' });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      authority: result.authority,
+      paymentUrl: result.paymentUrl,
+      fee: result.fee,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'داده‌های درخواست نامعتبر است' });
+      return;
+    }
+    console.error('Zarinpal request error:', err);
+    res.status(500).json({ error: 'خطا در ایجاد درخواست پرداخت زرین‌پال' });
+  }
+});
+
+/**
+ * ZarinPal browser callback endpoint.
+ * ZarinPal redirects here with ?Authority=...&Status=OK/NOK
+ */
+router.get('/zarinpal/callback', async (req, res) => {
+  const authority = String(req.query.Authority || req.query.authority || '');
+  const status = String(req.query.Status || req.query.status || '');
+
+  const frontendUrl = config.frontendBaseUrl.replace(/\/+$/, '');
+
+  if (!authority) {
+    res.redirect(`${frontendUrl}?payment_status=failed&error=missing_authority`);
+    return;
+  }
+
+  try {
+    const result = await verifyZarinpalPayment({
+      authority,
+      statusQuery: status,
+    });
+
+    if (result.ok) {
+      const refId = encodeURIComponent(result.refId || '');
+      const sku = encodeURIComponent(result.transaction?.sku || '');
+      res.redirect(
+        `${frontendUrl}?payment_status=success&ref_id=${refId}&sku=${sku}&authority=${encodeURIComponent(authority)}`,
+      );
+    } else {
+      const err = encodeURIComponent(result.error || 'خطا در پرداخت');
+      res.redirect(
+        `${frontendUrl}?payment_status=failed&error=${err}&authority=${encodeURIComponent(authority)}`,
+      );
+    }
+  } catch (err) {
+    console.error('Zarinpal callback verification error:', err);
+    res.redirect(`${frontendUrl}?payment_status=failed&error=server_error`);
+  }
+});
+
+/**
+ * ZarinPal client direct verification endpoint.
+ * Body: { authority, status? }
+ */
+router.post('/zarinpal/verify', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        authority: z.string().min(1),
+        status: z.string().optional(),
+      })
+      .parse(req.body);
+
+    const result = await verifyZarinpalPayment({
+      authority: body.authority,
+      statusQuery: body.status,
+    });
+
+    if (!result.ok) {
+      res.status(400).json({
+        ok: false,
+        error: result.error || 'تأیید پرداخت با شکست مواجه شد',
+        transaction: result.transaction,
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      refId: result.refId,
+      cardPan: result.cardPan,
+      rewardSummary: result.rewardSummary,
+      transaction: result.transaction,
+      playerState: result.playerState,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: 'اطلاعات ارسالی نامعتبر است' });
+      return;
+    }
+    console.error('Zarinpal verify error:', err);
+    res.status(500).json({ error: 'خطا در بررسی تراکنش زرین‌پال' });
+  }
+});
+
+/**
+ * Cafe Bazaar / Native IAP verification endpoint.
  * Body: { sku, purchaseToken }
  */
 router.post('/iap/verify', requireDeviceId, async (req, res) => {
@@ -69,7 +189,7 @@ router.post('/iap/verify', requireDeviceId, async (req, res) => {
       })
       .parse(req.body);
 
-    const skuMeta = SHOP_SKUS.find((s) => s.sku === body.sku);
+    const skuMeta = await getShopPackageBySku(body.sku);
     if (!skuMeta) {
       res.status(400).json({ error: 'SKU نامعتبر' });
       return;
@@ -82,33 +202,9 @@ router.post('/iap/verify', requireDeviceId, async (req, res) => {
       return;
     }
 
-    // TODO: call Cafe Bazaar purchase validation API with purchaseToken
-    if (body.sku === 'energy_refill') {
-      refillEnergy(player, player.stats.maxEnergy);
-      player.toastMessage = 'انرژی کامل پر شد';
-    } else if (body.sku === 'scenario_kavir') {
-      if (!player.purchasedSkus.includes(body.sku)) {
-        player.purchasedSkus.push(body.sku);
-      }
-      player.toastMessage = 'سناریو «شن‌های کویر» باز شد';
-      player.currentLocation = 'دشت‌های سوزان کویر';
-      player.storyText =
-        'افق در حرارت می‌لرزد. شن‌های طلایی زیر پایت جاری‌اند و سایه‌ای ناشناس دعوتت می‌کند...';
-      player.enemyLineArtType = 'desert_spirit';
-    } else if (body.sku === 'unlock_full_ui') {
-      if (!player.purchasedSkus.includes(body.sku)) {
-        player.purchasedSkus.push(body.sku);
-      }
-      player.unlockedFullUi = true;
-      player.playDayCount = Math.max(player.playDayCount, 3);
-      player.toastMessage = 'رابط کامل باز شد';
-    }
+    const { player: updatedPlayer } = await applyPackageRewardToPlayer(req.deviceId, body.sku);
 
-    if ('save' in player && typeof player.save === 'function') {
-      await player.save();
-    }
-
-    res.json({ ...toClientState(player), verified: true });
+    res.json({ ...toClientState(updatedPlayer), verified: true });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: 'درخواست نامعتبر' });

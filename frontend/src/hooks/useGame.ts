@@ -82,11 +82,30 @@ export function useGame() {
     (async () => {
       try {
         setLoading(true);
+
+        // Check for Zarinpal payment callback parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment_status');
+        const authority = urlParams.get('Authority') || urlParams.get('authority');
+        const status = urlParams.get('Status') || urlParams.get('status');
+
+        if (authority && !paymentStatus) {
+          try {
+            const verifyRes = await api.verifyZarinpal(authority, status || undefined);
+            if (verifyRes.ok && verifyRes.playerState) {
+              setState(verifyRes.playerState);
+            }
+          } catch (verErr) {
+            console.error('Zarinpal verify error:', verErr);
+          }
+        }
+
         const [s, shopRes, inbox] = await Promise.all([
           api.getState(),
           api.getShop(),
           api.getInbox(),
         ]);
+
         if (!cancelled) {
           setState(s);
           setShop(shopRes.items);
@@ -95,6 +114,14 @@ export function useGame() {
           setError(null);
           initFunnel(!s.awakened);
           track('app_open');
+
+          if (paymentStatus === 'success' || authority) {
+            setTab('shop');
+            window.history.replaceState({}, '', window.location.pathname);
+          } else if (paymentStatus === 'failed') {
+            setTab('shop');
+            window.history.replaceState({}, '', window.location.pathname);
+          }
         }
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -223,8 +250,18 @@ export function useGame() {
   };
 
   const buySku = async (sku: string) => {
-    const s = await run(() => api.verifyIap(sku));
-    if (s) setState(s);
+    try {
+      const res = await api.requestZarinpal(sku);
+      if (res.ok && res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+        return;
+      }
+      throw new Error('خطا در دریافت آدرس پرداخت');
+    } catch (e) {
+      console.warn('Zarinpal gateway redirect failed, attempting fallback:', e);
+      const s = await run(() => api.verifyIap(sku));
+      if (s) setState(s);
+    }
   };
 
   const unlockDebug = async () => {

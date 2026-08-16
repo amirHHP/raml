@@ -31,4 +31,8 @@ export const config = {
   adminToken: process.env.ADMIN_TOKEN || '',
   energyRegenMinutes: Number(process.env.ENERGY_REGEN_MINUTES) || 20,
   energyMax: Number(process.env.ENERGY_MAX) || 10,
+  zarinpalMerchantId: process.env.ZARINPAL_MERCHANT_ID || 'e4fe46b0-384d-4cd1-8aa1-d4bde5d2e511',
+  zarinpalSandbox: process.env.ZARINPAL_SANDBOX === 'true',
+  frontendBaseUrl: process.env.FRONTEND_BASE_URL || 'http://localhost:5173',
+  backendBaseUrl: process.env.BACKEND_BASE_URL || 'http://localhost:3001',
 };

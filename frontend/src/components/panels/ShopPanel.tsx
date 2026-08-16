@@ -53,6 +53,7 @@ export function ShopPanel({
 
   return (
     <div className="space-y-3 px-4 py-4 pb-8">
+      {/* Save Code Backup & Restore */}
       <section className={`rounded-xl border border-amber/40 bg-panel px-4 py-3 ${isEn ? 'text-left' : 'text-right'}`}>
         <p className="text-sm text-amber">{t('saveCodeLabel', lang)}</p>
         <p className="mt-1 text-xs leading-6 text-ink-muted">
@@ -68,14 +69,14 @@ export function ShopPanel({
           <button
             type="button"
             onClick={() => void copyCode()}
-            className="flex-1 rounded-lg border border-amber/50 py-2 text-xs text-amber"
+            className="flex-1 rounded-lg border border-amber/50 py-2 text-xs text-amber transition hover:bg-amber/10"
           >
             {copied ? t('copied', lang) : t('copySaveCode', lang)}
           </button>
           <button
             type="button"
             onClick={() => setRestoreOpen((v) => !v)}
-            className="flex-1 rounded-lg border border-line py-2 text-xs text-ink-dim"
+            className="flex-1 rounded-lg border border-line py-2 text-xs text-ink-dim hover:text-ink transition"
           >
             {restoreOpen ? (isEn ? 'Close' : 'بستن') : t('restoreSaveCode', lang)}
           </button>
@@ -108,8 +109,10 @@ export function ShopPanel({
         )}
       </section>
 
+      {/* Referral System */}
       <ReferralPanel language={lang} referralCode={state.referralCode || ''} />
 
+      {/* Rewarded Ad Option */}
       <button
         type="button"
         disabled={busy}
@@ -120,27 +123,55 @@ export function ShopPanel({
         <p className="mt-1 text-xs text-ink-muted">+5 {t('energy', lang)} (Adivery Network)</p>
       </button>
 
+      {/* ZarinPal Gateway Header */}
+      <div className={`flex items-center justify-between gap-2 px-1 pt-1 text-[11px] text-ink-muted ${isEn ? 'flex-row' : 'flex-row-reverse'}`}>
+        <span>{t('paymentGateway', lang)}</span>
+        <span className="font-mono text-[10px] text-amber/80">ZarinPal v4</span>
+      </div>
+
+      {/* Shop Packages */}
       {items.map((item) => {
         const owned =
           item.type === 'non_consumable' && state.purchasedSkus.includes(item.sku);
+        const title = isEn && item.titleEn ? item.titleEn : item.title;
+        const description = isEn && item.descriptionEn ? item.descriptionEn : item.description;
+        const badge = isEn && item.badgeEn ? item.badgeEn : item.badge;
+
         return (
           <button
             key={item.sku}
             type="button"
             disabled={busy || owned}
             onClick={() => onBuy(item.sku)}
-            className={`w-full rounded-xl border border-line bg-panel px-4 py-3 ${isEn ? 'text-left' : 'text-right'} transition enabled:hover:border-amber/40 disabled:opacity-45`}
+            className={`w-full rounded-xl border border-line bg-panel p-4 ${isEn ? 'text-left' : 'text-right'} transition enabled:hover:border-amber/60 enabled:hover:bg-sand-2/40 disabled:opacity-45 relative overflow-hidden`}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm text-ink">{item.title}</p>
-                <p className="mt-1 text-xs text-ink-muted">{item.description}</p>
-              </div>
-              <span className="shrink-0 text-xs text-amber">
-                {owned
-                  ? (isEn ? 'Purchased' : 'خریداری شده')
-                  : (isEn ? `${item.priceTomans.toLocaleString('en-US')} Tomans` : `${item.priceTomans.toLocaleString('fa-IR')} تومان`)}
+            {badge && (
+              <span className={`absolute top-0 ${isEn ? 'right-0 rounded-bl-lg' : 'left-0 rounded-br-lg'} bg-amber/20 border-b border-amber/40 px-2 py-0.5 text-[10px] font-semibold text-amber`}>
+                {badge}
               </span>
+            )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 pr-1">
+                <p className="text-sm font-medium text-ink">{title}</p>
+                <p className="text-xs text-ink-muted leading-5">{description}</p>
+                {item.rewardType === 'gold' && item.rewardValue && (
+                  <p className="text-[11px] text-amber font-mono">
+                    +{Number(item.rewardValue).toLocaleString(isEn ? 'en-US' : 'fa-IR')} {isEn ? 'Gold Coins' : 'سکه طلا'}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0 text-left">
+                <span className="inline-block font-mono text-xs font-bold text-amber">
+                  {owned
+                    ? (isEn ? 'Purchased' : 'خریداری شده')
+                    : (isEn ? `${item.priceTomans.toLocaleString('en-US')} Tomans` : `${item.priceTomans.toLocaleString('fa-IR')} تومان`)}
+                </span>
+                {!owned && (
+                  <p className="mt-1 text-[10px] text-ink-muted text-center">
+                    {t('buyButton', lang)}
+                  </p>
+                )}
+              </div>
             </div>
           </button>
         );

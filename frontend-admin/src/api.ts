@@ -12,6 +12,9 @@ import type {
   PromptKey,
   MilestonePromptItem,
   ReferralAdminStats,
+  ShopPackageItem,
+  PaymentTransactionItem,
+  PaymentStats,
 } from './types';
 
 const TOKEN_KEY = 'raml_admin_token';
@@ -189,4 +192,40 @@ export const adminApi = {
       method: 'POST',
       body: '{}',
     }),
+  listShopPackages: () =>
+    request<{ items: ShopPackageItem[] }>('/api/admin/shop-packages'),
+  createShopPackage: (body: Partial<ShopPackageItem>) =>
+    request<ShopPackageItem>('/api/admin/shop-packages', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateShopPackage: (id: string, body: Partial<ShopPackageItem>) =>
+    request<ShopPackageItem>(`/api/admin/shop-packages/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  deleteShopPackage: (id: string) =>
+    request<{ ok: boolean; id: string }>(`/api/admin/shop-packages/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  listPayments: (params?: {
+    status?: string;
+    sku?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.sku) qs.set('sku', params.sku);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    return request<{
+      items: PaymentTransactionItem[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/api/admin/payments?${qs}`);
+  },
+  getPaymentStats: () =>
+    request<PaymentStats>('/api/admin/payments/stats'),
 };

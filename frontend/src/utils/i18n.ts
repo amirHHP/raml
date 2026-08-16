@@ -125,6 +125,12 @@ export const TRANSLATIONS = {
     buyButton: 'خرید',
     tomanCurrency: 'تومان',
     coinCurrency: 'سکه',
+    paymentSuccess: 'پرداخت با موفقیت انجام شد',
+    paymentFailed: 'پرداخت انجام نشد یا لغو گردید',
+    paymentPending: 'در حال هدایت به درگاه پرداخت زرین‌پال...',
+    trackingCode: 'کد رهگیری:',
+    paymentGateway: 'درگاه پرداخت امن زرین‌پال',
+    purchasedBadge: 'خریداری شده',
 
     // Settings Modal
     settingsTitle: 'تنظیمات بازی',
@@ -339,6 +345,12 @@ export const TRANSLATIONS = {
     buyButton: 'Buy',
     tomanCurrency: 'Tomans',
     coinCurrency: 'Coins',
+    paymentSuccess: 'Payment completed successfully',
+    paymentFailed: 'Payment failed or was cancelled',
+    paymentPending: 'Redirecting to ZarinPal payment gateway...',
+    trackingCode: 'Ref ID:',
+    paymentGateway: 'Secure ZarinPal Gateway',
+    purchasedBadge: 'Purchased',
 
     // Settings Modal
     settingsTitle: 'Game Settings',

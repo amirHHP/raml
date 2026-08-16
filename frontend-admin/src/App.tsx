@@ -11,10 +11,12 @@ import { GamePage } from './pages/GamePage';
 import { PromptsPage } from './pages/PromptsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ChangelogsPage } from './pages/ChangelogsPage';
+import { ShopPage } from './pages/ShopPage';
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'dashboard', label: 'داشبورد' },
   { id: 'players', label: 'بازیکن‌ها' },
+  { id: 'shop', label: 'فروشگاه و درگاه' },
   { id: 'game', label: 'بازی' },
   { id: 'ai', label: 'هوش مصنوعی' },
   { id: 'prompts', label: 'پرامپت‌ها' },
@@ -113,6 +115,7 @@ export default function App() {
       <main className="flex-1 pb-10">
         {tab === 'dashboard' && <DashboardPage />}
         {tab === 'players' && <PlayersPage />}
+        {tab === 'shop' && <ShopPage />}
         {tab === 'game' && <GamePage />}
         {tab === 'ai' && <AiPage />}
         {tab === 'prompts' && <PromptsPage />}

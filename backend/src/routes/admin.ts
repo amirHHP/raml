@@ -36,6 +36,16 @@ import {
 import { getFunnelReport } from '../services/funnel';
 import { getAdminReferralStats } from '../services/referral';
 import { listFeedbacks, getFeedbackStats, deleteFeedback } from '../services/feedback';
+import {
+  listAllShopPackages,
+  createShopPackage,
+  updateShopPackage,
+  deleteShopPackage,
+} from '../services/shopPackages';
+import {
+  listAdminPayments,
+  getAdminPaymentStats,
+} from '../services/zarinpal';
 
 const router = Router();
 
@@ -464,6 +474,112 @@ router.delete('/feedbacks/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     sendError(res, err, 'خطا در حذف فیدبک');
+  }
+});
+
+// ── Shop Packages & Payments Management ─────────────────────────
+
+router.get('/shop-packages', async (_req, res) => {
+  try {
+    const items = await listAllShopPackages();
+    res.json({ items });
+  } catch (err) {
+    sendError(res, err, 'خطا در دریافت بسته‌های فروشگاه');
+  }
+});
+
+router.post('/shop-packages', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        sku: z.string().min(1).max(50),
+        title: z.string().min(1).max(100),
+        titleEn: z.string().max(100).optional(),
+        description: z.string().max(500).optional(),
+        descriptionEn: z.string().max(500).optional(),
+        priceTomans: z.number().int().min(0),
+        type: z.enum(['consumable', 'non_consumable']).optional(),
+        rewardType: z
+          .enum(['energy_refill', 'energy_amount', 'gold', 'unlock_full_ui', 'scenario', 'custom'])
+          .optional(),
+        rewardValue: z.union([z.number(), z.string()]).optional().nullable(),
+        badge: z.string().max(50).optional(),
+        badgeEn: z.string().max(50).optional(),
+        icon: z.string().max(50).optional(),
+        sortOrder: z.number().int().optional(),
+        isActive: z.boolean().optional(),
+      })
+      .parse(req.body);
+
+    const item = await createShopPackage(body);
+    res.status(201).json(item);
+  } catch (err) {
+    sendError(res, err, 'خطا در ایجاد بسته فروشگاه');
+  }
+});
+
+router.put('/shop-packages/:id', async (req, res) => {
+  try {
+    const body = z
+      .object({
+        title: z.string().min(1).max(100).optional(),
+        titleEn: z.string().max(100).optional(),
+        description: z.string().max(500).optional(),
+        descriptionEn: z.string().max(500).optional(),
+        priceTomans: z.number().int().min(0).optional(),
+        type: z.enum(['consumable', 'non_consumable']).optional(),
+        rewardType: z
+          .enum(['energy_refill', 'energy_amount', 'gold', 'unlock_full_ui', 'scenario', 'custom'])
+          .optional(),
+        rewardValue: z.union([z.number(), z.string()]).optional().nullable(),
+        badge: z.string().max(50).optional(),
+        badgeEn: z.string().max(50).optional(),
+        icon: z.string().max(50).optional(),
+        sortOrder: z.number().int().optional(),
+        isActive: z.boolean().optional(),
+      })
+      .parse(req.body);
+
+    const item = await updateShopPackage(String(req.params.id), body);
+    res.json(item);
+  } catch (err) {
+    sendError(res, err, 'خطا در به‌روزرسانی بسته فروشگاه');
+  }
+});
+
+router.delete('/shop-packages/:id', async (req, res) => {
+  try {
+    await deleteShopPackage(String(req.params.id));
+    res.json({ ok: true, id: req.params.id });
+  } catch (err) {
+    sendError(res, err, 'خطا در حذف بسته فروشگاه');
+  }
+});
+
+router.get('/payments/stats', async (_req, res) => {
+  try {
+    const stats = await getAdminPaymentStats();
+    res.json(stats);
+  } catch (err) {
+    sendError(res, err, 'خطا در آمار پرداخت‌ها');
+  }
+});
+
+router.get('/payments', async (req, res) => {
+  try {
+    const query = z
+      .object({
+        status: z.enum(['pending', 'paid', 'failed', 'cancelled']).optional(),
+        sku: z.string().optional(),
+        page: z.coerce.number().int().min(1).optional(),
+        limit: z.coerce.number().int().min(1).max(100).optional(),
+      })
+      .parse(req.query);
+
+    const result = await listAdminPayments(query);
+    res.json(result);
+  } catch (err) {
+    sendError(res, err, 'خطا در لیست تراکنش‌ها');
   }
 });
 

@@ -165,7 +165,75 @@ export type ChangelogItem = {
   createdAt: string;
 };
 
-export type TabId = 'dashboard' | 'players' | 'game' | 'ai' | 'prompts' | 'notifications' | 'changelogs';
+export type ShopPackageType = 'consumable' | 'non_consumable';
+
+export type ShopRewardType =
+  | 'energy_refill'
+  | 'energy_amount'
+  | 'gold'
+  | 'unlock_full_ui'
+  | 'scenario'
+  | 'custom';
+
+export type ShopPackageItem = {
+  id: string;
+  sku: string;
+  title: string;
+  titleEn: string;
+  description: string;
+  descriptionEn: string;
+  priceTomans: number;
+  type: ShopPackageType;
+  rewardType: ShopRewardType;
+  rewardValue: number | string | null;
+  badge: string;
+  badgeEn: string;
+  icon: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled';
+
+export type PaymentTransactionItem = {
+  id: string;
+  authority: string;
+  amountTomans: number;
+  sku: string;
+  skuTitle: string;
+  deviceId: string;
+  status: PaymentStatus;
+  refId: string;
+  cardPan: string;
+  cardHash: string;
+  fee: number;
+  gateway: string;
+  errorMessage: string;
+  verifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaymentStats = {
+  totalRevenueTomans: number;
+  paidCount: number;
+  pendingCount: number;
+  failedCount: number;
+  cancelledCount: number;
+  averageOrderTomans: number;
+};
+
+export type TabId =
+  | 'dashboard'
+  | 'players'
+  | 'game'
+  | 'shop'
+  | 'ai'
+  | 'prompts'
+  | 'notifications'
+  | 'changelogs';
 
 export const CLASS_LABELS: Record<string, string> = {
   warrior: 'جنگجو',

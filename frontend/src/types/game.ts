@@ -211,11 +211,21 @@ export interface GameState {
 }
 
 export interface ShopSku {
+  id?: string;
   sku: string;
   title: string;
+  titleEn?: string;
   description: string;
+  descriptionEn?: string;
   priceTomans: number;
   type: 'consumable' | 'non_consumable';
+  rewardType?: 'energy_refill' | 'energy_amount' | 'gold' | 'unlock_full_ui' | 'scenario' | 'custom';
+  rewardValue?: number | string | null;
+  badge?: string;
+  badgeEn?: string;
+  icon?: string;
+  sortOrder?: number;
+  isActive?: boolean;
 }
 
 export interface InboxItem {
