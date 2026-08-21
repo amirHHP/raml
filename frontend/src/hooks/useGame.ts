@@ -167,12 +167,15 @@ export function useGame() {
     if (!needsImage) return;
 
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 45; // 45 * 2000ms = 90s (AI image generation usually takes 20-35s)
     const interval = window.setInterval(async () => {
       attempts++;
-      if (attempts > maxAttempts || busyRef.current) {
+      if (attempts >= maxAttempts) {
         window.clearInterval(interval);
         return;
+      }
+      if (busyRef.current) {
+        return; // Don't abort interval, just skip this tick
       }
       try {
         const fresh = await api.getState();
@@ -185,9 +188,9 @@ export function useGame() {
           setState(fresh);
         }
       } catch {
-        // Ignore polling errors
+        // Ignore network/transient errors during polling
       }
-    }, 1500);
+    }, 2000);
 
     return () => window.clearInterval(interval);
   }, [state?.storyTurnCount, state?.imageUrl, state?.storyHistory, state?.awakened]);

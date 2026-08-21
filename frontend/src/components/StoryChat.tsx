@@ -186,6 +186,7 @@ export function StoryChat({
 
   const lastStoryRef = useRef<string | null>(null);
   const lastImageRef = useRef<string | null>(null);
+  const lastHistoryLenRef = useRef(0);
   const lastTurnRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingDoneRef = useRef(false);
@@ -219,6 +220,7 @@ export function StoryChat({
       setBubbles(initialBubbles);
       lastStoryRef.current = state.storyText;
       lastImageRef.current = state.imageUrl ?? null;
+      lastHistoryLenRef.current = history.length;
       lastTurnRef.current = state.storyTurnCount || history.length;
       const animateFirst = history.length <= 1;
       setAnimateLatest(animateFirst);
@@ -232,12 +234,13 @@ export function StoryChat({
     const textChanged = Boolean(state.storyText) && state.storyText !== lastStoryRef.current;
     const turnAdvanced = turn > lastTurnRef.current;
     const imageChanged = Boolean(state.imageUrl) && state.imageUrl !== lastImageRef.current;
+    const historyLenChanged = history.length !== lastHistoryLenRef.current;
 
-    if (!textChanged && !turnAdvanced && !imageChanged) return;
+    if (!textChanged && !turnAdvanced && !imageChanged && !historyLenChanged) return;
     if (!state.storyText) return;
 
-    // If only image arrived without a new turn, update bubbles quietly without restarting typewriter!
-    if (imageChanged && !textChanged && !turnAdvanced) {
+    // If only image arrived or history updated without advancing turn/text, update bubbles quietly without restarting typewriter!
+    if ((imageChanged || !historyLenChanged) && !textChanged && !turnAdvanced) {
       lastImageRef.current = state.imageUrl ?? null;
       setBubbles(
         parseHistoryBubbles(history, {
@@ -253,6 +256,7 @@ export function StoryChat({
 
     lastStoryRef.current = state.storyText;
     lastImageRef.current = state.imageUrl ?? null;
+    lastHistoryLenRef.current = history.length;
     lastTurnRef.current = turnAdvanced ? turn : lastTurnRef.current + 1;
 
     setBubbles(
@@ -370,10 +374,19 @@ export function StoryChat({
         const asciiArt = isLatest ? state.asciiArt : bubble.asciiArt;
         const svgArt = isLatest ? state.svgArt : bubble.svgArt;
         const imageUrl = isLatest ? state.imageUrl : bubble.imageUrl;
+        const turnNumber = isLatest ? (state.storyTurnCount || bubble.turnNumber) : bubble.turnNumber;
 
         return (
           <div key={bubble.id} className="flex flex-col gap-3">
-            <EnemyLineArt type={lineArtType} asciiArt={asciiArt} svgArt={svgArt} imageUrl={imageUrl} isLatest={isLatest} language={lang} />
+            <EnemyLineArt
+              type={lineArtType}
+              asciiArt={asciiArt}
+              svgArt={svgArt}
+              imageUrl={imageUrl}
+              turnNumber={turnNumber}
+              isLatest={isLatest}
+              language={lang}
+            />
             <StoryBubbleView
               text={bubble.text}
               animate={isLatest && animateLatest}
