@@ -127,9 +127,9 @@ export const TRANSLATIONS = {
     coinCurrency: 'سکه',
     paymentSuccess: 'پرداخت با موفقیت انجام شد',
     paymentFailed: 'پرداخت انجام نشد یا لغو گردید',
-    paymentPending: 'در حال هدایت به درگاه پرداخت زرین‌پال...',
+    paymentPending: 'در حال اتصال به پرداخت درون‌برنامه‌ای بازار...',
     trackingCode: 'کد رهگیری:',
-    paymentGateway: 'درگاه پرداخت امن زرین‌پال',
+    paymentGateway: 'پرداخت درون‌برنامه‌ای بازار',
     purchasedBadge: 'خریداری شده',
 
     // Settings Modal
@@ -347,9 +347,9 @@ export const TRANSLATIONS = {
     coinCurrency: 'Coins',
     paymentSuccess: 'Payment completed successfully',
     paymentFailed: 'Payment failed or was cancelled',
-    paymentPending: 'Redirecting to ZarinPal payment gateway...',
+    paymentPending: 'Connecting to Cafe Bazaar in-app purchase...',
     trackingCode: 'Ref ID:',
-    paymentGateway: 'Secure ZarinPal Gateway',
+    paymentGateway: 'Cafe Bazaar in-app purchase',
     purchasedBadge: 'Purchased',
 
     // Settings Modal

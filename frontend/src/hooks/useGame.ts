@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { initFunnel, track } from '../analytics/funnel';
+import { purchaseSku } from '../monetization/iap';
 import type { GameState, InboxItem, ShopSku, TabId } from '../types/game';
 import type { PopupData } from '../components/ItemPopup';
 
@@ -83,23 +84,6 @@ export function useGame() {
       try {
         setLoading(true);
 
-        // Check for Zarinpal payment callback parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const paymentStatus = urlParams.get('payment_status');
-        const authority = urlParams.get('Authority') || urlParams.get('authority');
-        const status = urlParams.get('Status') || urlParams.get('status');
-
-        if (authority && !paymentStatus) {
-          try {
-            const verifyRes = await api.verifyZarinpal(authority, status || undefined);
-            if (verifyRes.ok && verifyRes.playerState) {
-              setState(verifyRes.playerState);
-            }
-          } catch (verErr) {
-            console.error('Zarinpal verify error:', verErr);
-          }
-        }
-
         const [s, shopRes, inbox] = await Promise.all([
           api.getState(),
           api.getShop(),
@@ -114,14 +98,6 @@ export function useGame() {
           setError(null);
           initFunnel(!s.awakened);
           track('app_open');
-
-          if (paymentStatus === 'success' || authority) {
-            setTab('shop');
-            window.history.replaceState({}, '', window.location.pathname);
-          } else if (paymentStatus === 'failed') {
-            setTab('shop');
-            window.history.replaceState({}, '', window.location.pathname);
-          }
         }
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -254,17 +230,12 @@ export function useGame() {
 
   const buySku = async (sku: string) => {
     try {
-      const res = await run(() => api.requestZarinpal(sku));
-      if (res?.ok && res.paymentUrl) {
-        window.location.href = res.paymentUrl;
-        return;
-      }
-      if (res?.error) {
-        setError(res.error);
-      }
+      const purchase = await purchaseSku(sku);
+      const s = await run(() => api.verifyIap(sku, purchase.purchaseToken));
+      if (s) setState(s);
     } catch (e) {
-      console.error('Zarinpal gateway redirect error:', e);
-      setError((e as Error).message || 'خطا در اتصال به درگاه پرداخت زرین‌پال');
+      console.error('Bazaar IAP error:', e);
+      setError((e as Error).message || 'خطا در پرداخت درون‌برنامه‌ای بازار');
     }
   };
 

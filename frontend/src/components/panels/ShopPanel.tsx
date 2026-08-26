@@ -123,13 +123,7 @@ export function ShopPanel({
         <p className="mt-1 text-xs text-ink-muted">+5 {t('energy', lang)} (Adivery Network)</p>
       </button>
 
-      {/* ZarinPal Gateway Header */}
-      <div className={`flex items-center justify-between gap-2 px-1 pt-1 text-[11px] text-ink-muted ${isEn ? 'flex-row' : 'flex-row-reverse'}`}>
-        <span>{t('paymentGateway', lang)}</span>
-        <span className="font-mono text-[10px] text-amber/80">ZarinPal v4</span>
-      </div>
-
-      {/* Shop Packages */}
+      {/* Shop Packages — Cafe Bazaar IAP */}
       {items.map((item) => {
         const owned =
           item.type === 'non_consumable' && state.purchasedSkus.includes(item.sku);
