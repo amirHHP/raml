@@ -26,7 +26,7 @@ export function EnemyLineArt({
           <div className="overflow-hidden rounded-lg border border-line/40 bg-black">
             <img
               src={imageUrl}
-              alt="تصویر صحنه"
+              alt={language === 'en' ? 'Scene image' : 'تصویر صحنه'}
               className="w-full max-h-72 object-cover rounded-md"
               loading="lazy"
             />
