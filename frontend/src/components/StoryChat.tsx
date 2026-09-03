@@ -165,6 +165,7 @@ export function StoryChat({
   onRoll,
   onWatchAd,
   onBuyRefill,
+  onOpenShop,
   onTimerElapsed,
 }: {
   state: GameState;
@@ -175,6 +176,7 @@ export function StoryChat({
   onRoll: (raw: number, modifier: number) => Promise<void>;
   onWatchAd: () => void;
   onBuyRefill: () => void;
+  onOpenShop?: () => void;
   onTimerElapsed: () => void;
 }) {
   const [bubbles, setBubbles] = useState<ChatBubble[]>([]);
@@ -411,6 +413,7 @@ export function StoryChat({
           busy={busy}
           onWatchAd={onWatchAd}
           onBuyRefill={onBuyRefill}
+          onOpenShop={onOpenShop}
           onTimerElapsed={onTimerElapsed}
         />
       )}

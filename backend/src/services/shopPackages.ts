@@ -44,6 +44,54 @@ export const DEFAULT_SHOP_PACKAGES: Array<Omit<ShopPackageMemEntry, '_id' | 'cre
     isActive: true,
   },
   {
+    sku: 'energy_pack_large',
+    title: 'معجون انرژی مضاعف (+۲۵ انرژی)',
+    titleEn: 'Grand Energy Elixir (+25 Energy)',
+    description: '۲۵ واحد انرژی فوری و مازاد بر ظرفیت برای ادامه بی‌وقفه ماجراجویی',
+    descriptionEn: 'Instantly adds +25 bonus energy beyond your maximum limit',
+    priceTomans: 3000,
+    type: 'consumable',
+    rewardType: 'energy_amount',
+    rewardValue: 25,
+    badge: 'انرژی اضافه',
+    badgeEn: 'Bonus Energy',
+    icon: 'energy_large',
+    sortOrder: 2,
+    isActive: true,
+  },
+  {
+    sku: 'hp_elixir',
+    title: 'اکسیر حیات (درمان کامل جان)',
+    titleEn: 'Elixir of Life (Full HP Refill)',
+    description: 'جان قهرمان را کامل احیا کرده و اثرات آسیب‌ها و خستگی را برطرف می‌سازد',
+    descriptionEn: 'Fully restores hero HP and removes all battle wounds',
+    priceTomans: 1500,
+    type: 'consumable',
+    rewardType: 'hp_refill',
+    rewardValue: null,
+    badge: 'حیاتی',
+    badgeEn: 'Life Saver',
+    icon: 'heart',
+    sortOrder: 3,
+    isActive: true,
+  },
+  {
+    sku: 'mana_potion',
+    title: 'معجون جوهره جادو (شارژ کامل مانا)',
+    titleEn: 'Essence of Magic (Full Mana Refill)',
+    description: 'حوضچه جادوی قهرمان را پر می‌کند تا آماده اجرای طلسم‌های سنگین باشید',
+    descriptionEn: 'Fully replenishes your mana pool for powerful spells',
+    priceTomans: 1500,
+    type: 'consumable',
+    rewardType: 'mana_refill',
+    rewardValue: null,
+    badge: 'جادو',
+    badgeEn: 'Magic',
+    icon: 'mana',
+    sortOrder: 4,
+    isActive: true,
+  },
+  {
     sku: 'gold_200',
     title: 'کیسه سکه (۲۰۰ طلا)',
     titleEn: 'Coin Pouch (200 Gold)',
@@ -56,7 +104,7 @@ export const DEFAULT_SHOP_PACKAGES: Array<Omit<ShopPackageMemEntry, '_id' | 'cre
     badge: 'محبوب',
     badgeEn: 'Popular',
     icon: 'gold',
-    sortOrder: 2,
+    sortOrder: 5,
     isActive: true,
   },
   {
@@ -72,7 +120,39 @@ export const DEFAULT_SHOP_PACKAGES: Array<Omit<ShopPackageMemEntry, '_id' | 'cre
     badge: 'بهترین ارزش',
     badgeEn: 'Best Value',
     icon: 'chest',
-    sortOrder: 3,
+    sortOrder: 6,
+    isActive: true,
+  },
+  {
+    sku: 'gold_1500',
+    title: 'خزانه سلطنتی طلا (۱,۵۰۰ طلا)',
+    titleEn: 'Royal Treasury (1,500 Gold)',
+    description: 'ثروتی عظیم شامل ۱۵۰۰ سکه طلا برای خرید آزادانه نایاب‌ترین تجهیزات',
+    descriptionEn: 'A fortune of 1,500 gold coins for elite equipment and upgrades',
+    priceTomans: 10000,
+    type: 'consumable',
+    rewardType: 'gold',
+    rewardValue: 1500,
+    badge: 'ویژه ثروتمندان',
+    badgeEn: 'VIP Wealth',
+    icon: 'treasury',
+    sortOrder: 7,
+    isActive: true,
+  },
+  {
+    sku: 'starter_bundle',
+    title: 'بسته بقای ماجراجو (Starter Bundle)',
+    titleEn: 'Adventurer Survival Kit (Starter Bundle)',
+    description: 'بسته جامع: شارژ ۱۰۰٪ انرژی + درمان کامل جان (HP) + ۳۰۰ سکه طلا با تخفیف ۵۰٪',
+    descriptionEn: 'Complete pack: Full Energy + Full HP Heal + 300 Gold Coins at 50% discount',
+    priceTomans: 4000,
+    type: 'consumable',
+    rewardType: 'starter_bundle',
+    rewardValue: 300,
+    badge: 'پیشنهاد طلایی',
+    badgeEn: 'Golden Offer',
+    icon: 'bundle',
+    sortOrder: 8,
     isActive: true,
   },
   {
@@ -88,7 +168,7 @@ export const DEFAULT_SHOP_PACKAGES: Array<Omit<ShopPackageMemEntry, '_id' | 'cre
     badge: 'داستان ویژه',
     badgeEn: 'Special Story',
     icon: 'scenario',
-    sortOrder: 4,
+    sortOrder: 9,
     isActive: true,
   },
   {
@@ -104,7 +184,7 @@ export const DEFAULT_SHOP_PACKAGES: Array<Omit<ShopPackageMemEntry, '_id' | 'cre
     badge: 'ویژه',
     badgeEn: 'Feature',
     icon: 'unlock',
-    sortOrder: 5,
+    sortOrder: 10,
     isActive: true,
   },
 ];
@@ -154,13 +234,26 @@ export async function ensureShopPackageSeeds(): Promise<void> {
         createdAt: now,
         updatedAt: now,
       }));
+    } else {
+      for (const defPkg of DEFAULT_SHOP_PACKAGES) {
+        if (!memStore.some((p) => p.sku === defPkg.sku)) {
+          const now = new Date();
+          memStore.push({
+            _id: `mem_pkg_${memIdCounter++}`,
+            ...defPkg,
+            rewardValue: defPkg.rewardValue ?? null,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
     }
     return;
   }
 
-  const count = await ShopPackage.countDocuments({});
-  if (count === 0) {
-    for (const pkg of DEFAULT_SHOP_PACKAGES) {
+  for (const pkg of DEFAULT_SHOP_PACKAGES) {
+    const existing = await ShopPackage.findOne({ sku: pkg.sku });
+    if (!existing) {
       await ShopPackage.create(pkg);
     }
   }

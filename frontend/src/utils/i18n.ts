@@ -121,7 +121,7 @@ export const TRANSLATIONS = {
 
     // Shop Panel
     shopTitle: 'فروشگاه رمل',
-    shopSubtitle: 'خرید بسته‌ها و آنلاک‌های بازی',
+    shopSubtitle: 'خرید بسته‌ها، منابع و ارتقاهای بازی',
     buyButton: 'خرید',
     tomanCurrency: 'تومان',
     coinCurrency: 'سکه',
@@ -131,6 +131,16 @@ export const TRANSLATIONS = {
     trackingCode: 'کد رهگیری:',
     paymentGateway: 'پرداخت درون‌برنامه‌ای بازار',
     purchasedBadge: 'خریداری شده',
+    shopCategoryAll: 'همه',
+    shopCategoryEnergy: '⚡️ انرژی و معجون',
+    shopCategoryGold: '💰 سکه و طلا',
+    shopCategorySpecial: '🎁 بسته‌های ویژه',
+    shopPlayerResources: 'موجودی قهرمان',
+    shopFreeDailyOffer: 'پاداش رایگان روزانه',
+    shopFreeEnergyDesc: 'تماشای ویدیو و دریافت +۵ انرژی',
+    shopBackupAndReferrals: 'پشتیبان‌گیری و معرفی به دوستان',
+    shopEmpty: 'در حال حاضر بسته‌ای در این دسته وجود ندارد.',
+    visitShop: 'مشاهده فروشگاه',
 
     // Settings Modal
     settingsTitle: 'تنظیمات بازی',
@@ -341,7 +351,7 @@ export const TRANSLATIONS = {
 
     // Shop Panel
     shopTitle: 'Raml Shop',
-    shopSubtitle: 'Purchase energy refills, coins, and unlocks',
+    shopSubtitle: 'Purchase energy, potions, gold, and special bundles',
     buyButton: 'Buy',
     tomanCurrency: 'Tomans',
     coinCurrency: 'Coins',
@@ -351,6 +361,16 @@ export const TRANSLATIONS = {
     trackingCode: 'Ref ID:',
     paymentGateway: 'Cafe Bazaar in-app purchase',
     purchasedBadge: 'Purchased',
+    shopCategoryAll: 'All',
+    shopCategoryEnergy: '⚡️ Energy & Potions',
+    shopCategoryGold: '💰 Gold & Coins',
+    shopCategorySpecial: '🎁 Bundles & Specials',
+    shopPlayerResources: 'Hero Balance',
+    shopFreeDailyOffer: 'Daily Free Reward',
+    shopFreeEnergyDesc: 'Watch a short video to gain +5 Energy',
+    shopBackupAndReferrals: 'Save Code & Invite Friends',
+    shopEmpty: 'No packages found in this category.',
+    visitShop: 'Visit Shop',
 
     // Settings Modal
     settingsTitle: 'Game Settings',

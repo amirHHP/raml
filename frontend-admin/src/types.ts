@@ -171,6 +171,9 @@ export type ShopRewardType =
   | 'energy_refill'
   | 'energy_amount'
   | 'gold'
+  | 'hp_refill'
+  | 'mana_refill'
+  | 'starter_bundle'
   | 'unlock_full_ui'
   | 'scenario'
   | 'custom';

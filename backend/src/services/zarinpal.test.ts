@@ -70,6 +70,52 @@ describe('Zarinpal Payment & Rewards Service', () => {
     assert.ok(player.playDayCount >= 3);
   });
 
+  it('should apply hp_elixir full health reward', async () => {
+    const player = await getOrCreatePlayer(testDeviceId);
+    player.stats.hp = 10;
+    player.stats.maxHp = 120;
+
+    const { player: updatedPlayer, rewardSummary } = await applyPackageRewardToPlayer(testDeviceId, 'hp_elixir');
+
+    assert.strictEqual(updatedPlayer.stats.hp, 120);
+    assert.ok(rewardSummary.includes('جان'));
+  });
+
+  it('should apply mana_potion full mana reward', async () => {
+    const player = await getOrCreatePlayer(testDeviceId);
+    player.stats.mana = 5;
+    player.stats.maxMana = 60;
+
+    const { player: updatedPlayer, rewardSummary } = await applyPackageRewardToPlayer(testDeviceId, 'mana_potion');
+
+    assert.strictEqual(updatedPlayer.stats.mana, 60);
+    assert.ok(rewardSummary.includes('مانا'));
+  });
+
+  it('should apply starter_bundle combo reward (energy + hp + gold)', async () => {
+    const player = await getOrCreatePlayer(testDeviceId);
+    player.stats.energy = 0;
+    player.stats.hp = 20;
+    player.stats.maxHp = 100;
+    const goldBefore = player.stats.gold || 0;
+
+    const { player: updatedPlayer, rewardSummary } = await applyPackageRewardToPlayer(testDeviceId, 'starter_bundle');
+
+    assert.strictEqual(updatedPlayer.stats.energy, updatedPlayer.stats.maxEnergy);
+    assert.strictEqual(updatedPlayer.stats.hp, 100);
+    assert.strictEqual(updatedPlayer.stats.gold, goldBefore + 300);
+    assert.ok(rewardSummary.includes('بسته بقای ماجراجو'));
+  });
+
+  it('should apply energy_pack_large bonus energy amount reward', async () => {
+    const player = await getOrCreatePlayer(testDeviceId);
+    player.stats.energy = 5;
+
+    const { player: updatedPlayer } = await applyPackageRewardToPlayer(testDeviceId, 'energy_pack_large');
+
+    assert.strictEqual(updatedPlayer.stats.energy, 5 + 25);
+  });
+
   it('should mark payment as cancelled if statusQuery is NOK', async () => {
     const authority = 'A00000000000000000000000000000000002';
     await createPaymentRecord({

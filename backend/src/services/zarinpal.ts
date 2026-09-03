@@ -322,7 +322,8 @@ export async function applyPackageRewardToPlayer(
     }
     case 'energy_amount': {
       const amount = Number(pkg.rewardValue) || 5;
-      refillEnergy(player, amount);
+      player.stats.energy = (player.stats.energy || 0) + amount;
+      player.lastEnergyAt = new Date();
       rewardSummary = `${amount} واحد انرژی اضافه شد`;
       break;
     }
@@ -330,6 +331,24 @@ export async function applyPackageRewardToPlayer(
       const goldAmount = Number(pkg.rewardValue) || 100;
       player.stats.gold = (player.stats.gold || 0) + goldAmount;
       rewardSummary = `${goldAmount.toLocaleString('fa-IR')} سکه طلا دریافت شد`;
+      break;
+    }
+    case 'hp_refill': {
+      player.stats.hp = player.stats.maxHp || 100;
+      rewardSummary = 'جان قهرمان به‌طور کامل بازیابی شد';
+      break;
+    }
+    case 'mana_refill': {
+      player.stats.mana = player.stats.maxMana || 50;
+      rewardSummary = 'مانای قهرمان کاملاً پر شد';
+      break;
+    }
+    case 'starter_bundle': {
+      refillEnergy(player, player.stats.maxEnergy);
+      player.stats.hp = player.stats.maxHp || 100;
+      const gold = Number(pkg.rewardValue) || 300;
+      player.stats.gold = (player.stats.gold || 0) + gold;
+      rewardSummary = `بسته بقای ماجراجو فعال شد (انرژی کامل + درمان کامل + ${gold.toLocaleString('fa-IR')} سکه)`;
       break;
     }
     case 'unlock_full_ui': {

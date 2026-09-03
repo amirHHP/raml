@@ -18,6 +18,7 @@ export function EnergyDepletedScreen({
   busy,
   onWatchAd,
   onBuyRefill,
+  onOpenShop,
   onTimerElapsed,
 }: {
   msUntilNextEnergy: number;
@@ -27,6 +28,7 @@ export function EnergyDepletedScreen({
   busy: boolean;
   onWatchAd: () => void;
   onBuyRefill: () => void;
+  onOpenShop?: () => void;
   onTimerElapsed: () => void;
 }) {
   const isEn = language === 'en';
@@ -97,6 +99,17 @@ export function EnergyDepletedScreen({
               </span>
             ) : null}
           </button>
+          {onOpenShop && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onOpenShop}
+              className="w-full border border-amber/30 bg-amber/5 py-2.5 text-xs text-amber transition hover:bg-amber/10 rounded-lg flex items-center justify-center gap-1.5"
+            >
+              <span>🛍️</span>
+              <span>{t('visitShop', language)}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

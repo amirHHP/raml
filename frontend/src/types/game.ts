@@ -219,7 +219,16 @@ export interface ShopSku {
   descriptionEn?: string;
   priceTomans: number;
   type: 'consumable' | 'non_consumable';
-  rewardType?: 'energy_refill' | 'energy_amount' | 'gold' | 'unlock_full_ui' | 'scenario' | 'custom';
+  rewardType?:
+    | 'energy_refill'
+    | 'energy_amount'
+    | 'gold'
+    | 'hp_refill'
+    | 'mana_refill'
+    | 'starter_bundle'
+    | 'unlock_full_ui'
+    | 'scenario'
+    | 'custom';
   rewardValue?: number | string | null;
   badge?: string;
   badgeEn?: string;

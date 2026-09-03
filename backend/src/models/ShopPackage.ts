@@ -6,6 +6,9 @@ export type ShopRewardType =
   | 'energy_refill'
   | 'energy_amount'
   | 'gold'
+  | 'hp_refill'
+  | 'mana_refill'
+  | 'starter_bundle'
   | 'unlock_full_ui'
   | 'scenario'
   | 'custom';
@@ -44,7 +47,17 @@ const ShopPackageSchema = new Schema<IShopPackage>(
     },
     rewardType: {
       type: String,
-      enum: ['energy_refill', 'energy_amount', 'gold', 'unlock_full_ui', 'scenario', 'custom'],
+      enum: [
+        'energy_refill',
+        'energy_amount',
+        'gold',
+        'hp_refill',
+        'mana_refill',
+        'starter_bundle',
+        'unlock_full_ui',
+        'scenario',
+        'custom',
+      ],
       default: 'energy_refill',
     },
     rewardValue: { type: Schema.Types.Mixed, default: null },

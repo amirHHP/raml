@@ -271,6 +271,22 @@ export function IconVolumeMute(p: IconProps) {
   );
 }
 
+export function IconCheck(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+export function IconSparkles(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="m12 3 1.9 4.9L19 9.8l-3.9 3.8.9 5.4-4-2.5-4 2.5.9-5.4L4.9 9.8l5.1-1.9L12 3Z" />
+    </svg>
+  );
+}
+
 export const ACTION_ICONS = {
   sword: IconSword,
   spell: IconSpell,

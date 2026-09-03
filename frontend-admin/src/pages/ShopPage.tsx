@@ -11,6 +11,9 @@ import type {
 const REWARD_TYPE_LABELS: Record<ShopRewardType, string> = {
   energy_refill: 'شارژ کامل انرژی',
   energy_amount: 'مقدار مشخص انرژی',
+  hp_refill: 'درمان کامل جان (HP)',
+  mana_refill: 'شارژ کامل مانا',
+  starter_bundle: 'بسته بقای ماجراجو (ترکیبی)',
   gold: 'سکه طلا',
   unlock_full_ui: 'باز کردن رابط کاربری',
   scenario: 'سناریوی داستانی ویژه',
@@ -702,6 +705,9 @@ export function ShopPage() {
                     <option value="gold">سکه طلا (Gold)</option>
                     <option value="energy_refill">شارژ کامل انرژی</option>
                     <option value="energy_amount">افزایش مقداری انرژی</option>
+                    <option value="hp_refill">درمان کامل جان (HP Refill)</option>
+                    <option value="mana_refill">شارژ کامل مانا (Mana Refill)</option>
+                    <option value="starter_bundle">بسته بقای ماجراجو (ترکیبی)</option>
                     <option value="unlock_full_ui">باز کردن رابط کامل بازی</option>
                     <option value="scenario">سناریوی داستانی ویژه</option>
                     <option value="custom">سفارشی</option>
@@ -712,6 +718,7 @@ export function ShopPage() {
               {/* Reward Value */}
               {(formData.rewardType === 'gold' ||
                 formData.rewardType === 'energy_amount' ||
+                formData.rewardType === 'starter_bundle' ||
                 formData.rewardType === 'scenario') && (
                 <div>
                   <label className="block text-ink-dim mb-1">
@@ -719,6 +726,8 @@ export function ShopPage() {
                       ? 'تعداد سکه طلا:'
                       : formData.rewardType === 'energy_amount'
                       ? 'مقدار انرژی دریافتی:'
+                      : formData.rewardType === 'starter_bundle'
+                      ? 'تعداد سکه در بسته بقا:'
                       : 'شناسه سناریو:'}
                   </label>
                   <input

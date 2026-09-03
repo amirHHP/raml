@@ -4,7 +4,7 @@
  * SKU catalog mirrors `pool.json` / backend SHOP_SKUS.
  */
 
-import pool from '../../pool.json';
+import pool from '../../pool.json' with { type: 'json' };
 
 export type BazaarPurchase = {
   sku: string;

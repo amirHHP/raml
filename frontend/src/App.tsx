@@ -101,6 +101,7 @@ export default function App() {
           state={state}
           audioMuted={!audio.settings.bgmEnabled}
           onToggleAudio={() => audio.toggleBgm()}
+          onOpenShop={() => game.setTab('shop')}
           onSettings={() => game.setSettingsOpen(true)}
           onInbox={() => {
             void game.refreshInbox().catch(() => undefined);
@@ -161,6 +162,7 @@ export default function App() {
                 onRoll={game.submitDice}
                 onWatchAd={() => game.setAdOpen(true)}
                 onBuyRefill={() => void game.buySku('energy_refill')}
+                onOpenShop={() => game.setTab('shop')}
                 onTimerElapsed={() => {
                   void game.refreshEnergy().catch(() => undefined);
                 }}

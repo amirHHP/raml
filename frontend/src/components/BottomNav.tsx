@@ -49,13 +49,13 @@ export function BottomNav({
           const isDisabled = id === 'story' && disableStory;
           const label = t(labelKey, language);
           return (
-            <li key={id}>
+            <li key={id} className="flex-1 flex justify-center">
               <button
                 type="button"
                 disabled={isDisabled}
                 title={isDisabled ? (isEn ? 'Return from home first' : 'ابتدا باید خروج از خانه را بزنید') : undefined}
                 onClick={() => !isDisabled && onChange(id)}
-                className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] transition ${
+                className={`flex w-full max-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-[10px] transition ${
                   isDisabled
                     ? 'opacity-35 cursor-not-allowed text-ink-muted'
                     : on

@@ -1,6 +1,7 @@
 import {
   IconBell,
   IconBolt,
+  IconCart,
   IconCoin,
   IconFlask,
   IconHeart,
@@ -24,6 +25,7 @@ export function StatusBar({
   state,
   onSettings,
   onInbox,
+  onOpenShop,
   unreadCount = 0,
   audioMuted = false,
   onToggleAudio,
@@ -31,6 +33,7 @@ export function StatusBar({
   state: GameState;
   onSettings: () => void;
   onInbox?: () => void;
+  onOpenShop?: () => void;
   unreadCount?: number;
   audioMuted?: boolean;
   onToggleAudio?: () => void;
@@ -124,6 +127,17 @@ export function StatusBar({
               )}
             </button>
           )}
+          {onOpenShop && (
+            <button
+              type="button"
+              onClick={onOpenShop}
+              className="rounded-full p-2 text-ink-dim transition hover:text-amber"
+              aria-label={t('shopTitle', language)}
+              title={t('shopTitle', language)}
+            >
+              <IconCart size={20} />
+            </button>
+          )}
           <button
             type="button"
             onClick={onSettings}
@@ -138,35 +152,55 @@ export function StatusBar({
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-dim">
         {unlocks.hp && (
           <>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenShop}
+              className="inline-flex items-center gap-1 hover:text-rose-300 transition"
+              title={onOpenShop ? (isEn ? 'Heal HP in shop' : 'درمان جان در فروشگاه') : undefined}
+            >
               <IconHeart size={14} className="text-red-400/80" />
               {t('hp', language)}: {stats.hp}/{stats.maxHp}
-            </span>
+            </button>
             <span className="text-line">|</span>
           </>
         )}
         {unlocks.mana && (
           <>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenShop}
+              className="inline-flex items-center gap-1 hover:text-sky-300 transition"
+              title={onOpenShop ? (isEn ? 'Restore Mana in shop' : 'شارژ مانا در فروشگاه') : undefined}
+            >
               <IconFlask size={14} className="text-sky-400/80" />
               {t('mana', language)}: {stats.mana}/{stats.maxMana}
-            </span>
+            </button>
             <span className="text-line">|</span>
           </>
         )}
         {unlocks.gold && (
           <>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenShop}
+              className="inline-flex items-center gap-1 text-amber hover:brightness-125 transition"
+              title={onOpenShop ? (isEn ? 'Get Gold in shop' : 'خرید سکه در فروشگاه') : undefined}
+            >
               <IconCoin size={14} className="text-amber" />
               {isEn ? stats.gold.toLocaleString('en-US') : stats.gold.toLocaleString('fa-IR')}
-            </span>
+            </button>
             <span className="text-line">|</span>
           </>
         )}
-        <span className="inline-flex items-center gap-1 text-amber amber-text-glow">
+        <button
+          type="button"
+          onClick={onOpenShop}
+          className="inline-flex items-center gap-1 text-amber amber-text-glow hover:brightness-125 transition"
+          title={onOpenShop ? (isEn ? 'Refill energy in shop' : 'شارژ انرژی در فروشگاه') : undefined}
+        >
           <IconBolt size={14} />
           {stats.energy}/{stats.maxEnergy}
-        </span>
+        </button>
       </div>
     </header>
   );
