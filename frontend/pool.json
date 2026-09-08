@@ -5,7 +5,7 @@
       "sku": "energy_refill",
       "type": "inapp",
       "title": "پر کردن کامل انرژی",
-      "price": "1000",
+      "price": "2000",
       "currency": "IRR",
       "description": "انرژی را کامل پر می‌کند و خستگی را برطرف می‌سازد"
     },
@@ -13,7 +13,7 @@
       "sku": "energy_pack_large",
       "type": "inapp",
       "title": "معجون انرژی مضاعف (+۲۵ انرژی)",
-      "price": "3000",
+      "price": "6000",
       "currency": "IRR",
       "description": "۲۵ واحد انرژی فوری و مازاد بر ظرفیت برای ادامه بی‌وقفه ماجراجویی"
     },
@@ -21,7 +21,7 @@
       "sku": "hp_elixir",
       "type": "inapp",
       "title": "اکسیر حیات (درمان کامل جان)",
-      "price": "1500",
+      "price": "3000",
       "currency": "IRR",
       "description": "جان قهرمان را کامل احیا کرده و اثرات آسیب‌ها و خستگی را برطرف می‌سازد"
     },
@@ -29,7 +29,7 @@
       "sku": "mana_potion",
       "type": "inapp",
       "title": "معجون جوهره جادو (شارژ کامل مانا)",
-      "price": "1500",
+      "price": "3000",
       "currency": "IRR",
       "description": "حوضچه جادوی قهرمان را پر می‌کند تا آماده اجرای طلسم‌های سنگین باشید"
     },
@@ -37,7 +37,7 @@
       "sku": "gold_200",
       "type": "inapp",
       "title": "کیسه سکه (۲۰۰ طلا)",
-      "price": "2000",
+      "price": "4000",
       "currency": "IRR",
       "description": "۲۰۰ سکه طلا برای خرید تجهیزات و ارتقای بازی"
     },
@@ -45,7 +45,7 @@
       "sku": "gold_600",
       "type": "inapp",
       "title": "صندوقچه سکه (۶۰۰ طلا)",
-      "price": "5000",
+      "price": "10000",
       "currency": "IRR",
       "description": "۶۰۰ سکه طلا با تخفیف ویژه به همراه پاداش ماجراجو"
     },
@@ -53,7 +53,7 @@
       "sku": "gold_1500",
       "type": "inapp",
       "title": "خزانه سلطنتی طلا (۱,۵۰۰ طلا)",
-      "price": "10000",
+      "price": "20000",
       "currency": "IRR",
       "description": "ثروتی عظیم شامل ۱۵۰۰ سکه طلا برای خرید آزادانه نایاب‌ترین تجهیزات"
     },
@@ -61,7 +61,7 @@
       "sku": "starter_bundle",
       "type": "inapp",
       "title": "بسته بقای ماجراجو (Starter Bundle)",
-      "price": "4000",
+      "price": "8000",
       "currency": "IRR",
       "description": "بسته جامع: شارژ ۱۰۰٪ انرژی + درمان کامل جان (HP) + ۳۰۰ سکه طلا با تخفیف ۵۰٪"
     },
@@ -69,7 +69,7 @@
       "sku": "scenario_kavir",
       "type": "inapp",
       "title": "سناریو: شن‌های کویر",
-      "price": "5000",
+      "price": "10000",
       "currency": "IRR",
       "description": "باز کردن ماجرای ویژه کویر"
     },
@@ -77,7 +77,7 @@
       "sku": "unlock_full_ui",
       "type": "inapp",
       "title": "باز کردن رابط کامل",
-      "price": "2000",
+      "price": "4000",
       "currency": "IRR",
       "description": "بدون انتظار ۳ روزه"
     }

@@ -24,13 +24,13 @@ describe('ShopPackages Service', () => {
     assert.strictEqual(packages.length, 10);
     const energyRefill = packages.find((p) => p.sku === 'energy_refill');
     assert.ok(energyRefill);
-    assert.strictEqual(energyRefill?.priceTomans, 1000);
+    assert.strictEqual(energyRefill?.priceTomans, 2000);
     assert.strictEqual(energyRefill?.type, 'consumable');
 
     const starterBundle = packages.find((p) => p.sku === 'starter_bundle');
     assert.ok(starterBundle);
     assert.strictEqual(starterBundle?.rewardType, 'starter_bundle');
-    assert.strictEqual(starterBundle?.priceTomans, 4000);
+    assert.strictEqual(starterBundle?.priceTomans, 8000);
 
     const hpElixir = packages.find((p) => p.sku === 'hp_elixir');
     assert.ok(hpElixir);

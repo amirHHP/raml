@@ -22,7 +22,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Full Energy Refill',
     description: 'انرژی را کامل پر می‌کند و خستگی را برطرف می‌سازد',
     descriptionEn: 'Instantly restores your energy to maximum capacity',
-    priceTomans: 1000,
+    priceTomans: 2000,
     type: 'consumable',
     rewardType: 'energy_refill',
     badge: 'ضروری',
@@ -36,7 +36,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Grand Energy Elixir (+25 Energy)',
     description: '۲۵ واحد انرژی فوری و مازاد بر ظرفیت برای ادامه بی‌وقفه ماجراجویی',
     descriptionEn: 'Instantly adds +25 bonus energy beyond your maximum limit',
-    priceTomans: 3000,
+    priceTomans: 6000,
     type: 'consumable',
     rewardType: 'energy_amount',
     rewardValue: 25,
@@ -51,7 +51,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Elixir of Life (Full HP Refill)',
     description: 'جان قهرمان را کامل احیا کرده و اثرات آسیب‌ها و خستگی را برطرف می‌سازد',
     descriptionEn: 'Fully restores hero HP and removes all battle wounds',
-    priceTomans: 1500,
+    priceTomans: 3000,
     type: 'consumable',
     rewardType: 'hp_refill',
     badge: 'حیاتی',
@@ -65,7 +65,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Essence of Magic (Full Mana Refill)',
     description: 'حوضچه جادوی قهرمان را پر می‌کند تا آماده اجرای طلسم‌های سنگین باشید',
     descriptionEn: 'Fully replenishes your mana pool for powerful spells',
-    priceTomans: 1500,
+    priceTomans: 3000,
     type: 'consumable',
     rewardType: 'mana_refill',
     badge: 'جادو',
@@ -79,7 +79,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Coin Pouch (200 Gold)',
     description: '۲۰۰ سکه طلا برای خرید تجهیزات و ارتقای بازی',
     descriptionEn: '200 gold coins for purchasing gear and upgrades',
-    priceTomans: 2000,
+    priceTomans: 4000,
     type: 'consumable',
     rewardType: 'gold',
     rewardValue: 200,
@@ -94,7 +94,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Chest of Gold (600 Gold)',
     description: '۶۰۰ سکه طلا با تخفیف ویژه به همراه پاداش ماجراجو',
     descriptionEn: '600 gold coins with special value discount',
-    priceTomans: 5000,
+    priceTomans: 10000,
     type: 'consumable',
     rewardType: 'gold',
     rewardValue: 600,
@@ -109,7 +109,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Royal Treasury (1,500 Gold)',
     description: 'ثروتی عظیم شامل ۱۵۰۰ سکه طلا برای خرید آزادانه نایاب‌ترین تجهیزات',
     descriptionEn: 'A fortune of 1,500 gold coins for elite equipment and upgrades',
-    priceTomans: 10000,
+    priceTomans: 20000,
     type: 'consumable',
     rewardType: 'gold',
     rewardValue: 1500,
@@ -124,7 +124,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Adventurer Survival Kit (Starter Bundle)',
     description: 'بسته جامع: شارژ ۱۰۰٪ انرژی + درمان کامل جان (HP) + ۳۰۰ سکه طلا با تخفیف ۵۰٪',
     descriptionEn: 'Complete pack: Full Energy + Full HP Heal + 300 Gold Coins at 50% discount',
-    priceTomans: 4000,
+    priceTomans: 8000,
     type: 'consumable',
     rewardType: 'starter_bundle',
     rewardValue: 300,
@@ -139,7 +139,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Scenario: Desert Sands',
     description: 'باز کردن سناریو و ماجرای رازآلود کویر سوزان',
     descriptionEn: 'Unlock the special Desert Sands adventure scenario',
-    priceTomans: 5000,
+    priceTomans: 10000,
     type: 'non_consumable',
     rewardType: 'scenario',
     rewardValue: 'desert_spirit',
@@ -154,7 +154,7 @@ const FALLBACK_ITEMS: ShopSku[] = [
     titleEn: 'Unlock Full UI',
     description: 'دسترسی فوری به تمامی بخش‌های بازی بدون نیاز به صبر ۳ روزه',
     descriptionEn: 'Instant access to all game tabs without waiting 3 days',
-    priceTomans: 2000,
+    priceTomans: 4000,
     type: 'non_consumable',
     rewardType: 'unlock_full_ui',
     badge: 'ویژه',
@@ -547,7 +547,7 @@ export function ShopPanel({
                           : `${item.priceTomans.toLocaleString('fa-IR')} تومان`}
                       </span>
                       <span className="text-[10px] text-ink-muted group-hover:text-oled/80 mt-0.5">
-                        {isBuying ? (isEn ? 'Purchasing...' : 'در حال خرید...') : t('buyButton', lang)}
+                        {isBuying ? (isEn ? 'Connecting...' : 'در حال انتقال...') : t('buyButton', lang)}
                       </span>
                     </button>
                   )}

@@ -105,6 +105,26 @@ export const api = {
       body: JSON.stringify({ sessionId, events }),
     }),
   getShop: () => request<{ items: ShopSku[] }>('/api/mono/shop'),
+  requestZarinpal: (sku: string, callbackUrl?: string) =>
+    request<{ ok: boolean; authority?: string; paymentUrl?: string; fee?: number; error?: string }>(
+      '/api/mono/zarinpal/request',
+      {
+        method: 'POST',
+        body: JSON.stringify({ sku, callbackUrl }),
+      },
+    ),
+  verifyZarinpal: (authority: string, status?: string) =>
+    request<{
+      ok: boolean;
+      refId?: string;
+      cardPan?: string;
+      rewardSummary?: string;
+      playerState?: GameState;
+      error?: string;
+    }>('/api/mono/zarinpal/verify', {
+      method: 'POST',
+      body: JSON.stringify({ authority, status }),
+    }),
   claimAdReward: () =>
     request<GameState>('/api/mono/ads/reward', { method: 'POST', body: '{}' }),
   verifyIap: (sku: string, purchaseToken = `mock_${Date.now()}`) =>
