@@ -11,7 +11,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,html,ico,svg,woff2}',
+          '**/pwa-192.png',
+          '**/pwa-512.png',
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -32,11 +36,11 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\/api\/.*/i,
-            handler: 'NetworkFirst',
+            urlPattern: /\/api\/game\/changelogs/i,
+            handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'api-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              cacheName: 'api-changelogs-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import type { EnemyLineArtType, Language } from '../types/game';
 
-export function EnemyLineArt({
+export const EnemyLineArt = memo(function EnemyLineArt({
   imageUrl,
   turnNumber,
   isLatest = false,
@@ -57,4 +58,4 @@ export function EnemyLineArt({
 
   // 3. For past turns without image or turns < 5, return null
   return null;
-}
+});

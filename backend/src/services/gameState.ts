@@ -473,7 +473,10 @@ export async function restorePlayer(saveCode: string): Promise<ReturnType<typeof
   regenerateEnergy(player);
   touchPlayDay(player);
   player.unlockedFullUi = computeUnlocked(player);
-  await persist(player);
+  const isDirty = typeof player.isModified === 'function' ? player.isModified() : true;
+  if (isDirty) {
+    await persist(player);
+  }
   return toClientState(player);
 }
 
@@ -506,7 +509,10 @@ export async function getOrCreatePlayer(deviceId: string): Promise<IPlayer> {
   regenerateEnergy(player);
   touchPlayDay(player);
   player.unlockedFullUi = computeUnlocked(player);
-  await player.save();
+  const isDirty = typeof player.isModified === 'function' ? player.isModified() : true;
+  if (isDirty) {
+    await player.save();
+  }
   return player;
 }
 

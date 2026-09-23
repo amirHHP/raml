@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -90,7 +91,7 @@ function nextId(prefix: string): string {
   return `${prefix}-${bubbleSeq}`;
 }
 
-function StoryBubbleView({
+const StoryBubbleView = memo(function StoryBubbleView({
   text,
   animate,
   msPerWord,
@@ -141,9 +142,9 @@ function StoryBubbleView({
       )}
     </button>
   );
-}
+});
 
-function ChoiceBubbleView({ bubble }: { bubble: ChoiceBubble }) {
+const ChoiceBubbleView = memo(function ChoiceBubbleView({ bubble }: { bubble: ChoiceBubble }) {
   const Icon = ACTION_ICONS[bubble.icon] || ACTION_ICONS.search;
   return (
     <div className="flex justify-end px-1">
@@ -154,7 +155,7 @@ function ChoiceBubbleView({ bubble }: { bubble: ChoiceBubble }) {
       </div>
     </div>
   );
-}
+});
 
 export function StoryChat({
   state,

@@ -189,9 +189,11 @@ export async function listPlayers(params: {
   const [total, docs] = await Promise.all([
     Player.countDocuments(filter),
     Player.find(filter)
+      .select('deviceId characterName classType status awakened unlockedFullUi playDayCount stats.level stats.gold stats.energy lastPlayedAt createdAt purchasedSkus')
       .sort({ lastPlayedAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
   ]);
 
   return {

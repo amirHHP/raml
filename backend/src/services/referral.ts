@@ -261,26 +261,27 @@ export async function fixReferralCodeDuplicates(): Promise<void> {
       ],
     });
 
-    for (const p of unassigned) {
-      let code = generateRandomReferralCode();
-      let attempts = 0;
-      while (attempts < 10) {
-        const exists = await Player.findOne({ referralCode: code });
-        if (!exists) break;
-        code = generateRandomReferralCode();
-        attempts++;
+    if (unassigned.length > 0) {
+      for (const p of unassigned) {
+        let code = generateRandomReferralCode();
+        let attempts = 0;
+        while (attempts < 10) {
+          const exists = await Player.findOne({ referralCode: code });
+          if (!exists) break;
+          code = generateRandomReferralCode();
+          attempts++;
+        }
+        p.referralCode = code;
+        await p.save().catch(() => undefined);
       }
-      p.referralCode = code;
-      await p.save().catch(() => undefined);
     }
 
     const collection = Player.collection;
     const indexes = await collection.indexes().catch(() => []);
     const hasReferralIndex = indexes.some((idx: any) => idx.name === 'referralCode_1');
-    if (hasReferralIndex) {
-      await collection.dropIndex('referralCode_1').catch(() => undefined);
+    if (!hasReferralIndex) {
+      await Player.createIndexes().catch(() => undefined);
     }
-    await Player.createIndexes().catch(() => undefined);
   } catch (err) {
     console.warn('Referral index migration warning:', err);
   }

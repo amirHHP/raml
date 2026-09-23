@@ -352,7 +352,7 @@ router.post('/referral/apply', requireDeviceId, async (req, res) => {
   }
 });
 
-router.post('/generate-image', async (req, res) => {
+router.post('/generate-image', requireDeviceId, async (req, res) => {
   try {
     const body = z
       .object({

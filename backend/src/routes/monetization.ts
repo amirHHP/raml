@@ -32,9 +32,26 @@ router.get('/shop', async (_req, res) => {
   }
 });
 
-/** Mock rewarded ad grant: +5 energy */
+const AD_REWARD_COOLDOWN_MS = 60 * 1000;
+const lastAdClaims = new Map<string, number>();
+
+/** Mock rewarded ad grant: +5 energy with cooldown */
 router.post('/ads/reward', requireDeviceId, async (req, res) => {
   try {
+    const now = Date.now();
+    const lastClaim = lastAdClaims.get(req.deviceId) || 0;
+    if (now - lastClaim < AD_REWARD_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((AD_REWARD_COOLDOWN_MS - (now - lastClaim)) / 1000);
+      res.status(429).json({ error: `برای دریافت پاداش بعدی لطفاً ${waitSeconds} ثانیه دیگر صبر کنید` });
+      return;
+    }
+    lastAdClaims.set(req.deviceId, now);
+    if (lastAdClaims.size > 10000) {
+      for (const [id, time] of lastAdClaims.entries()) {
+        if (now - time > AD_REWARD_COOLDOWN_MS * 5) lastAdClaims.delete(id);
+      }
+    }
+
     const player = await getOrCreatePlayer(req.deviceId);
     refillEnergy(player, 5);
     player.toastMessage = '۵ انرژی از تبلیغ دریافت شد';

@@ -198,6 +198,10 @@ PlayerSchema.index(
   { referralCode: 1 },
   { unique: true, sparse: true, partialFilterExpression: { referralCode: { $type: 'string' } } },
 );
+PlayerSchema.index({ lastPlayedAt: -1 });
+PlayerSchema.index({ status: 1, lastPlayedAt: -1 });
+PlayerSchema.index({ awakened: 1 });
+
 
 export const Player =
   mongoose.models.Player || mongoose.model<IPlayer>('Player', PlayerSchema);
